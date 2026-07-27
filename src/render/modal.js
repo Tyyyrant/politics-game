@@ -173,28 +173,67 @@ export function showSeatPicker(title, filterFn = null) {
 export function showAppointmentUI(factionId) {
   return new Promise(resolve => {
     const faction = gameState.factions[factionId];
+
+    // Calculate vacancies for each department
+    function getVacancies(deptId) {
+      const dept = DEPARTMENTS[deptId];
+      if (!dept) return {};
+      const filled = {};
+      for (const m of faction.members) {
+        if (m.dept === deptId) filled[m.rank] = (filled[m.rank] || 0) + 1;
+      }
+      const vac = {};
+      for (const pos of dept.positions) {
+        const filledCount = filled[pos.rank] || 0;
+        const vacant = Math.max(0, pos.count - filledCount);
+        vac[pos.rank] = (vac[pos.rank] || 0) + vacant;
+      }
+      return vac;
+    }
+
     const memberDepts = [...new Set(faction.members.map(m => m.dept))];
-    let html = '<div class="appointment-panel"><h4>🏛️ 干部任用</h4>';
+    let html = '<div class="appointment-panel"><h4>干部任用</h4>';
     html += '<p style="font-size:0.8em;color:var(--text-secondary);margin-bottom:8px;">消耗组织部资源或本部门资源 | 副处5 · 正处8 · 副厅15</p>';
-    html += '<div class="appoint-section"><h5>📋 你控制的部门（可任用新人）</h5>';
+
+    // Department vacancies
+    html += '<div class="appoint-section"><h5>部门职位空缺</h5>';
+    let hasAnyVacancy = false;
     for (const deptId of memberDepts) {
       const deptName = DEPT_NAMES[deptId] || deptId;
-      const count = faction.members.filter(m => m.dept === deptId).length;
-      html += `<div class="appoint-dept"><span class="dept-name">${deptName}</span><span class="dept-count">${count}人</span>
-        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="副处">+副处(5)</button>
-        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="正处">+正处(8)</button>
-        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="副厅">+副厅(15)</button></div>`;
+      const vac = getVacancies(deptId);
+      const memberCount = faction.members.filter(m => m.dept === deptId).length;
+      html += `<div class="appoint-dept"><span class="dept-name">${deptName}</span><span class="dept-count">现${memberCount}人</span>`;
+      for (const [rank, count] of Object.entries(vac)) {
+        if (count > 0 && rank !== '副部') {
+          hasAnyVacancy = true;
+          const cost = { '副处': 5, '正处': 8, '副厅': 15 }[rank] || '—';
+          html += `<button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="${rank}">+${rank}(${cost}) 缺${count}</button>`;
+        }
+      }
+      html += '</div>';
     }
-    html += '</div><div class="appoint-section"><h5>⬆️ 可提拔的现有成员</h5>';
+    if (!hasAnyVacancy) html += '<div style="font-size:0.8em;color:var(--text-secondary);">所有职位已满</div>';
+    html += '</div>';
+
+    // Promotable members
+    html += '<div class="appoint-section"><h5>可提拔的现有成员</h5>';
     const promotable = faction.members.filter(m => ['副处', '正处', '副厅'].includes(m.rank));
+    let hasPromotable = false;
     if (promotable.length) {
       for (const m of promotable) {
         const next = { '副处': '正处', '正处': '副厅', '副厅': '正厅' }[m.rank];
-        const cost = { '副处': 8, '正处': 15 }[m.rank] || '—';
-        html += `<div class="appoint-member"><span>${m.name} · ${m.rank}→${next}</span>
-          <button class="btn-small btn-promote" data-mid="${m.id}" data-rank="${next}">提拔(${cost})</button></div>`;
+        const vac = getVacancies(m.dept);
+        const hasVacancy = (vac[next] || 0) > 0;
+        if (hasVacancy) {
+          hasPromotable = true;
+          const cost = { '副处': 8, '正处': 15 }[m.rank] || '—';
+          const deptName = DEPT_NAMES[m.dept] || m.dept;
+          html += `<div class="appoint-member"><span>${m.name} · ${m.rank}→${next} · ${deptName}</span>
+            <button class="btn-small btn-promote" data-mid="${m.id}" data-rank="${next}" data-dept="${m.dept}">提拔(${cost})</button></div>`;
+        }
       }
-    } else { html += '<div style="font-size:0.8em;color:var(--text-secondary);">无</div>'; }
+    }
+    if (!hasPromotable) html += '<div style="font-size:0.8em;color:var(--text-secondary);">无可提拔成员（需有空缺职位）</div>';
     html += '</div><button class="modal-btn modal-cancel" style="margin-top:12px;">关闭</button></div>';
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -205,7 +244,7 @@ export function showAppointmentUI(factionId) {
       btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'appoint', dept: btn.dataset.dept, rank: btn.dataset.rank }); });
     });
     overlay.querySelectorAll('.btn-promote').forEach(btn => {
-      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'promote', memberId: btn.dataset.mid, rank: btn.dataset.rank }); });
+      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'promote', memberId: btn.dataset.mid, rank: btn.dataset.rank, dept: btn.dataset.dept }); });
     });
   });
 }

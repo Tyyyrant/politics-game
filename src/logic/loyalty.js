@@ -2,6 +2,7 @@
 import { gameState, emit } from './state.js';
 import { spendResources, spendInfluence } from './resources.js';
 import { APPOINTMENT_COST, TRAITS, DEPT_NAMES } from './data/constants.js';
+import { DEPARTMENTS } from './data/departments.js';
 
 export function boostLoyalty(factionId, memberId, method) {
   const faction = gameState.factions[factionId];
@@ -41,8 +42,16 @@ export function promoteMember(factionId, memberId) {
   const rankOrder = ['副处', '正处', '副厅', '正厅'];
   const idx = rankOrder.indexOf(member.rank);
   if (idx < 0 || idx >= rankOrder.length - 1) return { success: false, message: '无法继续提拔' };
-  member.rank = rankOrder[idx + 1]; member.loyalty = Math.min(member.maxLoyalty, member.loyalty + 2);
-  return { success: true, message: `${member.name}已晋升为${member.rank}` };
+  const newRank = rankOrder[idx + 1];
+  // Update position title to reflect new rank
+  const dept = DEPARTMENTS[member.dept];
+  if (dept) {
+    const matchingPos = dept.positions.find(p => p.rank === newRank);
+    if (matchingPos) member.position = matchingPos.title;
+  }
+  member.rank = newRank;
+  member.loyalty = Math.min(member.maxLoyalty, member.loyalty + 2);
+  return { success: true, message: `${member.name}已晋升为${newRank}·${member.position}` };
 }
 
 export function appointOfficial(factionId, dept, rank) {
