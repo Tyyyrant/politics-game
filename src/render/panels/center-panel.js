@@ -93,10 +93,12 @@ export function renderCenterPanel() {
     const allEffects = [...billEffects, ...eventEffects];
 
     // 始终可用：两个办公厅各自兑换到本体系部门
-    if ((pf.resources.govOffice || 0) > 0) h += btn('🏛️ 政府办→政府', 'convertGovOffice', '政府办公厅资源1:1兑换任意政府部门（发改/财政/公安等）');
-    if ((pf.resources.partyOffice || 0) > 0) h += btn('🏛️ 党委办→党委', 'convertPartyOffice', '党委办公厅资源1:1兑换任意党委部门（组织/宣传/纪检/政法）');
+    const govRes = pf.resources.govOffice || 0;
+    const partyRes = pf.resources.partyOffice || 0;
+    h += `<button class="action-btn convert-btn${govRes ? '' : ' btn-disabled'}" data-action="convertGovOffice">🏛️ 政府办→政府 (${govRes})</button>`;
+    h += `<button class="action-btn convert-btn${partyRes ? '' : ' btn-disabled'}" data-action="convertPartyOffice">🏛️ 党委办→党委 (${partyRes})</button>`;
     // 始终可用：影响力→通用
-    h += btn('影响→通用', 'convertInfluence', '5影响力兑换1通用资源');
+    h += `<button class="action-btn convert-btn${pf.influence >= 5 ? '' : ' btn-disabled'}" data-action="convertInfluence">影响→通用 (5:1|现${pf.influence})</button>`;
 
     // 动态显示：法案/事件触发的置换
     if (allEffects.includes('propagandaToInfluence') || allEffects.includes('propagandaToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertPropaganda">宣传→影响(2:1)</button>';
