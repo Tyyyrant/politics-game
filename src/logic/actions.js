@@ -19,7 +19,7 @@ export function executeAction(factionId, actionType, params = {}) {
 }
 
 function visitSeat(factionId, seatId) {
-  if (gameState.factions[factionId].visitsThisTurn >= 3) return { success: false, message: '每轮最多拜访3个席位' };
+  if (gameState.factions[factionId].visitsThisTurn >= 2) return { success: false, message: '每轮最多拜访2个席位' };
   if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat) return { success: false, message: '席位不存在' };

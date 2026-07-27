@@ -69,8 +69,8 @@ export function renderCenterPanel() {
   }
 
   if (isPlayer) {
-    const visitsLeft = 3 - (gameState.factions[cf].visitsThisTurn || 0);
-    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/3）</h3><div class="action-grid">';
+    const visitsLeft = 2 - (gameState.factions[cf].visitsThisTurn || 0);
+    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/2）</h3><div class="action-grid">';
     h += btn('拜访人大席位', 'visitSeat', '消耗1影响力，查看席位任务');
     h += btn('完成席位任务', 'completeTask', '消耗对应资源，锁定席位（本回合拜访的需下回合完成）');
     h += btn('打探对手席位', 'scoutSeat', '消耗2影响力，查看对手攻略的席位详情');

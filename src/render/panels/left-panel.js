@@ -14,9 +14,9 @@ export function renderLeftPanel() {
   // === 我的派系详情 ===
   h += '<div class="panel-section player-full"><h3>👤 我的派系 — ' + pf.leaderName + '</h3>';
   h += `<div class="stat-row">📊 影响力: <b>${pf.influence}</b> &nbsp;|&nbsp; 💰 资金: <b>${pf.funds}</b></div>`;
-  const visitsLeft = 3 - (pf.visitsThisTurn || 0);
+  const visitsLeft = 2 - (pf.visitsThisTurn || 0);
   h += `<div class="stat-row">🔒 席位: <b>${pf.lockedSeats}/27</b> &nbsp;|&nbsp; 🔴 纪委标记: <b>${pf.disciplineMarks}</b></div>`;
-  h += `<div class="stat-row">👁️ 剩余拜访: <b>${visitsLeft}/3</b> &nbsp;|&nbsp; 👥 攻略中: <b>${pf.activeSeatTasks.length || gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId).length}</b></div>`;
+  h += `<div class="stat-row">👁️ 剩余拜访: <b>${visitsLeft}/2</b> &nbsp;|&nbsp; 👥 攻略中: <b>${pf.activeSeatTasks.length || gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId).length}</b></div>`;
 
   // 资源明细
   h += '<div class="resource-section"><h4>📦 资源</h4>';
@@ -32,6 +32,17 @@ export function renderLeftPanel() {
     h += '<div class="empty-hint">暂无资源（每轮回合开始时产出）</div>';
   }
   h += '</div>';
+
+  // 生效法案效果（紧挨资源，显眼位置）
+  const effectsDesc = getBillEffectDescriptions();
+  if (effectsDesc.length) {
+    h += '<div class="panel-section bill-effects-box">';
+    for (const d of effectsDesc) {
+      const isPassed = d.includes('（通过）');
+      h += `<div class="effect-item">${isPassed ? '✅ 已通过' : '❌ 未通过'} ${d}</div>`;
+    }
+    h += '</div>';
+  }
 
   // 正在攻略的席位
   const mySeats = gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId && !s.lockedById);
@@ -73,14 +84,6 @@ export function renderLeftPanel() {
     </div>`;
   }
   h += '</div>';
-
-  // 生效效果
-  const effectsDesc = getBillEffectDescriptions();
-  if (effectsDesc.length) {
-    h += '<div class="panel-section"><h3>📋 生效法案效果</h3>';
-    for (const d of effectsDesc) h += `<div class="effect-item">· ${d}</div>`;
-    h += '</div>';
-  }
 
   el.innerHTML = h;
 }
