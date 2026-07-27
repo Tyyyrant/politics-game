@@ -103,12 +103,12 @@ export function renderCenterPanel() {
 
 // === BILL PHASE (fixed — waits for player) ===
 function renderBillPhase(el) {
-  // Bill not yet drawn — draw it synchronously
+  // Bill not yet drawn — draw it only once per round
   if (!gameState.currentBill) {
+    if (_billResolving) return;  // Guard: don't redraw if already resolving
     _playerVoted = false;
     _aiVoteTriggered = false;
     _billResolving = false;
-    // Dynamic import cached from first use — near-instant
     import('../../logic/bills.js').then(m => { m.drawBill(); el.innerHTML = ''; renderBillPhase(el); });
     return;
   }

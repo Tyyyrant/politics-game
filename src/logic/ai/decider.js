@@ -17,13 +17,16 @@ export function decideAIActions(factionId) {
     candidates.push({ type: ACTION_TYPES.VISIT_SEAT, params: { seatId: unvisited[0].id }, score: sit.seatGap * (1 - p.aggression) * 10 });
   }
 
-  // 完成自己的席位任务
+  // 完成自己的席位任务（最多完成2个）
+  let completeCount = 0;
   for (const seat of gameState.npcSeats) {
+    if (completeCount >= 2) break;
     if (seat.visitorId === factionId && seat.visitedOnTurn !== gameState.turn) {
       const canAfford = seat.task.resourceType === 'any'
         ? Object.values(faction.resources).reduce((s, v) => s + v, 0) >= seat.task.cost
         : (faction.resources[seat.task.resourceType] || 0) >= seat.task.cost;
-      if (canAfford) {
+      if (canAfford && sit.resourceHealth > 0.3) {  // Only complete if resources aren't depleted
+        completeCount++;
         const score = 15 + sit.seatGap * 2 + sit.resourceHealth * 5;
         candidates.push({ type: ACTION_TYPES.COMPLETE_TASK, params: { seatId: seat.id }, score });
       }
