@@ -47,7 +47,8 @@ export function resolveBill() {
   }
   if (passed && bill.passEffects) gameState.activeBillEffects.push({ id: bill.id, name: bill.name + '（通过）', effects: bill.passEffects, duration: bill.passEffects.duration || 1 });
   if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', name: bill.name + '（未通过）', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
-  const result = { passed, supportWeight, opposeWeight, billName: bill.name };
+  const result = { passed, supportWeight, opposeWeight, billName: bill.name, billDesc: bill.description, passEffects: bill.passEffects, failEffects: bill.failEffects };
+  gameState.lastBillResult = result;
   emit('bill:resolved', result);
   gameState.currentBill = null;
   return result;

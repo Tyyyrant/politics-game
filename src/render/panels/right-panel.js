@@ -1,6 +1,35 @@
 // src/render/panels/right-panel.js
 import { gameState } from '../../logic/state.js';
-import { FACTION_NAMES_CN, ACTION_NAMES_CN, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
+import { FACTION_NAMES_CN, ACTION_NAMES_CN } from '../../logic/data/constants.js';
+
+function describeEffects(eff) {
+  if (!eff) return '';
+  const parts = [];
+  if (eff.globalResourceBonus) parts.push(`全体资源+${eff.globalResourceBonus}`);
+  if (eff.govResourceBonus) parts.push(`政府资源+${eff.govResourceBonus}`);
+  if (eff.financeResourceBonus) parts.push(`财政资源+${eff.financeResourceBonus}`);
+  if (eff.taskCostReduction) parts.push(`任务消耗-${eff.taskCostReduction}`);
+  if (eff.appointmentCostReduction) parts.push(`任用消耗-${eff.appointmentCostReduction}`);
+  if (eff.govPartyExchange) parts.push('政府与党委资源互通');
+  if (eff.blockPublicSecurity) parts.push('本轮公安资源封锁');
+  if (eff.disableResources) parts.push('目标下轮资源瘫痪');
+  if (eff.partySchoolBonus) parts.push('党校额外+1资源');
+  if (eff.disciplineSuccessBoost) parts.push('纪委查处成功率提升');
+  if (eff.banDisciplineAction) parts.push('禁止纪委行动');
+  if (eff.supporterInfluenceBonus) parts.push(`支持方影响力+${eff.supporterInfluenceBonus}`);
+  if (eff.disciplineMarksBonus) parts.push(`纪委标记+${eff.disciplineMarksBonus}`);
+  if (eff.propagandaToInfluence) parts.push('宣传资源可换影响力');
+  if (eff.govOfficeToGeneric) parts.push('办公厅资源可换通用');
+  if (eff.hrssResourcePenalty) parts.push(`人社资源-${eff.hrssResourcePenalty}`);
+  if (eff.propagandaResourcePenalty) parts.push(`宣传资源-${eff.propagandaResourcePenalty}`);
+  if (eff.partyResourcePenalty) parts.push(`党委资源-${eff.partyResourcePenalty}`);
+  if (eff.payPartyResourceOrInfluence) parts.push('需支付党委资源或影响力');
+  if (eff.banOpinionGuide) parts.push('禁止使用舆论引导');
+  if (eff.govAppointmentCostIncrease) parts.push('干部任用消耗增加');
+  if (eff.supporterPropagandaPenalty) parts.push('支持方宣传资源减少');
+  if (eff.immunityAuditStorm) parts.push('免疫审计风暴');
+  return parts.join('，');
+}
 
 export function renderRightPanel() {
   const el = document.getElementById('right-panel');
@@ -16,11 +45,26 @@ export function renderRightPanel() {
   if (!gameState.roundLog.length) h += '<div class="log-empty">暂无事件，开始你的第一轮行动吧</div>';
   h += '</div></div>';
 
+  // Current bill being voted
   if (gameState.currentBill) {
     const b = gameState.currentBill;
-    h += `<div class="panel-section bill-status"><h3>📜 本轮法案</h3>
-      <div class="bill-name">${b.name}</div><div>${b.description}</div>
+    h += `<div class="panel-section bill-status"><h3>📜 本轮法案投票中</h3>
+      <div class="bill-name">${b.name}</div><div style="font-size:0.8em;">${b.description || ''}</div>
       <div style="font-size:0.8em;margin-top:4px;">✅支持 ${b.votes.support.length} &nbsp; ❌反对 ${b.votes.oppose.length} &nbsp; ⏸️弃权 ${b.votes.abstain.length}</div></div>`;
+  }
+
+  // Last resolved bill result
+  if (gameState.lastBillResult) {
+    const r = gameState.lastBillResult;
+    const icon = r.passed ? '✅ 通过' : '❌ 未通过';
+    const appliedEffects = r.passed ? r.passEffects : r.failEffects;
+    const effText = describeEffects(appliedEffects);
+    h += `<div class="panel-section bill-result ${r.passed ? 'bill-passed' : 'bill-failed'}">
+      <h3>📋 上轮法案结果</h3>
+      <div class="bill-name">${icon} ${r.billName}</div>
+      <div style="font-size:0.75em;margin-top:4px;">✅${r.supportWeight}票 ❌${r.opposeWeight}票</div>
+      ${effText ? `<div class="bill-effect-detail">效果：${effText}</div>` : ''}
+    </div>`;
   }
 
   el.innerHTML = h;

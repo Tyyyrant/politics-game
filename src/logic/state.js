@@ -28,7 +28,8 @@ export function createNewGame(playerFactionId) {
     currentBill: null, billDeck: shuffleDeck([...BILL_POOL]),
     eventDeck: shuffleDeck([...EVENT_POOL]),
     activeBillEffects: [], roundLog: [], history: [],
-    globalDisciplineMarkPool: 0, diceResult: null, pendingActions: []
+    globalDisciplineMarkPool: 0, diceResult: null, pendingActions: [],
+    lastBillResult: null
   };
   return gameState;
 }
