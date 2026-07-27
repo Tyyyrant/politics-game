@@ -85,12 +85,12 @@ function investigate(factionId, targetFactionId, memberId) {
   gameState.factions[factionId].disciplineMarks -= cost;
   const roll = rollDice();
   let result;
-  if (roll <= 2) { result = 'no_evidence'; member.investigationStatus = null; }
-  else if (roll <= 4) { result = 'suspect'; member.investigationStatus = 'suspect'; member.investigationRoundsLeft = 1; }
-  else { result = 'evidence'; member.investigationStatus = 'evidence'; member.investigationRoundsLeft = 1; }
+  if (roll <= 2) { result = '无证据'; member.investigationStatus = null; }
+  else if (roll <= 4) { result = '嫌疑'; member.investigationStatus = 'suspect'; member.investigationRoundsLeft = 1; }
+  else { result = '证据确凿'; member.investigationStatus = 'evidence'; member.investigationRoundsLeft = 1; }
   emit('investigation:result', { factionId, targetFactionId, memberId, roll, result });
-  gameState.roundLog.push({ factionId, action: 'investigate', target: `${targetFactionId}.${memberId}`, roll, result });
-  return { success: true, message: `查处${member.name}：骰子${roll}点→${result}`, data: { roll, result } };
+  gameState.roundLog.push({ factionId, action: 'investigate', target: `${member.name}(${targetFactionId})`, roll, result });
+  return { success: true, message: `查处${member.name}：骰子${roll}点 → ${result}`, data: { roll, result } };
 }
 
 function scoutLoyalty(factionId, targetFactionId, memberId) {

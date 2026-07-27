@@ -43,7 +43,11 @@ export function renderRightPanel() {
     } else {
       const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId;
       const actionName = ACTION_NAMES_CN[e.action] || e.action;
-      const target = e.target || '';
+      let target = e.target || '';
+      // Translate faction IDs in target to Chinese
+      for (const [fid, fname] of Object.entries(FACTION_NAMES_CN)) {
+        target = target.replace(fid, fname);
+      }
       const resultText = e.result ? ` → ${e.result}` : '';
       h += `<div class="log-entry"><b>${factionName}</b> ${actionName} ${target}${resultText}</div>`;
     }
