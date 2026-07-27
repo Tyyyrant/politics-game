@@ -1,7 +1,6 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
-import { renderAllPanels } from '../screens/game-screen.js';
 import { showAlert, showSelect, showPrompt } from '../modal.js';
 
 export function renderLeftPanel() {
@@ -175,7 +174,7 @@ export function renderLeftPanel() {
           pf.resources.propaganda -= 2;
           pf.influence += 1;
           await showAlert('已兑换：2宣传资源 → 1影响力');
-          renderAllPanels();
+          (await import('../screens/game-screen.js')).renderAllPanels();
           break;
         }
         case 'convertPropagandaToGeneric': {
@@ -183,7 +182,7 @@ export function renderLeftPanel() {
           pf.resources.propaganda -= 2;
           pf.genericResources = (pf.genericResources || 0) + 1;
           await showAlert('已兑换：2宣传资源 → 1通用资源');
-          renderAllPanels();
+          (await import('../screens/game-screen.js')).renderAllPanels();
           break;
         }
         case 'convertGovParty': {
@@ -205,7 +204,7 @@ export function renderLeftPanel() {
           pf.resources[from] -= amt;
           pf.resources[to] = (pf.resources[to] || 0) + amt;
           await showAlert(`已兑换：${amt}${DEPT_NAMES[from] || from} → ${DEPT_NAMES[to] || to}`);
-          renderAllPanels();
+          (await import('../screens/game-screen.js')).renderAllPanels();
           break;
         }
         case 'convertGovOfficeToGeneric': {
@@ -220,7 +219,7 @@ export function renderLeftPanel() {
           pf.resources[type] -= amt;
           pf.genericResources = (pf.genericResources || 0) + amt;
           await showAlert(`已兑换！${amt}${type === 'govOffice' ? '政府' : '党委'}办公厅→${amt}通用资源`);
-          renderAllPanels();
+          (await import('../screens/game-screen.js')).renderAllPanels();
           break;
         }
         case 'convertEmergency': {
@@ -233,7 +232,7 @@ export function renderLeftPanel() {
           if (amt <= 0 || (pf.resources.publicSecurity || 0) < amt) { await showAlert('资源不足'); break; }
           pf.resources.publicSecurity -= amt;
           pf.resources[to] = (pf.resources[to] || 0) + amt;
-          renderAllPanels();
+          (await import('../screens/game-screen.js')).renderAllPanels();
           break;
         }
       }
