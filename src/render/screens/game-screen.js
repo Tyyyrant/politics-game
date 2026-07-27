@@ -17,13 +17,16 @@ export function showGameScreen() {
     </div>`;
   startNewRound();
   determineTurnOrder();
-  renderAllPanels();
+  // Small delay to ensure DOM is ready, then render
+  setTimeout(() => renderAllPanels(), 50);
 }
 
 export function renderAllPanels() {
   if (!gameState || gameState.phase === 'gameOver') return;
-  renderTopBar();
-  renderLeftPanel();
-  renderCenterPanel();
-  renderRightPanel();
+  try {
+    renderTopBar();
+    renderLeftPanel();
+    renderCenterPanel();
+    renderRightPanel();
+  } catch (e) { console.error('render error:', e); }
 }
