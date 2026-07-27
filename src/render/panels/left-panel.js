@@ -54,6 +54,7 @@ export function renderLeftPanel() {
       if (eff.disciplineSuccessBoost) descParts.push('查处成功率↑');
       if (eff.banDisciplineAction) descParts.push('禁纪委行动');
       if (eff.propagandaToInfluence) descParts.push('宣传可换影响力');
+      if (eff.propagandaToGeneric) descParts.push('宣传可换通用资源');
       if (eff.govOfficeToGeneric) descParts.push('办公厅可换通用');
       if (eff.publicSecurityAsGeneric) descParts.push('公安可当政府资源');
 
@@ -61,21 +62,57 @@ export function renderLeftPanel() {
 
       // Inline conversion buttons for actionable effects
       if (eff.propagandaToInfluence && (pf.resources.propaganda || 0) >= 2) {
-        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">换→(2宣传=1影响)</button>`;
+        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
+      }
+      if (eff.propagandaToGeneric && (pf.resources.propaganda || 0) >= 2) {
+        h += ` <button class="btn-effect-convert" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
       }
       if (eff.govPartyExchange) {
-        h += ` <button class="btn-effect-convert" data-action="convertGovParty">跨部门互通</button>`;
+        h += ` <button class="btn-effect-convert" data-action="convertGovParty">政府↔党委(1:1)</button>`;
       }
       if (eff.govOfficeToGeneric) {
-        h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用</button>`;
+        h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>`;
       }
       if (eff.publicSecurityAsGeneric && (pf.resources.publicSecurity || 0) >= 1) {
-        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府</button>`;
+        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府(1:1)</button>`;
       }
 
       h += '</div>';
     }
     h += '</div>';
+  }
+
+  // 当前事件效果（事件也可能有置换能力）
+  if (gameState.currentEvent && gameState.currentEvent.effects) {
+    const evEff = gameState.currentEvent.effects;
+    const evParts = [];
+    if (evEff.propagandaToGeneric) evParts.push('宣传可换通用资源');
+    if (evEff.publicSecurityAsGeneric) evParts.push('公安可当政府资源');
+    if (evEff.govPartyExchange) evParts.push('政府↔党委互通');
+    if (evEff.propagandaToInfluence) evParts.push('宣传可换影响力');
+    if (evEff.govOfficeToGeneric) evParts.push('办公厅可换通用');
+    if (evParts.length) {
+      h += '<div class="panel-section bill-effects-box"><h4>⚡ 当前事件效果</h4>';
+      h += `<div class="effect-item">📋 ${gameState.currentEvent.name}：${evParts.join('，')}`;
+
+      if (evEff.propagandaToInfluence && (pf.resources.propaganda || 0) >= 2) {
+        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
+      }
+      if (evEff.propagandaToGeneric && (pf.resources.propaganda || 0) >= 2) {
+        h += ` <button class="btn-effect-convert" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
+      }
+      if (evEff.govPartyExchange) {
+        h += ` <button class="btn-effect-convert" data-action="convertGovParty">政府↔党委(1:1)</button>`;
+      }
+      if (evEff.govOfficeToGeneric) {
+        h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>`;
+      }
+      if (evEff.publicSecurityAsGeneric && (pf.resources.publicSecurity || 0) >= 1) {
+        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府(1:1)</button>`;
+      }
+
+      h += '</div></div>';
+    }
   }
 
   // 正在攻略的席位
@@ -138,6 +175,14 @@ export function renderLeftPanel() {
           pf.resources.propaganda -= 2;
           pf.influence += 1;
           await showAlert('已兑换：2宣传资源 → 1影响力');
+          renderAllPanels();
+          break;
+        }
+        case 'convertPropagandaToGeneric': {
+          if ((pf.resources.propaganda || 0) < 2) { await showAlert('宣传资源不足（需2）'); break; }
+          pf.resources.propaganda -= 2;
+          pf.genericResources = (pf.genericResources || 0) + 1;
+          await showAlert('已兑换：2宣传资源 → 1通用资源');
           renderAllPanels();
           break;
         }

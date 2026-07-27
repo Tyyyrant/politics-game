@@ -101,7 +101,8 @@ export function renderCenterPanel() {
     h += `<button class="action-btn convert-btn${pf.influence >= 5 ? '' : ' btn-disabled'}" data-action="convertInfluence">影响→通用 (5:1|现${pf.influence})</button>`;
 
     // 动态显示：法案/事件触发的置换
-    if (allEffects.includes('propagandaToInfluence') || allEffects.includes('propagandaToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertPropaganda">宣传→影响(2:1)</button>';
+    if (allEffects.includes('propagandaToInfluence')) h += '<button class="action-btn convert-btn" data-action="convertPropaganda">宣传→影响(2:1)</button>';
+    if (allEffects.includes('propagandaToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>';
     if (allEffects.includes('govPartyExchange')) h += '<button class="action-btn convert-btn" data-action="convertGovParty">政府↔党委(1:1)</button>';
     if (allEffects.includes('govOfficeToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>';
     if (allEffects.includes('publicSecurityAsGeneric')) h += '<button class="action-btn convert-btn" data-action="convertEmergency">公安→政府(1:1)</button>';
@@ -406,6 +407,14 @@ async function handlePlayerAction(factionId, action) {
         if ((pf.resources.propaganda || 0) < 2) { await showAlert('宣传资源不足（2宣传→1影响力）'); break; }
         pf.resources.propaganda -= 2;
         pf.influence += 1;
+        renderAllPanels();
+        break;
+      }
+      case 'convertPropagandaToGeneric': {
+        const pf = gameState.factions[factionId];
+        if ((pf.resources.propaganda || 0) < 2) { await showAlert('宣传资源不足（2宣传→1通用资源）'); break; }
+        pf.resources.propaganda -= 2;
+        pf.genericResources = (pf.genericResources || 0) + 1;
         renderAllPanels();
         break;
       }
