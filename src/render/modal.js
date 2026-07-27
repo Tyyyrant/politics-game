@@ -106,7 +106,6 @@ export function showConfirm(message) {
 // Appointment interface
 import { gameState } from '../logic/state.js';
 import { DEPARTMENTS } from '../logic/data/departments.js';
-import { DEPT_NAMES } from '../logic/data/constants.js';
 import { SEAT_TASK_NAMES_CN, DEPT_NAMES } from '../logic/data/constants.js';
 
 export function showSeatPicker(title, filterFn = null) {
