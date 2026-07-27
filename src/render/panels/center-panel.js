@@ -86,7 +86,7 @@ export function renderCenterPanel() {
     h += btn('干部任用', 'appoint', '消耗5-15组织部资源，扩张派系编制');
     h += btn('提升忠诚度', 'boostLoyalty', '消耗10影响力或1笔资金，提升成员忠诚+1');
     h += btn('商人上门', 'merchant', '消耗2影响力，随机获得资金（带风险）');
-    h += '<button class="action-btn end-turn-btn" data-action="endTurn" title="结束本回合行动">✅ 结束回合</button>';
+    h += '<button class="action-btn end-turn-btn" data-action="endTurn" title="结束本回合行动">结束回合</button>';
     h += '</div></div>';
   } else {
     h += `<div class="ai-display">⏳ 等待其他派系行动完成...</div>`;
@@ -119,7 +119,7 @@ function renderBillPhase(el) {
     el.innerHTML = `<div class="center-content"><div class="bill-phase">
       <div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>
       <div class="event-card-body"><b>${b.name}</b><br>已投票，等待其他派系投票和结算...</div></div>
-      <div class="bill-vote-status">✅支持${b.votes.support.length} ❌反对${b.votes.oppose.length} ⏸️弃权${b.votes.abstain.length}</div>
+      <div class="bill-vote-status">支持 ${b.votes.support.length} | 反对 ${b.votes.oppose.length} | 弃权 ${b.votes.abstain.length}</div>
     </div></div>`;
     return;
   }
@@ -131,20 +131,20 @@ function renderBillPhase(el) {
   // Show what happens on pass/fail
   if (bill.passEffects) {
     const passEff = describeEffects(bill.passEffects);
-    if (passEff) h += `<br><span class="bill-effect-pass">✅ 通过：${passEff}</span>`;
+    if (passEff) h += `<br><span class="bill-effect-pass">通过：${passEff}</span>`;
   }
   if (bill.failEffects && Object.keys(bill.failEffects).length) {
     const failEff = describeEffects(bill.failEffects);
-    if (failEff) h += `<br><span class="bill-effect-fail">❌ 未通过：${failEff}</span>`;
+    if (failEff) h += `<br><span class="bill-effect-fail">未通过：${failEff}</span>`;
   }
   h += `<br><small>通过需票数过半</small></div></div>`;
   h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
   h += '<div class="action-grid">';
-  h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';
-  h += '<button class="action-btn oppose-btn" id="bill-oppose">❌ 反对</button>';
-  h += '<button class="action-btn abstain-btn" id="bill-abstain">⏸️ 弃权</button>';
+  h += '<button class="action-btn support-btn" id="bill-support">[支持]</button>';
+  h += '<button class="action-btn oppose-btn" id="bill-oppose">[反对]</button>';
+  h += '<button class="action-btn abstain-btn" id="bill-abstain">[弃权]</button>';
   h += '</div></div>';
-  h += `<div class="bill-vote-status">当前票数 — ✅支持${bill.votes.support.length} ❌反对${bill.votes.oppose.length} ⏸️弃权${bill.votes.abstain.length}</div>`;
+  h += `<div class="bill-vote-status">当前票数 — 支持 ${bill.votes.support.length} | 反对 ${bill.votes.oppose.length} | 弃权 ${bill.votes.abstain.length}</div>`;
   h += '</div></div>';
   el.innerHTML = h;
 
@@ -231,7 +231,7 @@ async function handlePlayerAction(factionId, action) {
           const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
           const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
           const canDo = s.visitedOnTurn !== gameState.turn;
-          const prefix = canDo ? '✅' : '⏳';
+          const prefix = canDo ? '[可]' : '[等]';
           return { label: `${prefix} ${s.name} | ${tname} | ${s.task.cost}${dname} | ${canDo ? '可完成' : '下轮可完成'}`, value: s.id };
         });
         const sid = await showSelect('选择要完成的席位', opts);
