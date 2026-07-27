@@ -39,7 +39,7 @@ export function renderCenterPanel() {
   }
 
   if (isPlayer) {
-    const visitsLeft = 3 - (gameState.factions[factionId].visitsThisTurn || 0);
+    const visitsLeft = 3 - (gameState.factions[cf].visitsThisTurn || 0);
     h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/3）</h3><div class="action-grid">';
     h += btn('拜访人大席位', 'visitSeat');
     h += btn('完成席位任务', 'completeTask');
