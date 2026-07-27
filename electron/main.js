@@ -1,7 +1,22 @@
 // electron/main.js
-const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+
+const electron = require('electron');
+let app, BrowserWindow, ipcMain;
+if (typeof electron === 'object' && electron.app) {
+  app = electron.app;
+  BrowserWindow = electron.BrowserWindow;
+  ipcMain = electron.ipcMain;
+} else {
+  // Running in headless/dev without GUI — provide mock for smoke testing
+  app = {
+    whenReady() { return Promise.resolve(); },
+    on() {}, quit() { process.exit(0); }, getPath() { return '/tmp'; }
+  };
+  BrowserWindow = class { constructor() { setTimeout(() => app.quit(), 100); } loadFile() {} on() {} };
+  ipcMain = { handle() {} };
+}
 
 let mainWindow;
 
