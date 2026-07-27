@@ -71,21 +71,21 @@ export function renderCenterPanel() {
   if (isPlayer) {
     const visitsLeft = 2 - (gameState.factions[cf].visitsThisTurn || 0);
     h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/2）</h3><div class="action-grid">';
-    h += btn('拜访人大席位', 'visitSeat', '消耗1影响力，查看席位任务');
-    h += btn('完成席位任务', 'completeTask', '消耗对应资源，锁定席位（本回合拜访的需下回合完成）');
-    h += btn('打探对手席位', 'scoutSeat', '消耗2影响力，查看对手攻略的席位详情');
-    h += btn('抢夺对手席位', 'stealSeat', '先打探(1影响)+抢夺(2影响)+双倍资源，直接锁定对手的席位');
-    h += btn('查处对手干部', 'investigate', '消耗纪委标记，骰子判决定，查处对手干部');
-    h += btn('公安审讯', 'interrogate', '消耗2公安资源，目标下回合无法产出');
-    h += btn('突击检查', 'raid', '消耗3公安资源，使目标任务失败');
-    h += btn('正面宣传', 'positivePropaganda', '消耗2宣传资源，指定任务全体消耗-1');
-    h += btn('负面曝光', 'negativePropaganda', '消耗2宣传资源，目标影响力-2');
-    h += btn('项目招标', 'projectBid', '消耗2住建资源，完成商人项目+免费拜访1次');
-    h += btn('五年计划', 'fiveYearPlan', '消耗5发改资源(3轮CD)，发起经济投票');
-    h += btn('资金变现', 'sasacCash', '消耗5国资委资源，获得1笔不留痕迹的资金');
-    h += btn('干部任用', 'appoint', '消耗影响力+资源，提拔或招募干部填补职位空缺');
-    h += btn('提升忠诚度', 'boostLoyalty', '消耗10影响力或1笔资金，提升成员忠诚+1');
-    h += btn('商人上门', 'merchant', '消耗2影响力，随机获得资金（带风险）');
+    h += btn('拜访人大席位 (1影响)', 'visitSeat', '查看席位任务，下回合可完成任务锁定');
+    h += btn('完成席位任务 (对应资源)', 'completeTask', '消耗对应部门资源或通用资源，锁定席位');
+    h += btn('打探对手席位 (1影响)', 'scoutSeat', '查看对手攻略的席位详情和任务');
+    h += btn('抢夺对手席位 (2影响+双倍资源)', 'stealSeat', '需先打探。直接锁定对手正在攻略的席位');
+    h += btn('查处对手干部 (纪委标记)', 'investigate', '消耗纪委标记，骰子判定查处对手干部');
+    h += btn('公安审讯 (2公安资源)', 'interrogate', '目标下回合无法产出资源');
+    h += btn('突击检查 (3公安资源)', 'raid', '使目标任务失败');
+    h += btn('正面宣传 (2宣传资源)', 'positivePropaganda', '指定任务类型，全体该任务消耗-1');
+    h += btn('负面曝光 (2宣传资源)', 'negativePropaganda', '目标派系影响力-2');
+    h += btn('项目招标 (2住建资源)', 'projectBid', '完成商人项目+免费拜访1次');
+    h += btn('五年计划 (5发改资源)', 'fiveYearPlan', '3轮CD，发起经济投票');
+    h += btn('资金变现 (5国资委资源)', 'sasacCash', '获得1笔不留痕迹的资金');
+    h += btn('干部任用 (影响+组织部资源)', 'appoint', '提拔内部成员或从外部招募无派系干部');
+    h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '提升本派系成员忠诚度+1');
+    h += btn('商人上门 (2影响)', 'merchant', '随机获得资金，但可能留下把柄');
     // 资源置换按钮
     const pf = gameState.factions[cf];
     const billEffects = gameState.activeBillEffects.flatMap(e => Object.keys(e.effects));
@@ -270,7 +270,7 @@ async function handlePlayerAction(factionId, action) {
         const sid = await showSeatPicker('打探对手席位 — 点击被对手攻略的席位');
         if (sid) {
           const r = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
-          const extra = r.data ? `\n任务: ${r.data.task.type}\n费用: ${r.data.task.cost}\n攻略者: ${r.data.visitorId}\n剩余: ${r.data.roundsLeft}轮` : '';
+          const extra = r.data ? `\n任务: ${SEAT_TASK_NAMES_CN[r.data.task.type] || r.data.task.type}\n费用: ${r.data.task.cost} ${DEPT_NAMES[r.data.task.resourceType] || r.data.task.resourceType}\n攻略者: ${FACTION_NAMES_CN[r.data.visitorId] || r.data.visitorId}\n剩余: ${r.data.roundsLeft}轮` : '';
           await showAlert(r.message + extra);
         }
         break;
@@ -300,7 +300,7 @@ async function handlePlayerAction(factionId, action) {
           if (!scoutR.success) { await showAlert(scoutR.message); break; }
           // Show what we found
           const data = scoutR.data;
-          const ok = await showConfirm(`打探结果：\n攻略者：${data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n原费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n抢夺 = 花双倍资源(${data.task.cost * 2})直接锁定该席位！\n确定要抢吗？`);
+          const ok = await showConfirm(`打探结果：\n攻略者：${FACTION_NAMES_CN[data.visitorId] || data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n原费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n抢夺 = 花双倍资源(${data.task.cost * 2})直接锁定该席位！\n确定要抢吗？`);
           if (!ok) break;
         }
         await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
