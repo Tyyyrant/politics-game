@@ -198,6 +198,8 @@ body {
 /* Position picker buttons (step 1) */
 .btn-position-pick { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.8em; background: var(--bg-panel); color: var(--text-primary); margin: 2px 0; transition: all 0.15s; text-align: left; }
 .btn-position-pick:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.08); }
+.btn-position-pick.pos-noncontrolled { border-style: dashed; opacity: 0.75; background: rgba(255,255,255,0.02); }
+.btn-position-pick.pos-noncontrolled:hover { opacity: 1; border-style: solid; }
 .pos-title { flex: 1; font-weight: bold; min-width: 100px; }
 .pos-rank { color: var(--accent-gold); min-width: 36px; text-align: center; }
 .pos-vacant { color: var(--danger); min-width: 48px; text-align: center; font-size: 0.85em; }

@@ -174,13 +174,12 @@ function countFactionInPosition(faction, deptId, positionTitle) {
   return faction.members.filter(m => m.dept === deptId && m.position === positionTitle).length;
 }
 
-// Helper: get vacant positions for a faction — only in departments the faction controls
+// Helper: get vacant positions for a faction across all departments
 function getVacantPositions(faction) {
-  // A faction "controls" a department if it has at least one member there
   const controlledDepts = new Set(faction.members.map(m => m.dept));
   const result = [];
   for (const [deptId, dept] of Object.entries(DEPARTMENTS)) {
-    if (!controlledDepts.has(deptId)) continue; // 只显示本派系控制的部门
+    const isControlled = controlledDepts.has(deptId);
     for (const pos of dept.positions) {
       if (pos.rank === '副部' || pos.rank === '正部') continue; // 不可任命副部及以上
       const filled = countFactionInPosition(faction, deptId, pos.title);
@@ -193,7 +192,8 @@ function getVacantPositions(faction) {
           rank: pos.rank,
           total: pos.count,
           filled,
-          vacant
+          vacant,
+          isControlled  // 是否已有成员在该部门
         });
       }
     }
@@ -222,14 +222,23 @@ export function showAppointmentUI(factionId) {
     if (!deptIds.length) {
       html += '<div style="padding:16px;text-align:center;color:var(--text-secondary);">暂无空缺职位</div>';
     } else {
-      for (const deptId of deptIds) {
+      // Show controlled departments first, then others
+      const sortedDeptIds = deptIds.sort((a, b) => {
+        const aCtrl = byDept[a].positions[0]?.isControlled ? 0 : 1;
+        const bCtrl = byDept[b].positions[0]?.isControlled ? 0 : 1;
+        return aCtrl - bCtrl;
+      });
+      for (const deptId of sortedDeptIds) {
         const g = byDept[deptId];
+        const isControlled = g.positions[0]?.isControlled;
         const memberCount = faction.members.filter(m => m.dept === deptId).length;
-        html += `<div class="appoint-dept"><div class="dept-header"><span class="dept-name">${g.deptName}</span><span class="dept-count">本派系现${memberCount}人</span></div>`;
+        const ctrlLabel = isControlled ? `🔵 本派系${memberCount}人` : `⚪ 未渗透 · 仅可外部招募`;
+        html += `<div class="appoint-dept"><div class="dept-header"><span class="dept-name">${g.deptName}</span><span class="dept-count">${ctrlLabel}</span></div>`;
         for (const p of g.positions) {
           const infCost = PROMOTION_INFLUENCE_COST[p.rank] || '—';
           const resCost = APPOINTMENT_COST[p.rank] || '—';
-          html += `<button class="btn-position-pick" data-dept="${p.deptId}" data-rank="${p.rank}">
+          const ctrlClass = p.isControlled ? '' : ' pos-noncontrolled';
+          html += `<button class="btn-position-pick${ctrlClass}" data-dept="${p.deptId}" data-rank="${p.rank}" data-controlled="${p.isControlled ? '1' : '0'}">
             <span class="pos-title">${p.title}</span>
             <span class="pos-rank">${p.rank}</span>
             <span class="pos-vacant">缺${p.vacant}/${p.total}</span>
@@ -258,9 +267,10 @@ export function showAppointmentUI(factionId) {
       btn.addEventListener('click', async () => {
         const dept = btn.dataset.dept;
         const rank = btn.dataset.rank;
+        const isControlled = btn.dataset.controlled === '1';
         overlay.remove();
         // Show step 2: candidate list
-        const result = await showCandidateUI(factionId, dept, rank);
+        const result = await showCandidateUI(factionId, dept, rank, isControlled);
         resolve(result);
       });
     });
@@ -268,7 +278,7 @@ export function showAppointmentUI(factionId) {
 }
 
 // Step 2: Show candidates for a specific position
-function showCandidateUI(factionId, deptId, targetRank) {
+function showCandidateUI(factionId, deptId, targetRank, isControlled = true) {
   return new Promise(resolve => {
     const faction = gameState.factions[factionId];
     const dept = DEPARTMENTS[deptId];
@@ -288,8 +298,8 @@ function showCandidateUI(factionId, deptId, targetRank) {
 
     let hasAny = false;
 
-    // === Section 1: Internal promotion ===
-    if (targetIdx > 0) {
+    // === Section 1: Internal promotion (only for controlled departments) ===
+    if (isControlled && targetIdx > 0) {
       const internalCandidates = faction.members.filter(m =>
         m.dept === deptId && m.rank === sourceRank
       );
