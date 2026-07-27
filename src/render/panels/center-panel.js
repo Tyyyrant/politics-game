@@ -251,19 +251,34 @@ async function handlePlayerAction(factionId, action) {
         break;
       }
       case 'stealSeat': {
-        const stealable = gameState.npcSeats.filter(s =>
+        // Step 1: pick an occupied seat to scout (only show un-scouted ones)
+        const occupied = gameState.npcSeats.filter(s =>
           s.visitorId && s.visitorId !== factionId && !s.lockedById
         );
-        if (!stealable.length) { await showAlert('没有可抢夺的席位（对手没有正在攻略的席位）'); break; }
-        const opts = stealable.map(s => {
-          const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
-          const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
-          return { label: `${s.name} | ${tname} | ${s.task.cost * 2}${dname}（双倍）| 剩${s.roundsRemaining}轮`, value: s.id };
+        if (!occupied.length) { await showAlert('没有正在被攻略的席位'); break; }
+        const unscouted = occupied.filter(s => !s.scoutedBy?.includes(factionId));
+        // Also show already-scouted seats
+        const opts = occupied.map(s => {
+          const scouted = s.scoutedBy?.includes(factionId);
+          const prefix = scouted ? '👁️' : '❓';
+          const info = scouted
+            ? `${(SEAT_TASK_NAMES_CN[s.task.type] || s.task.type)} 双倍${s.task.cost * 2}${DEPT_NAMES[s.task.resourceType] || s.task.resourceType}`
+            : '未打探（需先花1影响力打探）';
+          return { label: `${prefix} ${s.name} | ${info} | 剩${s.roundsRemaining}轮`, value: s.id };
         });
-        const sid = await showSelect('抢夺席位（双倍资源消耗）', opts);
-        if (sid) {
-          await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
+        const sid = await showSelect('抢夺席位（先打探→再抢夺，打探1影响+抢夺2影响+双倍资源）', opts);
+        if (!sid) break;
+        const seat = gameState.npcSeats.find(s => s.id === sid);
+        if (!seat.scoutedBy?.includes(factionId)) {
+          // Scout first
+          const scoutR = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
+          if (!scoutR.success) { await showAlert(scoutR.message); break; }
+          // Show what we found
+          const data = scoutR.data;
+          const ok = await showConfirm(`打探结果：\n攻略者：${data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n消耗2影响力+${data.task.cost * 2}资源抢夺？`);
+          if (!ok) break;
         }
+        await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
         break;
       }
       case 'investigate': {

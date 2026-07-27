@@ -49,16 +49,21 @@ function completeTask(factionId, seatId) {
 }
 
 function scoutSeat(factionId, seatId) {
-  if (!spendInfluence(factionId, 2)) return { success: false, message: '影响力不足' };
+  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
-  if (!seat || !seat.visitorId) return { success: false, message: '没有可打探的信息' };
+  if (!seat || !seat.visitorId) return { success: false, message: '该席位无人攻略，无需打探' };
+  // Record scout
+  if (!seat.scoutedBy) seat.scoutedBy = [];
+  if (!seat.scoutedBy.includes(factionId)) seat.scoutedBy.push(factionId);
   return { success: true, message: '打探成功', data: { task: seat.task, visitorId: seat.visitorId, roundsLeft: seat.roundsRemaining } };
 }
 
 function stealSeat(factionId, seatId) {
-  if (!spendInfluence(factionId, 2)) return { success: false, message: '影响力不足' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat || !seat.visitorId || seat.visitorId === factionId) return { success: false, message: '无法抢夺' };
+  // Must scout first
+  if (!seat.scoutedBy || !seat.scoutedBy.includes(factionId)) return { success: false, message: '必须先打探该席位才能抢夺' };
+  if (!spendInfluence(factionId, 2)) return { success: false, message: '影响力不足' };
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, seat.task.cost * 2) : spendResources(factionId, seat.task.resourceType, seat.task.cost * 2);
   if (!spent) return { success: false, message: '双倍资源不足' };
   const victimId = seat.visitorId; seat.visitorId = factionId; seat.roundsRemaining = 2;
