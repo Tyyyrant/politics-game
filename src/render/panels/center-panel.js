@@ -270,7 +270,7 @@ async function handlePlayerAction(factionId, action) {
         break;
       }
       case 'stealSeat': {
-        // Step 1: pick an occupied seat to scout (only show un-scouted ones)
+        if (gameState.turn <= 1) { await showAlert('第一轮大家都在拜访，还不能抢夺席位'); break; }
         const occupied = gameState.npcSeats.filter(s =>
           s.visitorId && s.visitorId !== factionId && !s.lockedById
         );
@@ -404,14 +404,15 @@ async function handlePlayerAction(factionId, action) {
         const pf = gameState.factions[factionId];
         const isGov = (d) => ['govOffice','ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'].includes(d);
         const isParty = (d) => ['partyOffice','organization','propaganda','discipline','legalAffairs'].includes(d);
+        const deptLabel = (d) => `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`;
         const govDepts = Object.keys(pf.resources).filter(d => isGov(d) && pf.resources[d] > 0);
         const partyDepts = Object.keys(pf.resources).filter(d => isParty(d) && pf.resources[d] > 0);
         if (!govDepts.length && !partyDepts.length) { await showAlert('没有可兑换的资源'); break; }
-        const allFrom = [...govDepts.map(d => ({ label: `政府·${d}:${pf.resources[d]}`, value: d })),
-                         ...partyDepts.map(d => ({ label: `党委·${d}:${pf.resources[d]}`, value: d }))];
+        const allFrom = [...govDepts.map(d => ({ label: `政府·${deptLabel(d)}`, value: d })),
+                         ...partyDepts.map(d => ({ label: `党委·${deptLabel(d)}`, value: d }))];
         const from = await showSelect('选择要兑换的来源部门', allFrom);
         if (!from) break;
-        const toTargets = (isGov(from) ? partyDepts : govDepts).map(d => ({ label: `${d}:${pf.resources[d]}`, value: d }));
+        const toTargets = (isGov(from) ? partyDepts : govDepts).map(d => ({ label: deptLabel(d), value: d }));
         const to = await showSelect('选择目标部门', toTargets.length ? toTargets : [{ label: '无可用目标', value: '' }]);
         if (!to) break;
         const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
@@ -425,7 +426,7 @@ async function handlePlayerAction(factionId, action) {
         const pf = gameState.factions[factionId];
         if ((pf.resources.govOffice || 0) < 1) { await showAlert('政府办公厅资源不足'); break; }
         const govDepts = ['ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'];
-        const opts = govDepts.map(d => ({ label: `${d}:${pf.resources[d] || 0}`, value: d }));
+        const opts = govDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
         const to = await showSelect('办公厅→哪个政府部门(1:1)', opts);
         if (!to) break;
         const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
@@ -439,7 +440,7 @@ async function handlePlayerAction(factionId, action) {
         const pf = gameState.factions[factionId];
         if ((pf.resources.publicSecurity || 0) < 1) { await showAlert('公安资源不足'); break; }
         const govDepts = ['govOffice','ndrc','sasac','hrss','finance','housing','education','audit'];
-        const opts = govDepts.map(d => ({ label: `${d}:${pf.resources[d] || 0}`, value: d }));
+        const opts = govDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
         const to = await showSelect('公安→哪个政府资源(1:1)', opts);
         if (!to) break;
         const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
@@ -470,7 +471,7 @@ async function handlePlayerAction(factionId, action) {
         if (!type) break;
         const isParty = type === 'partyOffice';
         const targets = isParty ? ['organization','propaganda','discipline','legalAffairs'] : ['ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'];
-        const to = await showSelect('目标部门', targets.map(d => ({ label: `${d}:${pf.resources[d] || 0}`, value: d })));
+        const to = await showSelect('目标部门', targets.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d })));
         if (!to) break;
         const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
         if (amt <= 0 || (pf.resources[type] || 0) < amt) { await showAlert('资源不足'); break; }

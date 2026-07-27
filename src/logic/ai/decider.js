@@ -33,19 +33,22 @@ export function decideAIActions(factionId) {
     }
   }
 
-  // 先打探一个被占用的席位（花1影响力）
-  const occupiedByOther = gameState.npcSeats.filter(s => s.visitorId && s.visitorId !== factionId && !s.lockedById);
-  const unscoutedOccupied = occupiedByOther.filter(s => !s.scoutedBy?.includes(factionId));
-  if (unscoutedOccupied.length && faction.influence >= 1) {
-    const target = unscoutedOccupied[Math.floor(Math.random() * unscoutedOccupied.length)];
-    candidates.push({ type: ACTION_TYPES.SCOUT_SEAT, params: { seatId: target.id }, score: 4 + p.aggression * 3 });
-  }
+  // 第一轮不打探不抢夺（刚开局，大家都在拜访）
+  if (gameState.turn > 1) {
+    // 先打探一个被占用的席位（花1影响力）
+    const occupiedByOther = gameState.npcSeats.filter(s => s.visitorId && s.visitorId !== factionId && !s.lockedById);
+    const unscoutedOccupied = occupiedByOther.filter(s => !s.scoutedBy?.includes(factionId));
+    if (unscoutedOccupied.length && faction.influence >= 1) {
+      const target = unscoutedOccupied[Math.floor(Math.random() * unscoutedOccupied.length)];
+      candidates.push({ type: ACTION_TYPES.SCOUT_SEAT, params: { seatId: target.id }, score: 4 + p.aggression * 3 });
+    }
 
-  // 抢夺已打探过的席位（需要3影响力：1打探+2抢夺，且双倍资源）
-  const scoutedOccupied = occupiedByOther.filter(s => s.scoutedBy?.includes(factionId));
-  if (scoutedOccupied.length && faction.influence >= 2 && p.aggression > 0.5) {
-    const target = scoutedOccupied[Math.floor(Math.random() * scoutedOccupied.length)];
-    candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: target.id }, score: sit.seatGap * p.aggression * 5 });
+    // 抢夺已打探过的席位
+    const scoutedOccupied = occupiedByOther.filter(s => s.scoutedBy?.includes(factionId));
+    if (scoutedOccupied.length && faction.influence >= 2 && p.aggression > 0.5) {
+      const target = scoutedOccupied[Math.floor(Math.random() * scoutedOccupied.length)];
+      candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: target.id }, score: sit.seatGap * p.aggression * 5 });
+    }
   }
 
   // 查处玩家干部
