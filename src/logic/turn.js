@@ -5,6 +5,7 @@ import { FACTION_IDS } from './data/constants.js';
 export function rollDice(sides = 6) { return Math.floor(Math.random() * sides) + 1; }
 
 export function determineTurnOrder() {
+  const playerId = gameState.playerFactionId;
   const rolls = FACTION_IDS.map(fid => ({
     factionId: fid, roll: rollDice(), rank: gameState.factions[fid].leaderRank
   }));
@@ -16,11 +17,19 @@ export function determineTurnOrder() {
     const rankOrder = { '副部': 5, '正厅': 4 };
     return (rankOrder[b.rank] || 0) - (rankOrder[a.rank] || 0);
   });
-  gameState.turnOrder = [...others.map(r => r.factionId), 'npcCongress', 'npcCppcc'];
+  // Player always goes first
+  const playerEntry = others.find(r => r.factionId === playerId);
+  const othersWithoutPlayer = others.filter(r => r.factionId !== playerId);
+  gameState.turnOrder = [playerId, ...othersWithoutPlayer.map(r => r.factionId), 'npcCongress', 'npcCppcc'];
   gameState.currentPlayerIndex = 0;
   gameState.phase = 'action';
   gameState.roundLog = [];
   emit('turn:order-determined', { order: gameState.turnOrder, rolls });
+}
+
+export function isCurrentPlayerAI() {
+  const fid = currentFactionId();
+  return fid !== gameState.playerFactionId;
 }
 
 export function startNewRound() {
