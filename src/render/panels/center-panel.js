@@ -55,6 +55,17 @@ export function renderCenterPanel() {
   }
 
   // === Action phase ===
+  if (gameState.phase === 'dice' || gameState.phase === 'cleanup') {
+    // Safety: auto-transition dice/cleanup to action
+    import('../../logic/turn.js').then(t => {
+      if (gameState.phase === 'dice' || gameState.phase === 'cleanup') {
+        t.determineTurnOrder();
+        renderAllPanels();
+      }
+    });
+    el.innerHTML = '<div class="ai-display">⏳ 正在确定顺位...</div>';
+    return;
+  }
   if (gameState.phase !== 'action' || !gameState.turnOrder.length) {
     el.innerHTML = ''; return;
   }
