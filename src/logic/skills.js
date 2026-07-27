@@ -1,0 +1,52 @@
+// src/logic/skills.js
+import { gameState, emit } from './state.js';
+import { spendResources } from './resources.js';
+
+export function executeSkill(factionId, skillId, params = {}) {
+  const faction = gameState.factions[factionId];
+  switch (skillId) {
+    case 'fiveYearPlan':
+      if (faction.fiveYearPlanCooldown > 0) return { success: false, message: `冷却中（${faction.fiveYearPlanCooldown}轮）` };
+      if (!spendResources(factionId, 'ndrc', 5)) return { success: false, message: '发改资源不足' };
+      faction.fiveYearPlanCooldown = 3;
+      return { success: true, message: '五年计划提案已发起' };
+    case 'projectVeto':
+      if (faction.projectVetoUsed) return { success: false, message: '本轮已使用' };
+      if (!spendResources(factionId, 'ndrc', 2)) return { success: false, message: '发改资源不足' };
+      faction.projectVetoUsed = true;
+      return { success: true, message: '已阻挠对手商人项目' };
+    case 'sasacCash':
+      if (!spendResources(factionId, 'sasac', 5)) return { success: false, message: '国资委资源不足' };
+      faction.funds += 1;
+      return { success: true, message: '获得1笔可用资金（不留记录）' };
+    case 'interrogate':
+      if (faction.interrogateUsed >= 2) return { success: false, message: '本轮审讯次数已用完' };
+      if (!spendResources(factionId, 'publicSecurity', 2)) return { success: false, message: '公安资源不足' };
+      faction.interrogateUsed++;
+      gameState.activeBillEffects.push({ id: `interrogate_${params.targetFactionId}`, effects: { disableResources: true }, duration: 1 });
+      emit('skill:interrogate', { factionId, target: params.targetFactionId });
+      return { success: true, message: '审讯已执行' };
+    case 'raid':
+      if (faction.raidUsed) return { success: false, message: '本轮已使用' };
+      if (!spendResources(factionId, 'publicSecurity', 3)) return { success: false, message: '公安资源不足' };
+      faction.raidUsed = true;
+      return { success: true, message: '突击检查已执行' };
+    case 'projectBid':
+      if (faction.projectBidUsed) return { success: false, message: '本轮已使用' };
+      if (!spendResources(factionId, 'housing', 2)) return { success: false, message: '住建资源不足' };
+      faction.projectBidUsed = true;
+      return { success: true, message: '项目招标成功！商人项目完成+免费拜访1次' };
+    case 'positivePropaganda':
+      if (!spendResources(factionId, 'propaganda', 2)) return { success: false, message: '宣传资源不足' };
+      gameState.activeBillEffects.push({ id: `positive_${params.taskType}`, effects: { taskCostReduction: 1 }, duration: 1 });
+      return { success: true, message: '正面宣传已发出' };
+    case 'negativePropaganda':
+      if (!spendResources(factionId, 'propaganda', 2)) return { success: false, message: '宣传资源不足' };
+      gameState.factions[params.targetFactionId].influence = Math.max(0, (gameState.factions[params.targetFactionId].influence || 0) - 2);
+      return { success: true, message: '负面曝光已发出' };
+    case 'rerollDice':
+      if (!spendResources(factionId, 'legalAffairs', 4)) return { success: false, message: '政法委资源不足' };
+      return { success: true, message: '骰子已重投' };
+    default: return { success: false, message: '未知技能' };
+  }
+}

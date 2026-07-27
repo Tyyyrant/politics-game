@@ -1,0 +1,54 @@
+// src/logic/bills.js
+import { gameState, emit } from './state.js';
+import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
+
+export function drawBill() {
+  if (gameState.billDeck.length === 0) gameState.billDeck = shuffleDeck([...BILL_POOL]);
+  gameState.currentBill = { ...gameState.billDeck.shift(), votes: { support: [], oppose: [], abstain: [] } };
+  emit('bill:drawn', { bill: gameState.currentBill });
+}
+
+export function castVote(factionId, stance) {
+  const bill = gameState.currentBill;
+  if (!bill) return { success: false, message: '没有待投票的法案' };
+  const allVotes = [...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain];
+  if (allVotes.find(v => v.factionId === factionId)) return { success: false, message: '已投票' };
+  const faction = gameState.factions[factionId];
+  let weight = 0;
+  for (const m of faction.members) {
+    if (m.investigationStatus === 'evidence') continue;
+    if (m.rank === '正厅') weight += 1.5;
+    else if (m.rank === '副厅') weight += 1;
+  }
+  bill.votes[stance].push({ factionId, weight });
+  emit('bill:voted', { factionId, stance, weight });
+  return { success: true };
+}
+
+export function resolveBill() {
+  const bill = gameState.currentBill;
+  const supportWeight = bill.votes.support.reduce((s, v) => s + v.weight, 0);
+  const opposeWeight = bill.votes.oppose.reduce((s, v) => s + v.weight, 0);
+  const totalWeight = supportWeight + opposeWeight;
+  const passed = totalWeight > 0 && supportWeight / totalWeight > 0.5;
+  for (const v of bill.votes.support) {
+    const f = gameState.factions[v.factionId];
+    f.influence += passed ? ({ '副部': 10, '正厅': 6, '副厅': 4 }[f.leaderRank] || 4) : 0;
+  }
+  if (!passed) {
+    for (const v of bill.votes.oppose) {
+      const f = gameState.factions[v.factionId];
+      f.influence += { '副部': 12, '正厅': 8, '副厅': 5 }[f.leaderRank] || 5;
+    }
+    for (const v of bill.votes.support) {
+      const f = gameState.factions[v.factionId];
+      for (const d of Object.keys(f.resources)) f.resources[d] = Math.floor(f.resources[d] / 2);
+    }
+  }
+  if (passed && bill.passEffects) gameState.activeBillEffects.push({ id: bill.id, effects: bill.passEffects, duration: bill.passEffects.duration || 1 });
+  if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
+  const result = { passed, supportWeight, opposeWeight };
+  emit('bill:resolved', result);
+  gameState.currentBill = null;
+  return result;
+}
