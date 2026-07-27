@@ -17,9 +17,9 @@ export function decideAIActions(factionId) {
     candidates.push({ type: ACTION_TYPES.VISIT_SEAT, params: { seatId: unvisited[0].id }, score: sit.seatGap * (1 - p.aggression) * 10 });
   }
 
-  // 完成已有席位任务
+  // 完成已有席位任务（只能完成上回合拜访的）
   for (const seat of gameState.npcSeats) {
-    if (seat.visitorId === factionId && (faction.resources[seat.task.resourceType] || 0) >= seat.task.cost) {
+    if (seat.visitorId === factionId && seat.visitedOnTurn !== gameState.turn && (faction.resources[seat.task.resourceType] || 0) >= seat.task.cost) {
       candidates.push({ type: ACTION_TYPES.COMPLETE_TASK, params: { seatId: seat.id }, score: 20 });
     }
   }

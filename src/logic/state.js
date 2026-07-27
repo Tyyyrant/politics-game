@@ -14,7 +14,7 @@ export function createNewGame(playerFactionId) {
   const factions = {};
   for (const fid of FACTION_IDS) {
     factions[fid] = createInitialFactionState(fid);
-    factions[fid].resources = getFactionResources(factions[fid]);
+    factions[fid].resources = {};  // 从零开始，每轮产出时获取
     factions[fid].influence = getFactionInfluenceFromMembers(factions[fid]);
   }
   const npcSeats = generateSeatTasks(TOTAL_NPC_SEATS);

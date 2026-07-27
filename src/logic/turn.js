@@ -1,6 +1,7 @@
 // src/logic/turn.js
 import { gameState, emit } from './state.js';
 import { FACTION_IDS } from './data/constants.js';
+import { produceResources } from './resources.js';
 
 export function rollDice(sides = 6) { return Math.floor(Math.random() * sides) + 1; }
 
@@ -43,6 +44,10 @@ export function startNewRound() {
     gameState.factions[fid].projectVetoUsed = false;
     gameState.factions[fid].visitsThisTurn = 0;
     if (gameState.factions[fid].fiveYearPlanCooldown > 0) gameState.factions[fid].fiveYearPlanCooldown--;
+  }
+  // Produce resources for everyone at round start
+  for (const fid of FACTION_IDS) {
+    produceResources(fid);
   }
   emit('turn:new-round', { turn: gameState.turn });
 }

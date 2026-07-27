@@ -393,7 +393,7 @@ async function executeAITurn(factionId) {
     evMod.drawEvent(factionId);
     evMod.resolveEvent(factionId);
 
-    produceResources(factionId);
+    // Resources already produced at round start via produceAllResources()
     if (gameState.turn % 2 === 0) {
       const depts = Object.keys(gameState.factions[factionId].resources);
       if (depts.length) {

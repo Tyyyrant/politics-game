@@ -17,7 +17,6 @@ export function showGameScreen() {
     </div>`;
   startNewRound();
   determineTurnOrder();
-  // Small delay to ensure DOM is ready, then render
   setTimeout(() => renderAllPanels(), 50);
 }
 
