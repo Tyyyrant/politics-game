@@ -145,3 +145,19 @@ body {
 .oppose-btn { background: rgba(192, 57, 43, 0.2) !important; border-color: var(--accent-red) !important; }
 .abstain-btn { background: rgba(160, 160, 176, 0.2) !important; }
 .end-turn-btn { background: rgba(212, 167, 116, 0.2) !important; border-color: var(--accent-gold) !important; font-weight: bold; }
+
+/* === Modal === */
+.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal-box { background: var(--bg-secondary); border: 1px solid var(--accent-gold); border-radius: 8px; padding: 20px; min-width: 320px; max-width: 450px; }
+.modal-title { font-size: 1em; color: var(--accent-gold); margin-bottom: 12px; }
+.modal-input { width: 100%; padding: 8px 12px; background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9em; }
+.modal-input:focus { outline: none; border-color: var(--accent-gold); }
+.modal-message { color: var(--text-primary); font-size: 0.9em; line-height: 1.6; white-space: pre-wrap; margin-bottom: 12px; }
+.modal-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+.modal-btn { padding: 6px 16px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.85em; }
+.modal-ok { background: var(--accent-gold); color: #1a1a2e; border-color: var(--accent-gold); }
+.modal-cancel { background: transparent; color: var(--text-secondary); }
+.modal-select { max-height: 70vh; overflow-y: auto; }
+.select-options { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
+.select-option { background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px 12px; cursor: pointer; text-align: left; font-size: 0.85em; }
+.select-option:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.1); }

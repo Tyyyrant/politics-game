@@ -7,8 +7,10 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
+import { showPrompt, showSelect, showAlert } from '../modal.js';
 
-let _billResolved = false;
+let _playerVoted = false;
+let _billResolveTimeout = null;
 
 export function renderCenterPanel() {
   const el = document.getElementById('center-panel');
@@ -19,9 +21,6 @@ export function renderCenterPanel() {
     renderBillPhase(el);
     return;
   }
-
-  // === Cleanup phase ===
-  if (gameState.phase === 'cleanup') return;
 
   // === Action phase ===
   const cf = gameState.turnOrder[gameState.currentPlayerIndex];
@@ -65,218 +64,234 @@ export function renderCenterPanel() {
   }
 }
 
-// === BILL PHASE ===
+// === BILL PHASE (fixed — waits for player) ===
 function renderBillPhase(el) {
-  // Ensure bill is drawn
+  _playerVoted = false;
+
   if (!gameState.currentBill) {
-    import('../../logic/bills.js').then(m => m.drawBill()).then(() => renderBillPhase(el));
+    import('../../logic/bills.js').then(m => { m.drawBill(); renderBillPhase(el); });
     return;
   }
-  const bill = gameState.currentBill;
-  const isPlayer = gameState.playerFactionId;
 
+  const bill = gameState.currentBill;
   let h = '<div class="center-content"><div class="bill-phase">';
-  h += `<div class="event-card"><div class="event-card-header">📜 法案投票</div>`;
-  h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}</div></div>`;
-  h += '<div class="bill-vote-section"><h4>选择你的立场</h4>';
+  h += `<div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>`;
+  h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}<br><small>通过需票数过半</small></div></div>`;
+  h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
   h += '<div class="action-grid">';
   h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';
   h += '<button class="action-btn oppose-btn" id="bill-oppose">❌ 反对</button>';
   h += '<button class="action-btn abstain-btn" id="bill-abstain">⏸️ 弃权</button>';
   h += '</div></div>';
-
-  // Show current votes
-  h += '<div class="bill-vote-status">';
-  h += `✅支持: ${bill.votes.support.length}派系 &nbsp; ❌反对: ${bill.votes.oppose.length}派系 &nbsp; ⏸️弃权: ${bill.votes.abstain.length}派系`;
-  h += '</div></div></div>';
-
+  h += `<div class="bill-vote-status">当前票数 — ✅${bill.votes.support.length} ❌${bill.votes.oppose.length} ⏸️${bill.votes.abstain.length}</div>`;
+  h += '</div></div>';
   el.innerHTML = h;
 
-  // Auto-vote for AI factions
+  // AI votes immediately
   setTimeout(async () => {
     const billsMod = await import('../../logic/bills.js');
     for (const fid of gameState.turnOrder) {
       if (fid === gameState.playerFactionId) continue;
-      if ([...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain].some(v => v.factionId === fid)) continue;
-      const stances = ['support', 'oppose', 'abstain'];
-      billsMod.castVote(fid, stances[Math.floor(Math.random() * stances.length)]);
+      const allVotes = [...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain];
+      if (allVotes.some(v => v.factionId === fid)) continue;
+      billsMod.castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
     }
     renderAllPanels();
-
-    // Resolve bill after AI votes
-    setTimeout(() => {
-      const result = billsMod.resolveBill();
-      renderAllPanels();
-      // Go to cleanup then next round
-      setTimeout(() => {
-        import('../../logic/turn.js').then(t => {
-          t.enterCleanup();
-          t.startNewRound();
-          t.determineTurnOrder();
-          renderAllPanels();
-          // If first player is AI, auto-execute
-          if (t.isCurrentPlayerAI()) {
-            const nf = gameState.turnOrder[gameState.currentPlayerIndex];
-            setTimeout(() => executeAITurn(nf), 400);
-          }
-        });
-      }, 800);
-    }, 500);
   }, 300);
 
-  // Player vote buttons
-  el.querySelector('#bill-support')?.addEventListener('click', async () => {
-    (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, 'support');
-    el.querySelector('#bill-support').disabled = true;
-    el.querySelector('#bill-oppose').disabled = true;
-    el.querySelector('#bill-abstain').disabled = true;
+  // Player vote handlers — resolution happens after player votes
+  const doPlayerVote = async (stance) => {
+    if (_playerVoted) return;
+    _playerVoted = true;
+    (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, stance);
     renderAllPanels();
-  });
-  el.querySelector('#bill-oppose')?.addEventListener('click', async () => {
-    (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, 'oppose');
-    el.querySelector('#bill-support').disabled = true;
-    el.querySelector('#bill-oppose').disabled = true;
-    el.querySelector('#bill-abstain').disabled = true;
-    renderAllPanels();
-  });
-  el.querySelector('#bill-abstain')?.addEventListener('click', async () => {
-    (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, 'abstain');
-    el.querySelector('#bill-support').disabled = true;
-    el.querySelector('#bill-oppose').disabled = true;
-    el.querySelector('#bill-abstain').disabled = true;
-    renderAllPanels();
-  });
+
+    // Now resolve the bill
+    setTimeout(async () => {
+      (await import('../../logic/bills.js')).resolveBill();
+      renderAllPanels();
+
+      // Transition to next round
+      setTimeout(async () => {
+        const t = await import('../../logic/turn.js');
+        t.enterCleanup();
+        t.startNewRound();
+        t.determineTurnOrder();
+        renderAllPanels();
+        // Auto-execute AI if first
+        if (t.isCurrentPlayerAI()) {
+          setTimeout(() => executeAITurn(gameState.turnOrder[gameState.currentPlayerIndex]), 400);
+        }
+      }, 600);
+    }, 500);
+  };
+
+  el.querySelector('#bill-support')?.addEventListener('click', () => doPlayerVote('support'));
+  el.querySelector('#bill-oppose')?.addEventListener('click', () => doPlayerVote('oppose'));
+  el.querySelector('#bill-abstain')?.addEventListener('click', () => doPlayerVote('abstain'));
 }
 
-// === PLAYER ACTIONS ===
+// === PLAYER ACTIONS (using custom modals) ===
 function btn(label, action) { return `<button class="action-btn" data-action="${action}">${label}</button>`; }
 
 function bindButtons(el, factionId) {
   el.querySelectorAll('.action-btn').forEach(b => {
-    b.addEventListener('click', () => {
+    b.addEventListener('click', async () => {
       const action = b.dataset.action;
       if (action === 'endTurn') {
         executeAction(factionId, ACTION_TYPES.END_TURN);
         advanceAfterPlayer();
       } else {
-        handlePlayerAction(factionId, action);
+        await handlePlayerAction(factionId, action);
+        renderAllPanels();
       }
     });
   });
 }
 
-function handlePlayerAction(factionId, action) {
-  let msg = '';
+async function handlePlayerAction(factionId, action) {
   try {
     switch (action) {
       case 'visitSeat': {
-        const sid = prompt('席位ID (seat_01~seat_27):');
-        if (sid) msg = executeAction(factionId, ACTION_TYPES.VISIT_SEAT, { seatId: sid }).message;
+        const sid = await showPrompt('席位ID (例如 seat_03):', 'seat_');
+        if (sid) {
+          const r = executeAction(factionId, ACTION_TYPES.VISIT_SEAT, { seatId: sid });
+          await showAlert(r.message + (r.data ? '\n任务: ' + r.data.type + ' 费用: ' + r.data.cost + ' ' + r.data.resourceType : ''));
+        }
         break;
       }
       case 'completeTask': {
-        const sid = prompt('席位ID:');
-        if (sid) msg = executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid }).message;
+        const sid = await showPrompt('要完成的席位ID:', 'seat_');
+        if (sid) {
+          const r = executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid });
+          await showAlert(r.message);
+        }
         break;
       }
       case 'scoutSeat': {
-        const sid = prompt('席位ID:');
+        const sid = await showPrompt('要打探的席位ID:', 'seat_');
         if (sid) {
           const r = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
-          msg = r.message + (r.data ? '\n任务: ' + r.data.task.type + ' 费用: ' + r.data.task.cost : '');
+          const extra = r.data ? `\n任务类型: ${r.data.task.type}\n费用: ${r.data.task.cost}\n攻略者: ${r.data.visitorId}\n剩余: ${r.data.roundsLeft}轮` : '';
+          await showAlert(r.message + extra);
         }
         break;
       }
       case 'stealSeat': {
-        const sid = prompt('席位ID:');
-        if (sid) msg = executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message;
+        const sid = await showPrompt('要抢夺的席位ID:', 'seat_');
+        if (sid) {
+          await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
+        }
         break;
       }
       case 'investigate': {
-        const target = prompt('目标派系 (discipline/organization/publicSecurity):');
+        const targets = Object.entries(gameState.factions)
+          .filter(([id]) => id !== factionId)
+          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+        const target = await showSelect('选择目标派系', targets);
         if (!target) break;
         const faction = gameState.factions[target];
-        if (!faction) { msg = '派系不存在'; break; }
-        const list = faction.members.filter(m => !m.isUnderInvestigation).map(m => `${m.id}: ${m.name}(${m.rank})`).join('\n');
-        const mid = prompt('选择目标:\n' + list);
-        if (mid) msg = executeAction(factionId, ACTION_TYPES.INVESTIGATE, { targetFactionId: target, memberId: mid }).message;
+        const members = faction.members.filter(m => !m.isUnderInvestigation);
+        if (!members.length) { await showAlert('该派系没有可查处的干部'); break; }
+        const memberOpts = members.map(m => ({
+          label: `${m.id}: ${m.name} (${m.rank})`,
+          value: m.id
+        }));
+        const mid = await showSelect('选择查处目标', memberOpts);
+        if (mid) await showAlert(executeAction(factionId, ACTION_TYPES.INVESTIGATE, { targetFactionId: target, memberId: mid }).message);
         break;
       }
       case 'interrogate': {
-        const target = prompt('审讯目标派系 (discipline/organization/publicSecurity):');
-        if (target) msg = executeSkill(factionId, 'interrogate', { targetFactionId: target }).message;
+        const targets = Object.entries(gameState.factions)
+          .filter(([id]) => id !== factionId)
+          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+        const target = await showSelect('审讯目标', targets);
+        if (target) await showAlert(executeSkill(factionId, 'interrogate', { targetFactionId: target }).message);
         break;
       }
       case 'raid': {
-        const target = prompt('突击检查目标派系:');
-        if (target) msg = executeSkill(factionId, 'raid', { targetFactionId: target }).message;
+        const targets = Object.entries(gameState.factions)
+          .filter(([id]) => id !== factionId)
+          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+        const target = await showSelect('突击检查目标', targets);
+        if (target) await showAlert(executeSkill(factionId, 'raid', { targetFactionId: target }).message);
         break;
       }
       case 'positivePropaganda': {
-        const taskType = prompt('指定任务类型 (arrangeSchool/arrangeJob/bailFriend/businessProject/buildConnections):');
-        if (taskType) msg = executeSkill(factionId, 'positivePropaganda', { taskType }).message;
+        const taskTypes = [
+          { label: '安排子女入学 (arrangeSchool)', value: 'arrangeSchool' },
+          { label: '安排国企工作 (arrangeJob)', value: 'arrangeJob' },
+          { label: '保释朋友 (bailFriend)', value: 'bailFriend' },
+          { label: '促成商人项目 (businessProject)', value: 'businessProject' },
+          { label: '积累人脉 (buildConnections)', value: 'buildConnections' },
+        ];
+        const tt = await showSelect('指定任务类型', taskTypes);
+        if (tt) await showAlert(executeSkill(factionId, 'positivePropaganda', { taskType: tt }).message);
         break;
       }
       case 'negativePropaganda': {
-        const target = prompt('负面曝光目标派系:');
-        if (target) msg = executeSkill(factionId, 'negativePropaganda', { targetFactionId: target }).message;
+        const targets = Object.entries(gameState.factions)
+          .filter(([id]) => id !== factionId)
+          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+        const target = await showSelect('负面曝光目标', targets);
+        if (target) await showAlert(executeSkill(factionId, 'negativePropaganda', { targetFactionId: target }).message);
         break;
       }
       case 'projectBid':
-        msg = executeSkill(factionId, 'projectBid', {}).message;
+        await showAlert(executeSkill(factionId, 'projectBid', {}).message);
         break;
       case 'fiveYearPlan':
-        msg = executeSkill(factionId, 'fiveYearPlan', {}).message;
+        await showAlert(executeSkill(factionId, 'fiveYearPlan', {}).message);
         break;
       case 'sasacCash':
-        msg = executeSkill(factionId, 'sasacCash', {}).message;
+        await showAlert(executeSkill(factionId, 'sasacCash', {}).message);
         break;
       case 'appoint': {
-        const dept = prompt('部门 (如 organization/publicSecurity/govOffice):');
-        const rank = prompt('职级 (副处/正处/副厅):');
-        if (dept && rank) {
-          import('../../logic/loyalty.js').then(m => {
-            alert(m.appointOfficial(factionId, dept, rank).message);
-          });
+        const dept = await showPrompt('部门ID (如 organization/publicSecurity/govOffice):');
+        if (!dept) break;
+        const rank = await showPrompt('职级 (副处/正处/副厅):');
+        if (rank) {
+          const m = await import('../../logic/loyalty.js');
+          await showAlert(m.appointOfficial(factionId, dept, rank).message);
         }
         break;
       }
       case 'boostLoyalty': {
         const faction = gameState.factions[factionId];
-        const list = faction.members.map(m => `${m.id}: ${m.name} 忠${m.loyalty}`).join('\n');
-        const mid = prompt('选择成员:\n' + list);
+        const opts = faction.members.map(m => ({
+          label: `${m.id}: ${m.name} 忠${m.loyalty} (${m.rank})`,
+          value: m.id
+        }));
+        const mid = await showSelect('选择要提升忠诚度的成员', opts);
         if (mid) {
-          import('../../logic/loyalty.js').then(m => {
-            alert(m.boostLoyalty(factionId, mid, 'influence').message);
-          });
+          const m = await import('../../logic/loyalty.js');
+          await showAlert(m.boostLoyalty(factionId, mid, 'influence').message);
         }
         break;
       }
       case 'merchant': {
-        import('../../logic/bribery.js').then(m => {
-          alert(m.triggerMerchant(factionId).message);
-        });
+        const m = await import('../../logic/bribery.js');
+        await showAlert(m.triggerMerchant(factionId).message);
         break;
       }
     }
   } catch (e) {
-    msg = '错误: ' + e.message;
+    await showAlert('错误: ' + e.message);
   }
-  if (msg) alert(msg);
-  renderAllPanels();
 }
 
+// === TURN ADVANCEMENT ===
 function advanceAfterPlayer() {
   if (nextPlayer()) {
     if (isCurrentPlayerAI()) {
       const cf = gameState.turnOrder[gameState.currentPlayerIndex];
-      setTimeout(() => executeAITurn(cf), 300);
+      setTimeout(() => executeAITurn(cf), 400);
     }
     renderAllPanels();
   } else {
-    // All actions done → start bill phase
     gameState.phase = 'bill';
     gameState.currentBill = null;
+    _playerVoted = false;
     renderAllPanels();
   }
 }
@@ -284,12 +299,10 @@ function advanceAfterPlayer() {
 // === AI TURN ===
 async function executeAITurn(factionId) {
   try {
-    // Draw event
     const evMod = await import('../../logic/events.js');
     evMod.drawEvent(factionId);
     evMod.resolveEvent(factionId);
 
-    // Produce resources
     produceResources(factionId);
     if (gameState.turn % 2 === 0) {
       const depts = Object.keys(gameState.factions[factionId].resources);
@@ -301,33 +314,30 @@ async function executeAITurn(factionId) {
       }
     }
 
-    // Decide and execute actions
     const decisions = decideAIActions(factionId);
     for (const d of decisions) {
       try {
-        if (['interrogate', 'raid', 'projectBid', 'fiveYearPlan', 'sasacCash', 'positivePropaganda', 'negativePropaganda', 'projectVeto', 'rerollDice'].includes(d.type)) {
+        if (['interrogate', 'raid', 'projectBid', 'fiveYearPlan', 'sasacCash', 'positivePropaganda', 'negativePropaganda'].includes(d.type)) {
           executeSkill(factionId, d.type, d.params);
         } else if (d.type === 'bribery' || d.type === 'merchant') {
           (await import('../../logic/bribery.js')).triggerMerchant(factionId);
         } else if (d.type) {
           executeAction(factionId, d.type, d.params);
         }
-      } catch (e) { /* skip failed AI actions */ }
+      } catch (e) { /* skip */ }
     }
-  } catch (e) { /* AI turn error recovery */ }
+  } catch (e) { /* recover */ }
 
   renderAllPanels();
 
-  // Advance to next player
   if (nextPlayer()) {
     if (isCurrentPlayerAI()) {
-      const nf = gameState.turnOrder[gameState.currentPlayerIndex];
-      setTimeout(() => executeAITurn(nf), 400);
+      setTimeout(() => executeAITurn(gameState.turnOrder[gameState.currentPlayerIndex]), 400);
     }
   } else {
-    // All done → bill phase
     gameState.phase = 'bill';
     gameState.currentBill = null;
+    _playerVoted = false;
     renderAllPanels();
   }
 }
