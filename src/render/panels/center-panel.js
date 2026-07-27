@@ -18,6 +18,9 @@ export function renderCenterPanel() {
   const el = document.getElementById('center-panel');
   if (!el) return;
 
+  // === Dice/cleanup phase — skip
+  if (gameState.phase === 'dice' || gameState.phase === 'cleanup') return;
+
   // === Bill phase ===
   if (gameState.phase === 'bill') {
     renderBillPhase(el);
@@ -25,7 +28,9 @@ export function renderCenterPanel() {
   }
 
   // === Action phase ===
+  if (!gameState.turnOrder.length) return;
   const cf = gameState.turnOrder[gameState.currentPlayerIndex];
+  if (!cf) return;
   const isPlayer = cf === gameState.playerFactionId;
   let h = '<div class="center-content">';
 
