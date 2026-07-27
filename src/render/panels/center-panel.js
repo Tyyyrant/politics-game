@@ -228,12 +228,20 @@ async function handlePlayerAction(factionId, action) {
       case 'completeTask': {
         const mySeats = gameState.npcSeats.filter(s => s.visitorId === factionId && !s.lockedById);
         if (!mySeats.length) { await showAlert('你没有正在攻略的席位'); break; }
+        const pf = gameState.factions[factionId];
         const opts = mySeats.map(s => {
           const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
           const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
           const canDo = s.visitedOnTurn !== gameState.turn;
-          const prefix = canDo ? '✅' : '⏳';
-          return { label: `${prefix} ${s.name} | ${tname} | ${s.task.cost}${dname} | ${canDo ? '可完成' : '下轮可完成'}`, value: s.id };
+          const hasRes = s.task.resourceType === 'any'
+            ? Object.values(pf.resources).reduce((a, b) => a + b, 0) >= s.task.cost
+            : (pf.resources[s.task.resourceType] || 0) >= s.task.cost;
+          let prefix;
+          if (!canDo) prefix = '⏳';
+          else if (!hasRes) prefix = '❌';
+          else prefix = '✅';
+          const status = !canDo ? '下轮可完成' : (!hasRes ? `资源不足(需${s.task.cost}${dname})` : '可完成');
+          return { label: `${prefix} ${s.name} | ${tname} | ${s.task.cost}${dname} | ${status}`, value: s.id };
         });
         const sid = await showSelect('选择要完成的席位', opts);
         if (sid) {

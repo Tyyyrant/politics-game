@@ -52,7 +52,13 @@ export function renderLeftPanel() {
       const taskName = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
       const deptName = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
       const canComplete = s.visitedOnTurn !== gameState.turn;
-      const statusText = canComplete ? '✅可完成' : '⏳下轮可完成';
+      const hasRes = s.task.resourceType === 'any'
+        ? Object.values(pf.resources).reduce((a, b) => a + b, 0) >= s.task.cost
+        : (pf.resources[s.task.resourceType] || 0) >= s.task.cost;
+      let statusText;
+      if (!canComplete) statusText = '⏳下轮可完成';
+      else if (!hasRes) statusText = `❌资源不足(需${s.task.cost}${deptName})`;
+      else statusText = '✅可完成';
       h += `<div class="active-seat-row">
         <div class="active-seat-name">${s.name} · ${taskName}</div>
         <div class="active-seat-cost">💰 ${s.task.cost} ${deptName} &nbsp;|&nbsp; ⏰ 剩余 ${s.roundsRemaining} 轮 &nbsp;|&nbsp; ${statusText}</div>
