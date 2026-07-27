@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
+import { showPrompt, showSelect, showAlert, showSeatPicker, showAppointmentUI } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -71,22 +71,22 @@ export function renderCenterPanel() {
   if (isPlayer) {
     const visitsLeft = 3 - (gameState.factions[cf].visitsThisTurn || 0);
     h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/3）</h3><div class="action-grid">';
-    h += btn('拜访人大席位', 'visitSeat');
-    h += btn('完成席位任务', 'completeTask');
-    h += btn('打探对手席位', 'scoutSeat');
-    h += btn('抢夺对手席位', 'stealSeat');
-    h += btn('查处对手干部', 'investigate');
-    h += btn('公安审讯', 'interrogate');
-    h += btn('突击检查', 'raid');
-    h += btn('正面宣传', 'positivePropaganda');
-    h += btn('负面曝光', 'negativePropaganda');
-    h += btn('项目招标', 'projectBid');
-    h += btn('五年计划', 'fiveYearPlan');
-    h += btn('资金变现', 'sasacCash');
-    h += btn('干部任用', 'appoint');
-    h += btn('提升忠诚度', 'boostLoyalty');
-    h += btn('商人上门', 'merchant');
-    h += '<button class="action-btn end-turn-btn" data-action="endTurn">✅ 结束回合</button>';
+    h += btn('拜访人大席位', 'visitSeat', '消耗1影响力，查看席位任务');
+    h += btn('完成席位任务', 'completeTask', '消耗对应资源，锁定席位（本回合拜访的需下回合完成）');
+    h += btn('打探对手席位', 'scoutSeat', '消耗2影响力，查看对手攻略的席位详情');
+    h += btn('抢夺对手席位', 'stealSeat', '消耗2影响力+双倍任务资源，抢走对手的席位');
+    h += btn('查处对手干部', 'investigate', '消耗纪委标记，骰子判决定，查处对手干部');
+    h += btn('公安审讯', 'interrogate', '消耗2公安资源，目标下回合无法产出');
+    h += btn('突击检查', 'raid', '消耗3公安资源，使目标任务失败');
+    h += btn('正面宣传', 'positivePropaganda', '消耗2宣传资源，指定任务全体消耗-1');
+    h += btn('负面曝光', 'negativePropaganda', '消耗2宣传资源，目标影响力-2');
+    h += btn('项目招标', 'projectBid', '消耗2住建资源，完成商人项目+免费拜访1次');
+    h += btn('五年计划', 'fiveYearPlan', '消耗5发改资源(3轮CD)，发起经济投票');
+    h += btn('资金变现', 'sasacCash', '消耗5国资委资源，获得1笔不留痕迹的资金');
+    h += btn('干部任用', 'appoint', '消耗5-15组织部资源，扩张派系编制');
+    h += btn('提升忠诚度', 'boostLoyalty', '消耗10影响力或1笔资金，提升成员忠诚+1');
+    h += btn('商人上门', 'merchant', '消耗2影响力，随机获得资金（带风险）');
+    h += '<button class="action-btn end-turn-btn" data-action="endTurn" title="结束本回合行动">✅ 结束回合</button>';
     h += '</div></div>';
   } else {
     h += `<div class="ai-display">⏳ 等待其他派系行动完成...</div>`;
@@ -195,7 +195,7 @@ function renderBillPhase(el) {
 }
 
 // === PLAYER ACTIONS (using custom modals) ===
-function btn(label, action) { return `<button class="action-btn" data-action="${action}">${label}</button>`; }
+function btn(label, action, tip) { return `<button class="action-btn" data-action="${action}" title="${tip || ''}">${label}</button>`; }
 
 function bindButtons(el, factionId) {
   el.querySelectorAll('.action-btn').forEach(b => {
@@ -328,25 +328,32 @@ async function handlePlayerAction(factionId, action) {
         await showAlert(executeSkill(factionId, 'sasacCash', {}).message);
         break;
       case 'appoint': {
-        const dept = await showPrompt('部门ID (如 organization/publicSecurity/govOffice):');
-        if (!dept) break;
-        const rank = await showPrompt('职级 (副处/正处/副厅):');
-        if (rank) {
-          const m = await import('../../logic/loyalty.js');
-          await showAlert(m.appointOfficial(factionId, dept, rank).message);
+        const result = await showAppointmentUI(factionId);
+        if (!result) break;
+        const m = await import('../../logic/loyalty.js');
+        if (result.action === 'appoint') {
+          await showAlert(m.appointOfficial(factionId, result.dept, result.rank).message);
+        } else if (result.action === 'promote') {
+          await showAlert(m.promoteMember(factionId, result.memberId).message);
         }
         break;
       }
       case 'boostLoyalty': {
         const faction = gameState.factions[factionId];
         const opts = faction.members.map(m => ({
-          label: `${m.name} · ${m.rank} · 忠诚${m.loyalty}`,
+          label: `${m.name} · ${m.rank} · 忠${m.loyalty}/9 · 💰10影响力 或 1资金`,
           value: m.id
         }));
-        const mid = await showSelect('选择要提升忠诚度的成员', opts);
+        const mid = await showSelect('提升忠诚度（每+1需10影响力 或 1笔资金）', opts);
         if (mid) {
-          const m = await import('../../logic/loyalty.js');
-          await showAlert(m.boostLoyalty(factionId, mid, 'influence').message);
+          const method = await showSelect('选择方式', [
+            { label: `消耗10影响力（当前${faction.influence}）`, value: 'influence' },
+            { label: `消耗1笔资金（当前${faction.funds}笔）`, value: 'funds' }
+          ]);
+          if (method) {
+            const m = await import('../../logic/loyalty.js');
+            await showAlert(m.boostLoyalty(factionId, mid, method).message);
+          }
         }
         break;
       }

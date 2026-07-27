@@ -35,7 +35,7 @@ export function completePersonalQuest(factionId, memberId) {
   return { success: true, message: `${member.name}完成个人追求，忠诚度+${gain}` };
 }
 
-function promoteMember(factionId, memberId) {
+export function promoteMember(factionId, memberId) {
   const faction = gameState.factions[factionId];
   const member = faction.members.find(m => m.id === memberId);
   const rankOrder = ['副处', '正处', '副厅', '正厅'];

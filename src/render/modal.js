@@ -103,7 +103,10 @@ export function showConfirm(message) {
 }
 
 // Seat matrix — show all 27 seats as a clickable grid
+// Appointment interface
 import { gameState } from '../logic/state.js';
+import { DEPARTMENTS } from '../logic/data/departments.js';
+import { DEPT_NAMES } from '../logic/data/constants.js';
 import { SEAT_TASK_NAMES_CN, DEPT_NAMES } from '../logic/data/constants.js';
 
 export function showSeatPicker(title, filterFn = null) {
@@ -163,6 +166,47 @@ export function showSeatPicker(title, filterFn = null) {
     overlay.querySelector('.modal-cancel').addEventListener('click', () => {
       overlay.remove();
       resolve(null);
+    });
+  });
+}
+
+// Appointment interface
+export function showAppointmentUI(factionId) {
+  return new Promise(resolve => {
+    const faction = gameState.factions[factionId];
+    const memberDepts = [...new Set(faction.members.map(m => m.dept))];
+    let html = '<div class="appointment-panel"><h4>🏛️ 干部任用</h4>';
+    html += '<p style="font-size:0.8em;color:var(--text-secondary);margin-bottom:8px;">消耗组织部资源或本部门资源 | 副处5 · 正处8 · 副厅15</p>';
+    html += '<div class="appoint-section"><h5>📋 你控制的部门（可任用新人）</h5>';
+    for (const deptId of memberDepts) {
+      const deptName = DEPT_NAMES[deptId] || deptId;
+      const count = faction.members.filter(m => m.dept === deptId).length;
+      html += `<div class="appoint-dept"><span class="dept-name">${deptName}</span><span class="dept-count">${count}人</span>
+        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="副处">+副处(5)</button>
+        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="正处">+正处(8)</button>
+        <button class="btn-small btn-appoint-new" data-dept="${deptId}" data-rank="副厅">+副厅(15)</button></div>`;
+    }
+    html += '</div><div class="appoint-section"><h5>⬆️ 可提拔的现有成员</h5>';
+    const promotable = faction.members.filter(m => ['副处', '正处', '副厅'].includes(m.rank));
+    if (promotable.length) {
+      for (const m of promotable) {
+        const next = { '副处': '正处', '正处': '副厅', '副厅': '正厅' }[m.rank];
+        const cost = { '副处': 8, '正处': 15 }[m.rank] || '—';
+        html += `<div class="appoint-member"><span>${m.name} · ${m.rank}→${next}</span>
+          <button class="btn-small btn-promote" data-mid="${m.id}" data-rank="${next}">提拔(${cost})</button></div>`;
+      }
+    } else { html += '<div style="font-size:0.8em;color:var(--text-secondary);">无</div>'; }
+    html += '</div><button class="modal-btn modal-cancel" style="margin-top:12px;">关闭</button></div>';
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `<div class="modal-box modal-appoint">${html}</div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+    overlay.querySelectorAll('.btn-appoint-new').forEach(btn => {
+      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'appoint', dept: btn.dataset.dept, rank: btn.dataset.rank }); });
+    });
+    overlay.querySelectorAll('.btn-promote').forEach(btn => {
+      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'promote', memberId: btn.dataset.mid, rank: btn.dataset.rank }); });
     });
   });
 }
