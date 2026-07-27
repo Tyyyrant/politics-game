@@ -183,16 +183,34 @@ body {
 
 
 /* === Appointment UI === */
-.modal-appoint { max-width: 520px; max-height: 75vh; overflow-y: auto; }
+.modal-appoint { max-width: 560px; max-height: 78vh; overflow-y: auto; }
 .appointment-panel h4 { color: var(--accent-gold); margin-bottom: 8px; }
 .appoint-section { margin-bottom: 12px; }
 .appoint-section h5 { color: var(--text-primary); font-size: 0.85em; margin-bottom: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 4px; }
-.appoint-dept { display: flex; align-items: center; gap: 6px; padding: 4px 0; font-size: 0.82em; flex-wrap: wrap; }
+.appoint-dept { display: flex; flex-direction: column; gap: 2px; padding: 4px 0; font-size: 0.82em; margin-bottom: 8px; }
+.dept-header { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid rgba(212,167,116,0.2); }
 .dept-name { font-weight: bold; color: var(--text-primary); min-width: 70px; }
-.dept-count { color: var(--text-secondary); min-width: 40px; }
+.dept-count { color: var(--text-secondary); font-size: 0.85em; }
 .btn-small { padding: 3px 8px; border: 1px solid var(--border-color); border-radius: 3px; cursor: pointer; font-size: 0.78em; background: var(--bg-panel); color: var(--text-primary); }
 .btn-small:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.1); }
 .appoint-member { display: flex; align-items: center; justify-content: space-between; padding: 4px 0; font-size: 0.82em; }
+
+/* Position picker buttons (step 1) */
+.btn-position-pick { display: flex; align-items: center; gap: 8px; width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; font-size: 0.8em; background: var(--bg-panel); color: var(--text-primary); margin: 2px 0; transition: all 0.15s; text-align: left; }
+.btn-position-pick:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.08); }
+.pos-title { flex: 1; font-weight: bold; min-width: 100px; }
+.pos-rank { color: var(--accent-gold); min-width: 36px; text-align: center; }
+.pos-vacant { color: var(--danger); min-width: 48px; text-align: center; font-size: 0.85em; }
+.pos-cost { color: var(--text-secondary); min-width: 90px; text-align: right; font-size: 0.85em; }
+
+/* Candidate rows (step 2) */
+.candidate-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.82em; }
+.candidate-row:hover { background: rgba(212,167,116,0.05); }
+.candidate-info { flex: 1; }
+.candidate-path { color: var(--accent-gold); min-width: 60px; text-align: center; font-size: 0.8em; }
+.candidate-empty { font-size: 0.78em; color: var(--text-secondary); padding: 6px 0; }
+.btn-recruit { background: rgba(39,174,96,0.15) !important; border-color: rgba(39,174,96,0.3) !important; }
+.btn-recruit:hover { background: rgba(39,174,96,0.25) !important; }
 
 /* === Seat Grid === */
 .modal-seats { max-width: 700px; max-height: 80vh; }

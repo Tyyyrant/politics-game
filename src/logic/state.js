@@ -3,6 +3,7 @@ import { FACTION_DEFS, createInitialFactionState, getFactionResources } from './
 import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
 import { EVENT_POOL } from './data/event-pool.js';
 import { generateSeatTasks } from './data/seat-tasks.js';
+import { INDEPENDENT_OFFICIALS } from './data/independent-officials.js';
 import { FACTION_IDS, TOTAL_NPC_SEATS } from './data/constants.js';
 
 export let gameState = null;
@@ -31,7 +32,8 @@ export function createNewGame(playerFactionId) {
     eventDeck: shuffleDeck([...EVENT_POOL]),
     activeBillEffects: [], roundLog: [], history: [],
     globalDisciplineMarkPool: 0, diceResult: null, pendingActions: [],
-    lastBillResult: null
+    lastBillResult: null,
+    independentOfficials: JSON.parse(JSON.stringify(INDEPENDENT_OFFICIALS))  // 可招募的无派系干部池
   };
   return gameState;
 }

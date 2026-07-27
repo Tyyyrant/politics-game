@@ -3,6 +3,10 @@ export const RANKS = ['副处', '正处', '副厅', '正厅', '副部', '正部'
 export const RANK_RESOURCES = { '副处': 1, '正处': 2, '副厅': 4, '正厅': 6, '副部': 10, '正部': 15 };
 export const RANK_INFLUENCE = { '副处': 1, '正处': 2, '副厅': 4, '正厅': 6, '副部': 10, '正部': 15 };
 export const APPOINTMENT_COST = { '副处': 5, '正处': 8, '副厅': 15 };
+// 提拔/招募消耗：影响力 + 组织部资源
+export const PROMOTION_INFLUENCE_COST = { '副处': 5, '正处': 10, '副厅': 20 };
+export const RECRUIT_INFLUENCE_COST = { '副处': 3, '正处': 6, '副厅': 12 };
+export const RECRUIT_RESOURCE_COST = { '副处': 5, '正处': 8, '副厅': 15 };
 export const INVESTIGATE_COST = { '副处': 1, '正处': 2, '副厅': 3, '正厅': 4 };
 export const CLEAR_COST = { '副处': 2, '正处': 5, '副厅': 7, '正厅': 10 };
 export const FACTION_IDS = ['propaganda', 'discipline', 'organization', 'publicSecurity', 'npcCongress', 'npcCppcc'];

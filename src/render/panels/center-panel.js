@@ -83,7 +83,7 @@ export function renderCenterPanel() {
     h += btn('项目招标', 'projectBid', '消耗2住建资源，完成商人项目+免费拜访1次');
     h += btn('五年计划', 'fiveYearPlan', '消耗5发改资源(3轮CD)，发起经济投票');
     h += btn('资金变现', 'sasacCash', '消耗5国资委资源，获得1笔不留痕迹的资金');
-    h += btn('干部任用', 'appoint', '消耗5-15组织部资源，扩张派系编制');
+    h += btn('干部任用', 'appoint', '消耗影响力+资源，提拔或招募干部填补职位空缺');
     h += btn('提升忠诚度', 'boostLoyalty', '消耗10影响力或1笔资金，提升成员忠诚+1');
     h += btn('商人上门', 'merchant', '消耗2影响力，随机获得资金（带风险）');
     // 资源置换按钮（根据当前生效效果动态显示）
@@ -366,12 +366,12 @@ async function handlePlayerAction(factionId, action) {
         const result = await showAppointmentUI(factionId);
         if (!result) break;
         const m = await import('../../logic/loyalty.js');
-        if (result.action === 'appoint') {
-          await showAlert(m.appointOfficial(factionId, result.dept, result.rank).message);
-        } else if (result.action === 'promote') {
+        if (result.action === 'promote') {
           await showAlert(m.promoteMember(factionId, result.memberId).message);
-          renderAllPanels();
+        } else if (result.action === 'recruit') {
+          await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank).message);
         }
+        renderAllPanels();
         break;
       }
       case 'boostLoyalty': {

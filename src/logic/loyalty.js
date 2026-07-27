@@ -1,7 +1,7 @@
 // src/logic/loyalty.js
 import { gameState, emit } from './state.js';
 import { spendResources, spendInfluence } from './resources.js';
-import { APPOINTMENT_COST, TRAITS, DEPT_NAMES } from './data/constants.js';
+import { APPOINTMENT_COST, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, TRAITS, DEPT_NAMES } from './data/constants.js';
 import { DEPARTMENTS } from './data/departments.js';
 
 export function boostLoyalty(factionId, memberId, method) {
@@ -36,31 +36,117 @@ export function completePersonalQuest(factionId, memberId) {
   return { success: true, message: `${member.name}完成个人追求，忠诚度+${gain}` };
 }
 
+// 提拔本派系成员：消耗影响力 + 组织部资源
 export function promoteMember(factionId, memberId) {
   const faction = gameState.factions[factionId];
   const member = faction.members.find(m => m.id === memberId);
+  if (!member) return { success: false, message: '成员不存在' };
+
   const rankOrder = ['副处', '正处', '副厅', '正厅'];
   const idx = rankOrder.indexOf(member.rank);
   if (idx < 0 || idx >= rankOrder.length - 1) return { success: false, message: '无法继续提拔' };
+
   const newRank = rankOrder[idx + 1];
-  // Update position title to reflect new rank
+  const influenceCost = PROMOTION_INFLUENCE_COST[member.rank] || 5;
+  const resourceCost = APPOINTMENT_COST[newRank] || 8;
+
+  // Check if target position is vacant in the department
   const dept = DEPARTMENTS[member.dept];
-  if (dept) {
-    const matchingPos = dept.positions.find(p => p.rank === newRank);
-    if (matchingPos) member.position = matchingPos.title;
+  if (!dept) return { success: false, message: '部门不存在' };
+  const matchingPos = dept.positions.find(p => p.rank === newRank);
+  if (!matchingPos) return { success: false, message: `该部门没有${newRank}级职位` };
+
+  // Count how many faction members hold this specific position
+  const holders = faction.members.filter(m => m.dept === member.dept && m.position === matchingPos.title && m.id !== member.id);
+  if (holders.length >= matchingPos.count) return { success: false, message: `${dept.name}的${matchingPos.title}职位已满（${matchingPos.count}个）` };
+
+  // Spend resources
+  if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
+  if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, member.dept, resourceCost)) {
+    return { success: false, message: `组织部或本部门资源不足（需${resourceCost}）` };
   }
+
+  // Perform promotion
   member.rank = newRank;
+  member.position = matchingPos.title;
   member.loyalty = Math.min(member.maxLoyalty, member.loyalty + 2);
-  return { success: true, message: `${member.name}已晋升为${newRank}·${member.position}` };
+  gameState.roundLog.push({ factionId, action: 'promoteMember', target: `${member.name}→${newRank}·${matchingPos.title}`, result: '提拔成功' });
+  emit('loyalty:changed', { factionId, memberId, newRank, newPosition: matchingPos.title });
+  return { success: true, message: `${member.name}已晋升为${newRank}·${matchingPos.title}！消耗${influenceCost}影响力+${resourceCost}资源` };
 }
 
+// 招募无派系干部：消耗影响力 + 组织部资源，该干部获得"曾受你的提拔"特性
+// targetRank: 目标职位级别（可能与干部当前级别不同，如招募正处填补副厅职位）
+export function recruitOfficial(factionId, officialName, officialDept, targetRank) {
+  const faction = gameState.factions[factionId];
+  const pool = gameState.independentOfficials;
+
+  // Find the official in the independent pool (may be at a lower rank than target)
+  const idx = pool.findIndex(o => o.name === officialName && o.dept === officialDept);
+  if (idx < 0) return { success: false, message: '该干部已不在候选池中' };
+
+  const official = pool[idx];
+  const influenceCost = RECRUIT_INFLUENCE_COST[targetRank] || 5;
+  const resourceCost = RECRUIT_RESOURCE_COST[targetRank] || 8;
+
+  // Check vacancy at target rank
+  const dept = DEPARTMENTS[officialDept];
+  if (!dept) return { success: false, message: '部门不存在' };
+  const matchingPos = dept.positions.find(p => p.rank === targetRank);
+  if (!matchingPos) return { success: false, message: `该部门没有${targetRank}级职位` };
+
+  const holders = faction.members.filter(m => m.dept === officialDept && m.position === matchingPos.title);
+  if (holders.length >= matchingPos.count) return { success: false, message: `${dept.name}的${matchingPos.title}职位已满` };
+
+  // Spend resources
+  if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
+  if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, officialDept, resourceCost)) {
+    return { success: false, message: `组织部或本部门资源不足（需${resourceCost}）` };
+  }
+
+  // Remove from pool and add to faction at target rank
+  pool.splice(idx, 1);
+  const memberId = `${factionId}_${official.name}`;
+  const member = {
+    id: memberId,
+    name: official.name,
+    dept: officialDept,
+    position: matchingPos.title,
+    rank: targetRank,  // Fill at target rank
+    loyalty: 5,  // 受提拔之恩，初始忠诚
+    maxLoyalty: 9,
+    traits: [TRAITS.mentored],  // 曾受你的提拔
+    isUnderInvestigation: false,
+    investigationStatus: null,
+    investigationRoundsLeft: 0,
+    personalQuests: [],
+    completedQuests: []
+  };
+  faction.members.push(member);
+  gameState.roundLog.push({ factionId, action: 'recruitOfficial', target: `${official.name}→${targetRank}·${dept.name}·${matchingPos.title}`, result: '招募成功' });
+  return { success: true, message: `成功招募${official.name}为${matchingPos.title}（${targetRank}）！消耗${influenceCost}影响力+${resourceCost}资源。获得"曾受你的提拔"特性，初始忠诚5` };
+}
+
+// 旧版任命（保留兼容，但新UI使用 recruitOfficial）
 export function appointOfficial(factionId, dept, rank) {
   const faction = gameState.factions[factionId];
+  // Try to recruit from independent pool first
+  const pool = gameState.independentOfficials;
+  const candidate = pool.find(o => o.dept === dept && o.rank === rank);
+  if (candidate) {
+    return recruitOfficial(factionId, candidate.name, candidate.dept, candidate.rank);
+  }
+  // Fallback: create a new official
   const cost = APPOINTMENT_COST[rank] || 5;
+  const influenceCost = RECRUIT_INFLUENCE_COST[rank] || 5;
+  if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
   if (!spendResources(factionId, 'organization', cost) && !spendResources(factionId, dept, cost)) return { success: false, message: '干部任用资源不足' };
-  const member = { id: `${factionId}_新${faction.members.length + 1}`, name: `新干部${faction.members.length + 1}`, dept, position: `${DEPT_NAMES[dept] || dept}${rank}`, rank, loyalty: 5, maxLoyalty: 9, traits: [], isUnderInvestigation: false, investigationStatus: null, investigationRoundsLeft: 0, personalQuests: [], completedQuests: [] };
+  const deptData = DEPARTMENTS[dept];
+  const matchingPos = deptData ? deptData.positions.find(p => p.rank === rank) : null;
+  const posTitle = matchingPos ? matchingPos.title : `${DEPT_NAMES[dept] || dept}${rank}`;
+  const member = { id: `${factionId}_新${faction.members.length + 1}`, name: `新干部${faction.members.length + 1}`, dept, position: posTitle, rank, loyalty: 5, maxLoyalty: 9, traits: [TRAITS.mentored], isUnderInvestigation: false, investigationStatus: null, investigationRoundsLeft: 0, personalQuests: [], completedQuests: [] };
   faction.members.push(member);
-  return { success: true, message: `已任用一名${rank}级干部到${dept}` };
+  return { success: true, message: `已任用一名${rank}级干部到${DEPT_NAMES[dept] || dept}（消耗${influenceCost}影响力+${cost}资源）` };
 }
 
 export function tryBribeMember(fromFactionId, toFactionId, memberId) {
