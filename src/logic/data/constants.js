@@ -1,0 +1,20 @@
+// src/logic/data/constants.js
+export const RANKS = ['副处', '正处', '副厅', '正厅', '副部', '正部'];
+export const RANK_RESOURCES = { '副处': 1, '正处': 2, '副厅': 4, '正厅': 6, '副部': 10, '正部': 15 };
+export const RANK_INFLUENCE = { '副处': 1, '正处': 2, '副厅': 4, '正厅': 6, '副部': 10, '正部': 15 };
+export const APPOINTMENT_COST = { '副处': 5, '正处': 8, '副厅': 15 };
+export const INVESTIGATE_COST = { '副处': 1, '正处': 2, '副厅': 3, '正厅': 4 };
+export const CLEAR_COST = { '副处': 2, '正处': 5, '副厅': 7, '正厅': 10 };
+export const FACTION_IDS = ['propaganda', 'discipline', 'organization', 'publicSecurity', 'npcCongress', 'npcCppcc'];
+export const FACTION_NAMES = { propaganda: '宣传部', discipline: '纪委', organization: '组织部', publicSecurity: '公安厅', npcCongress: '人大', npcCppcc: '政协' };
+export const DEPT_TYPES = { govOffice: '政府办公厅', ndrc: '发改委', sasac: '国资委', publicSecurity: '公安厅', hrss: '人社厅', finance: '财政厅', housing: '住建厅', education: '教育厅', audit: '审计厅', partyOffice: '党委办公厅', organization: '组织部', propaganda: '宣传部', discipline: '纪委', legalAffairs: '政法委', partySchool: '党校', congress: '人大', cppcc: '政协', procuratorate: '检察院' };
+export const TRAITS = { trustedAide: '心腹嫡系', mentored: '此人曾受你提拔', sharedInterest: '利益共同体', alumni: '校友', arrangedJob: '安排工作', childSchool: '小孩升学', buyHouse: '购买新房', politicalAmbition: '政治追求', seekPatron: '结识贵人' };
+export const SEAT_TASK_TYPES = ['arrangeSchool', 'arrangeJob', 'bailFriend', 'businessProject', 'buildConnections'];
+export const BILL_TYPES = ['finance', 'hrss', 'propaganda', 'government', 'party'];
+export const EVENT_TYPES = ['positive', 'negative', 'mixed'];
+export const ACTION_TYPES = { VISIT_SEAT: 'visitSeat', COMPLETE_TASK: 'completeTask', LOCK_SEAT_INFLUENCE: 'lockSeatInfluence', LOCK_SEAT_FUNDS: 'lockSeatFunds', SCOUT_SEAT: 'scoutSeat', STEAL_SEAT: 'stealSeat', SCOUT_LOYALTY: 'scoutLoyalty', SCOUT_RESOURCES: 'scoutResources', PROPOSE_BILL: 'proposeBill', INVESTIGATE: 'investigate', CLEAR_INVESTIGATION: 'clearInvestigation', REROLL_DICE: 'rerollDice', INTERROGATE: 'interrogate', RAID: 'raid', POSITIVE_PROPAGANDA: 'positivePropaganda', NEGATIVE_PROPAGANDA: 'negativePropaganda', PROJECT_BID: 'projectBid', FIVE_YEAR_PLAN: 'fiveYearPlan', PROJECT_VETO: 'projectVeto', SASAC_CASH: 'sasacCash', APPOINT_OFFICIAL: 'appointOfficial', BOOST_LOYALTY_INFLUENCE: 'boostLoyaltyInfluence', BOOST_LOYALTY_FUNDS: 'boostLoyaltyFunds', PERSONAL_QUEST: 'personalQuest', END_TURN: 'endTurn' };
+export const TOTAL_NPC_SEATS = 27;
+export const MAX_ROUNDS = 10;
+export const EXTENSION_ROUNDS = 2;
+export const SEAT_TASK_DEADLINE = 2;
+export const DICE_SIDES = 6;
