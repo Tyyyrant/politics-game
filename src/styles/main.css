@@ -118,3 +118,30 @@ body {
 .end-summary { color: var(--text-secondary); margin-bottom: 24px; font-size: 0.9em; }
 .btn-restart { background: var(--accent-gold); color: #1a1a2e; border: none; padding: 12px 32px; border-radius: 6px; font-size: 1.1em; font-weight: bold; cursor: pointer; }
 .btn-restart:hover { opacity: 0.9; }
+
+/* === Left Panel - Player Detail === */
+.player-full { background: rgba(212, 167, 116, 0.08); border: 1px solid rgba(212, 167, 116, 0.3); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+.stat-row { font-size: 0.85em; margin: 4px 0; color: var(--text-primary); }
+.stat-row b { color: var(--accent-gold); }
+.resource-section { margin-top: 8px; }
+.resource-section h4 { font-size: 0.8em; color: var(--accent-gold); margin: 8px 0 4px 0; }
+.resource-grid { display: flex; flex-wrap: wrap; gap: 4px; }
+.resource-tag { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 4px; padding: 2px 6px; font-size: 0.72em; color: var(--text-primary); }
+.resource-tag b { color: var(--accent-gold); }
+.empty-hint { font-size: 0.75em; color: var(--text-secondary); font-style: italic; }
+.member-section { margin-top: 8px; }
+.member-section h4 { font-size: 0.8em; color: var(--accent-gold); margin: 8px 0 4px 0; }
+.member-row { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 8px; margin-bottom: 4px; font-size: 0.78em; }
+.member-name { font-weight: bold; color: var(--text-primary); }
+.member-rank { color: var(--accent-gold); font-size: 0.9em; }
+.member-dept { color: var(--text-secondary); font-size: 0.85em; }
+.member-loyalty { color: var(--accent-blue); font-size: 0.85em; }
+
+/* === Bill Phase === */
+.bill-phase { padding: 16px; }
+.bill-vote-section h4 { color: var(--text-primary); margin: 12px 0 8px; }
+.bill-vote-status { margin-top: 12px; font-size: 0.9em; color: var(--text-secondary); text-align: center; }
+.support-btn { background: rgba(39, 174, 96, 0.2) !important; border-color: var(--accent-green) !important; }
+.oppose-btn { background: rgba(192, 57, 43, 0.2) !important; border-color: var(--accent-red) !important; }
+.abstain-btn { background: rgba(160, 160, 176, 0.2) !important; }
+.end-turn-btn { background: rgba(212, 167, 116, 0.2) !important; border-color: var(--accent-gold) !important; font-weight: bold; }
