@@ -161,3 +161,16 @@ body {
 .select-options { display: flex; flex-direction: column; gap: 4px; max-height: 300px; overflow-y: auto; }
 .select-option { background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px 12px; cursor: pointer; text-align: left; font-size: 0.85em; }
 .select-option:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.1); }
+
+/* === Seat Grid === */
+.modal-seats { max-width: 700px; max-height: 80vh; }
+.seat-grid-wrapper { max-height: 55vh; overflow-y: auto; }
+.seat-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
+.seat-cell { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 4px; padding: 6px 4px; cursor: pointer; text-align: center; transition: all 0.15s; font-size: 0.72em; }
+.seat-cell:hover { border-color: var(--accent-gold); transform: scale(1.05); }
+.seat-cell.seat-free { border-color: rgba(39,174,96,0.3); }
+.seat-cell.seat-visiting { border-color: rgba(212,167,116,0.5); background: rgba(212,167,116,0.08); }
+.seat-cell.seat-locked { border-color: rgba(192,57,43,0.5); background: rgba(192,57,43,0.08); cursor: not-allowed; opacity: 0.7; }
+.seat-cell .seat-icon { font-size: 1.2em; }
+.seat-cell .seat-name { font-weight: bold; margin-top: 2px; }
+.seat-cell .seat-info { font-size: 0.85em; color: var(--text-secondary); }

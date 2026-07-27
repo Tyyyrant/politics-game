@@ -68,3 +68,5 @@ ipcMain.handle('save:list', () => {
       return { slot: f.replace('save_', '').replace('.json', ''), meta: raw.meta, timestamp: raw.timestamp };
     });
 });
+
+ipcMain.handle('app:quit', () => app.quit());

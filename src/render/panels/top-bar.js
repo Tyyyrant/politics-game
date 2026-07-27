@@ -36,7 +36,12 @@ export function renderTopBar() {
       } else { alert(r.message); }
     }
   });
-  el.querySelector('#btn-exit')?.addEventListener('click', () => {
-    if (confirm('确定退出？未保存的进度将丢失。')) window.close();
+  el.querySelector('#btn-exit')?.addEventListener('click', async () => {
+    const { showAlert } = await import('../modal.js');
+    const confirmed = await showConfirm('确定退出？未保存的进度将丢失。');
+    if (confirmed) {
+      try { window.saveAPI?.quit(); } catch(e) {}
+      window.close();
+    }
   });
 }

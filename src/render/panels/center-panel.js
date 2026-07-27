@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showPrompt, showSelect, showAlert } from '../modal.js';
+import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
 
 let _playerVoted = false;
 let _billResolveTimeout = null;
@@ -153,32 +153,31 @@ async function handlePlayerAction(factionId, action) {
   try {
     switch (action) {
       case 'visitSeat': {
-        const sid = await showPrompt('席位ID (例如 seat_03):', 'seat_');
+        const sid = await showSeatPicker('拜访人大席位 — 点击一个空闲席位');
         if (sid) {
           const r = executeAction(factionId, ACTION_TYPES.VISIT_SEAT, { seatId: sid });
-          await showAlert(r.message + (r.data ? '\n任务: ' + r.data.type + ' 费用: ' + r.data.cost + ' ' + r.data.resourceType : ''));
+          await showAlert(r.message + (r.data ? '\n任务: ' + r.data.type + '\n费用: ' + r.data.cost + ' ' + r.data.resourceType : ''));
         }
         break;
       }
       case 'completeTask': {
-        const sid = await showPrompt('要完成的席位ID:', 'seat_');
+        const sid = await showSeatPicker('完成席位任务 — 点击你正在攻略的席位');
         if (sid) {
-          const r = executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid });
-          await showAlert(r.message);
+          await showAlert(executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid }).message);
         }
         break;
       }
       case 'scoutSeat': {
-        const sid = await showPrompt('要打探的席位ID:', 'seat_');
+        const sid = await showSeatPicker('打探对手席位 — 点击被对手攻略的席位');
         if (sid) {
           const r = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
-          const extra = r.data ? `\n任务类型: ${r.data.task.type}\n费用: ${r.data.task.cost}\n攻略者: ${r.data.visitorId}\n剩余: ${r.data.roundsLeft}轮` : '';
+          const extra = r.data ? `\n任务: ${r.data.task.type}\n费用: ${r.data.task.cost}\n攻略者: ${r.data.visitorId}\n剩余: ${r.data.roundsLeft}轮` : '';
           await showAlert(r.message + extra);
         }
         break;
       }
       case 'stealSeat': {
-        const sid = await showPrompt('要抢夺的席位ID:', 'seat_');
+        const sid = await showSeatPicker('抢夺席位 — 点击对手正在攻略的席位');
         if (sid) {
           await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
         }
