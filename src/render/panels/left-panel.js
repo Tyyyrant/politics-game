@@ -1,6 +1,6 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
-import { FACTION_NAMES, DEPT_NAMES } from '../../logic/data/constants.js';
+import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 export function renderLeftPanel() {
   const el = document.getElementById('left-panel');
@@ -31,6 +31,21 @@ export function renderLeftPanel() {
     h += '<div class="empty-hint">暂无资源（每轮回合开始时产出）</div>';
   }
   h += '</div>';
+
+  // 正在攻略的席位
+  const mySeats = gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId && !s.lockedById);
+  if (mySeats.length) {
+    h += '<div class="active-seats-section"><h4>🎯 正在攻略的席位</h4>';
+    for (const s of mySeats) {
+      const taskName = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
+      const deptName = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
+      h += `<div class="active-seat-row">
+        <div class="active-seat-name">${s.name} · ${taskName}</div>
+        <div class="active-seat-cost">💰 ${s.task.cost} ${deptName} &nbsp;|&nbsp; ⏰ 剩余 ${s.roundsRemaining} 轮</div>
+      </div>`;
+    }
+    h += '</div>';
+  }
 
   // 成员列表
   h += '<div class="member-section"><h4>👥 派系成员 (' + pf.members.length + '人)</h4>';

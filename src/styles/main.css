@@ -137,6 +137,13 @@ body {
 .member-dept { color: var(--text-secondary); font-size: 0.85em; }
 .member-loyalty { color: var(--accent-blue); font-size: 0.85em; }
 
+/* === Active Seat Tasks === */
+.active-seats-section { margin-top: 8px; }
+.active-seats-section h4 { font-size: 0.8em; color: var(--accent-gold); margin: 8px 0 4px 0; }
+.active-seat-row { background: rgba(212, 167, 116, 0.08); border: 1px solid rgba(212, 167, 116, 0.3); border-radius: 4px; padding: 6px 8px; margin-bottom: 4px; font-size: 0.78em; }
+.active-seat-name { font-weight: bold; color: var(--text-primary); }
+.active-seat-cost { color: var(--text-secondary); font-size: 0.9em; margin-top: 2px; }
+
 /* === Bill Phase === */
 .bill-phase { padding: 16px; }
 .bill-vote-section h4 { color: var(--text-primary); margin: 12px 0 8px; }
