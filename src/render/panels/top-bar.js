@@ -2,6 +2,7 @@
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES } from '../../logic/data/constants.js';
 import { saveGame } from '../../logic/save.js';
+import { showAlert, showConfirm, showPrompt, showSelect } from '../modal.js';
 
 export function renderTopBar() {
   const el = document.getElementById('top-bar');
@@ -22,26 +23,33 @@ export function renderTopBar() {
       <button class="btn-top" id="btn-load">📂 读档</button>
       <button class="btn-top" id="btn-exit">🚪 退出</button>
     </div>`;
-  el.querySelector('#btn-save')?.addEventListener('click', () => { saveGame('manual'); alert('已保存！'); });
+
+  el.querySelector('#btn-save')?.addEventListener('click', async () => {
+    saveGame('manual');
+    await showAlert('已保存！');
+  });
+
   el.querySelector('#btn-load')?.addEventListener('click', async () => {
     const { loadGame, listSaves } = await import('../../logic/save.js');
     const saves = await listSaves();
-    if (!saves.length) { alert('没有存档'); return; }
-    const slot = prompt('存档列表:\n' + saves.map(s => `${s.slot}: 第${s.meta?.turn}轮 ${s.meta?.playerFaction}`).join('\n') + '\n\n输入存档位:', 'manual');
+    if (!saves.length) { await showAlert('没有存档'); return; }
+    const slot = await showPrompt('输入存档位名称\n可用: ' + saves.map(s => s.slot).join(', '));
     if (slot) {
       const r = await loadGame(slot);
       if (r.success) {
         const { showGameScreen } = await import('../screens/game-screen.js');
         showGameScreen();
-      } else { alert(r.message); }
+      } else { await showAlert(r.message); }
     }
   });
+
   el.querySelector('#btn-exit')?.addEventListener('click', async () => {
-    const { showAlert } = await import('../modal.js');
-    const confirmed = await showConfirm('确定退出？未保存的进度将丢失。');
-    if (confirmed) {
-      try { window.saveAPI?.quit(); } catch(e) {}
-      window.close();
+    const ok = await showConfirm('确定退出游戏？\n未保存的进度将丢失。');
+    if (ok) {
+      // Direct window close — Electron will handle it
+      try { window.close(); } catch(e) {}
+      // Backup: try IPC
+      try { if (window.saveAPI) window.saveAPI.quit(); } catch(e) {}
     }
   });
 }

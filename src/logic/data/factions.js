@@ -75,8 +75,9 @@ export const FACTION_DEFS = {
 export function createInitialFactionState(factionId) {
   const def = FACTION_DEFS[factionId];
   if (!def) throw new Error(`Unknown faction: ${factionId}`);
+  const memberIdPrefix = { propaganda: 'J', discipline: 'Ch', organization: 'MI', publicSecurity: 'Wa', npcCongress: 'RD', npcCppcc: 'ZX' };
   const members = def.members.map((m, i) => ({
-    id: `${factionId}_m${i}`, name: m.name, dept: m.dept, position: m.position, rank: m.rank,
+    id: `${memberIdPrefix[factionId] || factionId}_${m.name}`, name: m.name, dept: m.dept, position: m.position, rank: m.rank,
     loyalty: m.loyalty, maxLoyalty: 9, traits: [...m.traits], isUnderInvestigation: false,
     investigationStatus: null, investigationRoundsLeft: 0,
     personalQuests: m.traits.filter(t => [T.childSchool, T.buyHouse, T.politicalAmbition, T.seekPatron, T.arrangedJob].includes(t)),

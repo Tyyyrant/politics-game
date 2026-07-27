@@ -8,6 +8,7 @@ import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
 import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
+import { FACTION_NAMES_CN, DEPT_NAMES } from '../../logic/data/constants.js';
 
 let _playerVoted = false;
 let _billResolveTimeout = null;
@@ -186,14 +187,14 @@ async function handlePlayerAction(factionId, action) {
       case 'investigate': {
         const targets = Object.entries(gameState.factions)
           .filter(([id]) => id !== factionId)
-          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+          .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
         const target = await showSelect('选择目标派系', targets);
         if (!target) break;
         const faction = gameState.factions[target];
         const members = faction.members.filter(m => !m.isUnderInvestigation);
         if (!members.length) { await showAlert('该派系没有可查处的干部'); break; }
         const memberOpts = members.map(m => ({
-          label: `${m.id}: ${m.name} (${m.rank})`,
+          label: `${m.name} · ${m.rank}`,
           value: m.id
         }));
         const mid = await showSelect('选择查处目标', memberOpts);
@@ -203,7 +204,7 @@ async function handlePlayerAction(factionId, action) {
       case 'interrogate': {
         const targets = Object.entries(gameState.factions)
           .filter(([id]) => id !== factionId)
-          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+          .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
         const target = await showSelect('审讯目标', targets);
         if (target) await showAlert(executeSkill(factionId, 'interrogate', { targetFactionId: target }).message);
         break;
@@ -211,18 +212,18 @@ async function handlePlayerAction(factionId, action) {
       case 'raid': {
         const targets = Object.entries(gameState.factions)
           .filter(([id]) => id !== factionId)
-          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+          .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
         const target = await showSelect('突击检查目标', targets);
         if (target) await showAlert(executeSkill(factionId, 'raid', { targetFactionId: target }).message);
         break;
       }
       case 'positivePropaganda': {
         const taskTypes = [
-          { label: '安排子女入学 (arrangeSchool)', value: 'arrangeSchool' },
-          { label: '安排国企工作 (arrangeJob)', value: 'arrangeJob' },
-          { label: '保释朋友 (bailFriend)', value: 'bailFriend' },
-          { label: '促成商人项目 (businessProject)', value: 'businessProject' },
-          { label: '积累人脉 (buildConnections)', value: 'buildConnections' },
+          { label: '安排子女入学', value: 'arrangeSchool' },
+          { label: '安排国企工作', value: 'arrangeJob' },
+          { label: '保释朋友', value: 'bailFriend' },
+          { label: '促成商人项目', value: 'businessProject' },
+          { label: '积累人脉', value: 'buildConnections' },
         ];
         const tt = await showSelect('指定任务类型', taskTypes);
         if (tt) await showAlert(executeSkill(factionId, 'positivePropaganda', { taskType: tt }).message);
@@ -231,7 +232,7 @@ async function handlePlayerAction(factionId, action) {
       case 'negativePropaganda': {
         const targets = Object.entries(gameState.factions)
           .filter(([id]) => id !== factionId)
-          .map(([id, f]) => ({ label: `${id} (${f.leaderName})`, value: id }));
+          .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
         const target = await showSelect('负面曝光目标', targets);
         if (target) await showAlert(executeSkill(factionId, 'negativePropaganda', { targetFactionId: target }).message);
         break;
@@ -258,7 +259,7 @@ async function handlePlayerAction(factionId, action) {
       case 'boostLoyalty': {
         const faction = gameState.factions[factionId];
         const opts = faction.members.map(m => ({
-          label: `${m.id}: ${m.name} 忠${m.loyalty} (${m.rank})`,
+          label: `${m.name} · ${m.rank} · 忠诚${m.loyalty}`,
           value: m.id
         }));
         const mid = await showSelect('选择要提升忠诚度的成员', opts);

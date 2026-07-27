@@ -1,7 +1,7 @@
 // src/logic/loyalty.js
 import { gameState, emit } from './state.js';
 import { spendResources, spendInfluence } from './resources.js';
-import { APPOINTMENT_COST, TRAITS } from './data/constants.js';
+import { APPOINTMENT_COST, TRAITS, DEPT_NAMES } from './data/constants.js';
 
 export function boostLoyalty(factionId, memberId, method) {
   const faction = gameState.factions[factionId];
@@ -49,7 +49,7 @@ export function appointOfficial(factionId, dept, rank) {
   const faction = gameState.factions[factionId];
   const cost = APPOINTMENT_COST[rank] || 5;
   if (!spendResources(factionId, 'organization', cost) && !spendResources(factionId, dept, cost)) return { success: false, message: '干部任用资源不足' };
-  const member = { id: `${factionId}_m${faction.members.length}`, name: `新干部${faction.members.length + 1}`, dept, position: `${dept}${rank}级`, rank, loyalty: 5, maxLoyalty: 9, traits: [], isUnderInvestigation: false, investigationStatus: null, investigationRoundsLeft: 0, personalQuests: [], completedQuests: [] };
+  const member = { id: `${factionId}_新${faction.members.length + 1}`, name: `新干部${faction.members.length + 1}`, dept, position: `${DEPT_NAMES[dept] || dept}${rank}`, rank, loyalty: 5, maxLoyalty: 9, traits: [], isUnderInvestigation: false, investigationStatus: null, investigationRoundsLeft: 0, personalQuests: [], completedQuests: [] };
   faction.members.push(member);
   return { success: true, message: `已任用一名${rank}级干部到${dept}` };
 }
@@ -65,7 +65,7 @@ export function tryBribeMember(fromFactionId, toFactionId, memberId) {
   if (member.loyalty <= 0) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4; member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
-    member.id = `${fromFactionId}_m${gameState.factions[fromFactionId].members.length}`;
+    member.id = `${fromFactionId}_${member.name}`;
     gameState.factions[fromFactionId].members.push(member);
     return { success: true, message: `${member.name}已叛变到你的派系！` };
   }

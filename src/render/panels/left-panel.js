@@ -1,6 +1,6 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
-import { FACTION_NAMES } from '../../logic/data/constants.js';
+import { FACTION_NAMES, DEPT_NAMES } from '../../logic/data/constants.js';
 
 export function renderLeftPanel() {
   const el = document.getElementById('left-panel');
@@ -21,7 +21,8 @@ export function renderLeftPanel() {
   if (resEntries.length) {
     h += '<div class="resource-grid">';
     for (const [dept, val] of resEntries) {
-      h += `<span class="resource-tag">${dept}: <b>${val}</b></span>`;
+      const deptName = DEPT_NAMES[dept] || dept;
+      h += `<span class="resource-tag">${deptName}: <b>${val}</b></span>`;
     }
     h += '</div>';
   } else {
