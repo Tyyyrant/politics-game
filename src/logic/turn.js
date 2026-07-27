@@ -36,7 +36,6 @@ export function isCurrentPlayerAI() {
 export function startNewRound() {
   gameState.turn++;
   gameState.phase = 'dice';
-  gameState.lastBillResult = null;
   for (const fid of FACTION_IDS) {
     gameState.factions[fid].projectBidUsed = false;
     gameState.factions[fid].raidUsed = false;

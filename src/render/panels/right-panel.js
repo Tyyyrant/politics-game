@@ -71,8 +71,8 @@ export function renderRightPanel() {
     h += `<div class="panel-section bill-result ${r.passed ? 'bill-passed' : 'bill-failed'}">
       <h3>📋 上轮法案结果</h3>
       <div class="bill-name">${icon} ${r.billName}</div>
-      <div style="font-size:0.75em;margin-top:4px;">✅${r.supportWeight}票 ❌${r.opposeWeight}票</div>
-      ${effText ? `<div class="bill-effect-detail">效果：${effText}</div>` : ''}
+      <div style="font-size:0.75em;margin-top:4px;">支持 ${r.supportWeight}票 | 反对 ${r.opposeWeight}票</div>
+      <div class="bill-effect-detail">${effText || '（无特殊效果）'}</div>
     </div>`;
   }
 
