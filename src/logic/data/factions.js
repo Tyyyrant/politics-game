@@ -87,7 +87,7 @@ export function createInitialFactionState(factionId) {
     id: factionId, leaderName: def.leader.name, leaderTitle: def.leader.title,
     leaderDept: def.leader.dept, leaderRank: def.leader.rank,
     isPlayerControllable: def.leader.isPlayerControllable, members,
-    resources: {}, influence: 0, funds: 0, briberyMarks: [], disciplineMarks: 0,
+    resources: {}, genericResources: 0, influence: 0, funds: 0, briberyMarks: [], disciplineMarks: 0,
     lockedSeats: def.leader.initialSeats || 0, activeSeatTasks: [],
     fiveYearPlanCooldown: 0, projectBidUsed: false, interrogateUsed: 0, raidUsed: false, projectVetoUsed: false,
     visitsThisTurn: 0  // 每轮最多拜访3个席位

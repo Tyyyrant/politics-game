@@ -452,11 +452,9 @@ async function handlePlayerAction(factionId, action) {
       case 'convertInfluence': {
         const pf = gameState.factions[factionId];
         if (pf.influence < 5) { await showAlert('影响力不足（5影响力→1通用资源）'); break; }
-        const allDepts = Object.keys(pf.resources);
-        const to = allDepts.length ? await showSelect('加到哪个资源?', allDepts.map(d => ({ label: `${d}:${pf.resources[d]}`, value: d }))) : null;
-        if (!to) { await showAlert('没有可用的资源部门'); break; }
         pf.influence -= 5;
-        pf.resources[to] = (pf.resources[to] || 0) + 1;
+        pf.genericResources = (pf.genericResources || 0) + 1;
+        await showAlert('已兑换！5影响力 → 1通用资源');
         renderAllPanels();
         break;
       }

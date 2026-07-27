@@ -17,14 +17,27 @@ export function produceResources(factionId) {
 
 export function spendResources(factionId, dept, amount) {
   const faction = gameState.factions[factionId];
-  if ((faction.resources[dept] || 0) < amount) return false;
-  faction.resources[dept] -= amount;
-  emit('resources:spent', { factionId, dept, amount });
+  const deptRes = faction.resources[dept] || 0;
+  const genRes = faction.genericResources || 0;
+  if (deptRes + genRes < amount) return false;
+  // Spend specific resources first, then generic
+  const fromDept = Math.min(deptRes, amount);
+  const fromGen = amount - fromDept;
+  faction.resources[dept] = deptRes - fromDept;
+  faction.genericResources = genRes - fromGen;
+  emit('resources:spent', { factionId, dept, amount, genericUsed: fromGen });
   return true;
 }
 
 export function spendAnyResources(factionId, amount) {
   const faction = gameState.factions[factionId];
+  // Try generic resources first
+  if (faction.genericResources > 0) {
+    const take = Math.min(faction.genericResources, amount);
+    faction.genericResources -= take;
+    amount -= take;
+  }
+  if (amount <= 0) return true;
   const entries = Object.entries(faction.resources).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   let remaining = amount;
   for (const [dept, val] of entries) {
