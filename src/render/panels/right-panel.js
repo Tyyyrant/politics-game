@@ -35,14 +35,20 @@ export function renderRightPanel() {
   const el = document.getElementById('right-panel');
   if (!el) return;
   let h = '<div class="panel-section"><h3>📜 事件日志</h3><div class="log-stream">';
-  for (const e of [...gameState.roundLog].reverse().slice(0, 15)) {
-    const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId;
-    const actionName = ACTION_NAMES_CN[e.action] || e.action;
-    const target = e.target || e.eventId || '';
-    const resultText = e.result ? ` → ${e.result}` : '';
-    h += `<div class="log-entry">【${factionName}】${actionName} ${target}${resultText}</div>`;
+  for (const e of [...gameState.roundLog].reverse().slice(0, 25)) {
+    if (e.factionId === 'system') {
+      if (e.action === 'roundStart') h += `<div class="log-round">━━━ ${e.target} ━━━</div>`;
+      else if (e.action === 'billResult') h += `<div class="log-bill">📜 ${e.target}：${e.result}（${e.detail || ''}）</div>`;
+      else h += `<div class="log-system">${e.target} ${e.result || ''}</div>`;
+    } else {
+      const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId;
+      const actionName = ACTION_NAMES_CN[e.action] || e.action;
+      const target = e.target || '';
+      const resultText = e.result ? ` → ${e.result}` : '';
+      h += `<div class="log-entry"><b>${factionName}</b> ${actionName} ${target}${resultText}</div>`;
+    }
   }
-  if (!gameState.roundLog.length) h += `<div class="log-empty">暂无事件，第${gameState.turn}轮行动开始</div>`;
+  if (!gameState.roundLog.length) h += `<div class="log-empty">第${gameState.turn}轮行动开始，暂无事件</div>`;
   h += '</div></div>';
 
   // Current bill being voted

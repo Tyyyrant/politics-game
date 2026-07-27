@@ -49,6 +49,7 @@ export function resolveBill() {
   if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', name: bill.name + '（未通过）', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
   const result = { passed, supportWeight, opposeWeight, billName: bill.name, billDesc: bill.description, passEffects: bill.passEffects, failEffects: bill.failEffects };
   gameState.lastBillResult = result;
+  gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: bill.name, result: passed ? '通过' : '未通过', detail: `${passed ? '支持' : '反对'} ${supportWeight}票:${opposeWeight}票` });
   emit('bill:resolved', result);
   gameState.currentBill = null;
   return result;

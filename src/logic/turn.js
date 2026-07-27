@@ -24,7 +24,7 @@ export function determineTurnOrder() {
   gameState.turnOrder = [playerId, ...othersWithoutPlayer.map(r => r.factionId), 'npcCongress', 'npcCppcc'];
   gameState.currentPlayerIndex = 0;
   gameState.phase = 'action';
-  gameState.roundLog = [];
+  gameState.roundLog.push({ factionId: 'system', action: 'roundStart', target: `第${gameState.turn}轮`, result: '开始' });
   emit('turn:order-determined', { order: gameState.turnOrder, rolls });
 }
 

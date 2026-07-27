@@ -99,7 +99,11 @@ body {
 
 /* === Right Panel === */
 .log-stream { max-height: 300px; overflow-y: auto; }
-.log-entry { font-size: 0.78em; color: var(--text-secondary); padding: 3px 0; border-bottom: 1px solid rgba(42,42,74,0.5); }
+.log-entry { font-size: 0.78em; color: var(--text-secondary); padding: 2px 0; }
+.log-entry b { color: var(--text-primary); }
+.log-round { font-size: 0.75em; color: var(--accent-gold); text-align: center; padding: 4px 0; font-weight: bold; }
+.log-bill { font-size: 0.78em; color: var(--text-primary); padding: 4px 6px; background: rgba(212,167,116,0.08); border-radius: 4px; margin: 2px 0; }
+.log-system { font-size: 0.75em; color: var(--text-secondary); font-style: italic; }
 .log-empty { color: var(--text-secondary); font-size: 0.85em; }
 .bill-status { background: rgba(212, 167, 116, 0.05); border: 1px solid var(--accent-gold); border-radius: 6px; padding: 10px; }
 .bill-name { font-weight: bold; color: var(--accent-gold); margin-bottom: 4px; }
