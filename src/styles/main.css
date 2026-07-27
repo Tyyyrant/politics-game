@@ -176,16 +176,6 @@ body {
 .select-option { background: var(--bg-panel); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px 12px; cursor: pointer; text-align: left; font-size: 0.85em; }
 .select-option:hover { border-color: var(--accent-gold); background: rgba(212,167,116,0.1); }
 
-/* === Action Button Tooltip === */
-.action-btn { position: relative; }
-.action-btn:hover::after {
-  content: attr(title);
-  position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%);
-  background: #1a1a2e; color: var(--text-primary); border: 1px solid var(--accent-gold);
-  padding: 6px 10px; border-radius: 4px; font-size: 0.75em; white-space: nowrap; z-index: 100;
-  pointer-events: none;
-  transition-delay: 2s;
-}
 
 /* === Appointment UI === */
 .modal-appoint { max-width: 520px; max-height: 75vh; overflow-y: auto; }
