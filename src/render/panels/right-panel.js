@@ -42,15 +42,18 @@ export function renderRightPanel() {
     const resultText = e.result ? ` → ${e.result}` : '';
     h += `<div class="log-entry">【${factionName}】${actionName} ${target}${resultText}</div>`;
   }
-  if (!gameState.roundLog.length) h += '<div class="log-empty">暂无事件，开始你的第一轮行动吧</div>';
+  if (!gameState.roundLog.length) h += `<div class="log-empty">暂无事件，第${gameState.turn}轮行动开始</div>`;
   h += '</div></div>';
 
   // Current bill being voted
   if (gameState.currentBill) {
     const b = gameState.currentBill;
-    h += `<div class="panel-section bill-status"><h3>📜 本轮法案投票中</h3>
+    const playerVoted = [...b.votes.support, ...b.votes.oppose, ...b.votes.abstain]
+      .some(v => v.factionId === gameState.playerFactionId);
+    const statusText = playerVoted ? '已投票，等待结算...' : '投票中';
+    h += `<div class="panel-section bill-status"><h3>📜 本轮法案${statusText}</h3>
       <div class="bill-name">${b.name}</div><div style="font-size:0.8em;">${b.description || ''}</div>
-      <div style="font-size:0.8em;margin-top:4px;">✅支持 ${b.votes.support.length} &nbsp; ❌反对 ${b.votes.oppose.length} &nbsp; ⏸️弃权 ${b.votes.abstain.length}</div></div>`;
+      <div style="font-size:0.8em;margin-top:4px;">支持 ${b.votes.support.length} | 反对 ${b.votes.oppose.length} | 弃权 ${b.votes.abstain.length}</div></div>`;
   }
 
   // Last resolved bill result
