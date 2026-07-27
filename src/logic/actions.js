@@ -27,6 +27,7 @@ function visitSeat(factionId, seatId) {
   if (seat.visitorId && seat.visitorId !== factionId) return { success: false, message: '已有其他派系在攻略' };
   seat.visitorId = factionId;
   seat.roundsRemaining = 2;
+  seat.visitedOnTurn = gameState.turn;  // track which turn it was visited
   if (factionId === gameState.playerFactionId) seat.revealed = true;
   gameState.factions[factionId].visitsThisTurn++;
   emit('seat:visited', { factionId, seatId, task: seat.revealed ? seat.task : null });
@@ -37,6 +38,7 @@ function visitSeat(factionId, seatId) {
 function completeTask(factionId, seatId) {
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat || seat.visitorId !== factionId) return { success: false, message: '你未在攻略此席位' };
+  if (seat.visitedOnTurn === gameState.turn) return { success: false, message: '本回合刚拜访，请下回合再完成任务' };
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, seat.task.cost) : spendResources(factionId, seat.task.resourceType, seat.task.cost);
   if (!spent) return { success: false, message: '资源不足' };
   seat.lockedById = factionId; seat.visitorId = null;

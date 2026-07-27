@@ -1,6 +1,7 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
+import { getBillEffectDescriptions } from '../../logic/bills.js';
 
 export function renderLeftPanel() {
   const el = document.getElementById('left-panel');
@@ -39,9 +40,11 @@ export function renderLeftPanel() {
     for (const s of mySeats) {
       const taskName = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
       const deptName = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
+      const canComplete = s.visitedOnTurn !== gameState.turn;
+      const statusText = canComplete ? '✅可完成' : '⏳下轮可完成';
       h += `<div class="active-seat-row">
         <div class="active-seat-name">${s.name} · ${taskName}</div>
-        <div class="active-seat-cost">💰 ${s.task.cost} ${deptName} &nbsp;|&nbsp; ⏰ 剩余 ${s.roundsRemaining} 轮</div>
+        <div class="active-seat-cost">💰 ${s.task.cost} ${deptName} &nbsp;|&nbsp; ⏰ 剩余 ${s.roundsRemaining} 轮 &nbsp;|&nbsp; ${statusText}</div>
       </div>`;
     }
     h += '</div>';
@@ -72,9 +75,10 @@ export function renderLeftPanel() {
   h += '</div>';
 
   // 生效效果
-  if (gameState.activeBillEffects.length) {
-    h += '<div class="panel-section"><h3>生效效果</h3>';
-    for (const e of gameState.activeBillEffects) h += `<div class="effect-item">· ${e.id}（${e.duration}轮）</div>`;
+  const effectsDesc = getBillEffectDescriptions();
+  if (effectsDesc.length) {
+    h += '<div class="panel-section"><h3>📋 生效法案效果</h3>';
+    for (const d of effectsDesc) h += `<div class="effect-item">· ${d}</div>`;
     h += '</div>';
   }
 

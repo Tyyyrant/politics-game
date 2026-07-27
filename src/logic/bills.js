@@ -47,8 +47,40 @@ export function resolveBill() {
   }
   if (passed && bill.passEffects) gameState.activeBillEffects.push({ id: bill.id, effects: bill.passEffects, duration: bill.passEffects.duration || 1 });
   if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
-  const result = { passed, supportWeight, opposeWeight };
+  const result = { passed, supportWeight, opposeWeight, billName: bill.name };
   emit('bill:resolved', result);
   gameState.currentBill = null;
   return result;
+}
+
+// Apply active bill effects to a faction's behavior
+export function getBillEffectBonus(factionId) {
+  let bonus = { resourceMult: 1, taskCostReduction: 0, influenceBonus: 0, appointmentDiscount: 0 };
+  for (const e of gameState.activeBillEffects) {
+    const eff = e.effects;
+    if (eff.globalResourceBonus) bonus.resourceMult += eff.globalResourceBonus;
+    if (eff.govResourceBonus && gameState.factions[factionId].leaderDept) bonus.resourceMult += eff.govResourceBonus;
+    if (eff.taskCostReduction) bonus.taskCostReduction += eff.taskCostReduction;
+    if (eff.appointmentCostReduction) bonus.appointmentDiscount += eff.appointmentCostReduction;
+    if (eff.supporterInfluenceBonus) bonus.influenceBonus += eff.supporterInfluenceBonus;
+  }
+  return bonus;
+}
+
+export function getBillEffectDescriptions() {
+  return gameState.activeBillEffects.map(e => {
+    const eff = e.effects;
+    const parts = [];
+    if (eff.globalResourceBonus) parts.push(`全体资源+${eff.globalResourceBonus}`);
+    if (eff.govResourceBonus) parts.push(`政府资源+${eff.govResourceBonus}`);
+    if (eff.taskCostReduction) parts.push(`任务消耗-${eff.taskCostReduction}`);
+    if (eff.appointmentCostReduction) parts.push(`任用消耗-${eff.appointmentCostReduction}`);
+    if (eff.govPartyExchange) parts.push('跨部门互通');
+    if (eff.blockPublicSecurity) parts.push('公安封锁');
+    if (eff.disableResources) parts.push('资源瘫痪');
+    if (eff.partySchoolBonus) parts.push('党校+1');
+    if (eff.disciplineSuccessBoost) parts.push('查处强化');
+    if (eff.banDisciplineAction) parts.push('禁纪委行动');
+    return `${e.id}：${parts.join('，')}（剩${e.duration}轮）`;
+  });
 }

@@ -185,7 +185,16 @@ async function handlePlayerAction(factionId, action) {
         break;
       }
       case 'completeTask': {
-        const sid = await showSeatPicker('完成席位任务 — 点击你正在攻略的席位');
+        const mySeats = gameState.npcSeats.filter(s => s.visitorId === factionId && !s.lockedById);
+        if (!mySeats.length) { await showAlert('你没有正在攻略的席位'); break; }
+        const opts = mySeats.map(s => {
+          const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
+          const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
+          const canDo = s.visitedOnTurn !== gameState.turn;
+          const prefix = canDo ? '✅' : '⏳';
+          return { label: `${prefix} ${s.name} | ${tname} | ${s.task.cost}${dname} | ${canDo ? '可完成' : '下轮可完成'}`, value: s.id };
+        });
+        const sid = await showSelect('选择要完成的席位', opts);
         if (sid) {
           await showAlert(executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid }).message);
         }
@@ -201,7 +210,16 @@ async function handlePlayerAction(factionId, action) {
         break;
       }
       case 'stealSeat': {
-        const sid = await showSeatPicker('抢夺席位 — 点击对手正在攻略的席位');
+        const stealable = gameState.npcSeats.filter(s =>
+          s.visitorId && s.visitorId !== factionId && !s.lockedById
+        );
+        if (!stealable.length) { await showAlert('没有可抢夺的席位（对手没有正在攻略的席位）'); break; }
+        const opts = stealable.map(s => {
+          const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
+          const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
+          return { label: `${s.name} | ${tname} | ${s.task.cost * 2}${dname}（双倍）| 剩${s.roundsRemaining}轮`, value: s.id };
+        });
+        const sid = await showSelect('抢夺席位（双倍资源消耗）', opts);
         if (sid) {
           await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
         }
