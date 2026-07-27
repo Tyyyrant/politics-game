@@ -11,7 +11,8 @@ import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 let _playerVoted = false;
-let _billResolveTimeout = null;
+let _aiVoteTriggered = false;
+let _billResolving = false;
 
 export function renderCenterPanel() {
   const el = document.getElementById('center-panel');
@@ -69,6 +70,8 @@ export function renderCenterPanel() {
 // === BILL PHASE (fixed — waits for player) ===
 function renderBillPhase(el) {
   _playerVoted = false;
+  _aiVoteTriggered = false;
+  _billResolving = false;
 
   if (!gameState.currentBill) {
     import('../../logic/bills.js').then(m => { m.drawBill(); renderBillPhase(el); });
@@ -79,53 +82,65 @@ function renderBillPhase(el) {
   let h = '<div class="center-content"><div class="bill-phase">';
   h += `<div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>`;
   h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}<br><small>通过需票数过半</small></div></div>`;
+
+  // If already voted, show disabled UI
+  if (_playerVoted) {
+    h += '<div class="bill-vote-section"><h4>✅ 已投票，等待结算...</h4>';
+    h += `<div class="bill-vote-status">当前票数 — ✅支持${bill.votes.support.length} ❌反对${bill.votes.oppose.length} ⏸️弃权${bill.votes.abstain.length}</div>`;
+    h += '</div></div>';
+    el.innerHTML = h;
+    return;
+  }
+
   h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
   h += '<div class="action-grid">';
   h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';
   h += '<button class="action-btn oppose-btn" id="bill-oppose">❌ 反对</button>';
   h += '<button class="action-btn abstain-btn" id="bill-abstain">⏸️ 弃权</button>';
   h += '</div></div>';
-  h += `<div class="bill-vote-status">当前票数 — ✅${bill.votes.support.length} ❌${bill.votes.oppose.length} ⏸️${bill.votes.abstain.length}</div>`;
+  h += `<div class="bill-vote-status">当前票数 — ✅支持${bill.votes.support.length} ❌反对${bill.votes.oppose.length} ⏸️弃权${bill.votes.abstain.length}</div>`;
   h += '</div></div>';
   el.innerHTML = h;
 
-  // AI votes immediately
-  setTimeout(async () => {
-    const billsMod = await import('../../logic/bills.js');
-    for (const fid of gameState.turnOrder) {
-      if (fid === gameState.playerFactionId) continue;
-      const allVotes = [...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain];
-      if (allVotes.some(v => v.factionId === fid)) continue;
-      billsMod.castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
-    }
-    renderAllPanels();
-  }, 300);
+  // AI votes — trigger ONCE
+  if (!_aiVoteTriggered) {
+    _aiVoteTriggered = true;
+    setTimeout(async () => {
+      const billsMod = await import('../../logic/bills.js');
+      for (const fid of gameState.turnOrder) {
+        if (fid === gameState.playerFactionId) continue;
+        const allVotes = [...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain];
+        if (allVotes.some(v => v.factionId === fid)) continue;
+        billsMod.castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
+      }
+      renderAllPanels();
+    }, 100);
+  }
 
-  // Player vote handlers — resolution happens after player votes
+  // Player vote → resolve immediately
   const doPlayerVote = async (stance) => {
-    if (_playerVoted) return;
+    if (_playerVoted || _billResolving) return;
     _playerVoted = true;
+    _billResolving = true;
     (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, stance);
     renderAllPanels();
 
-    // Now resolve the bill
+    // Short delay for visual feedback, then resolve
     setTimeout(async () => {
       (await import('../../logic/bills.js')).resolveBill();
       renderAllPanels();
 
-      // Transition to next round
       setTimeout(async () => {
         const t = await import('../../logic/turn.js');
         t.enterCleanup();
         t.startNewRound();
         t.determineTurnOrder();
         renderAllPanels();
-        // Auto-execute AI if first
         if (t.isCurrentPlayerAI()) {
-          setTimeout(() => executeAITurn(gameState.turnOrder[gameState.currentPlayerIndex]), 400);
+          setTimeout(() => executeAITurn(gameState.turnOrder[gameState.currentPlayerIndex]), 200);
         }
-      }, 600);
-    }, 500);
+      }, 300);
+    }, 200);
   };
 
   el.querySelector('#bill-support')?.addEventListener('click', () => doPlayerVote('support'));
@@ -294,6 +309,8 @@ function advanceAfterPlayer() {
     gameState.phase = 'bill';
     gameState.currentBill = null;
     _playerVoted = false;
+    _aiVoteTriggered = false;
+    _billResolving = false;
     renderAllPanels();
   }
 }
@@ -340,6 +357,8 @@ async function executeAITurn(factionId) {
     gameState.phase = 'bill';
     gameState.currentBill = null;
     _playerVoted = false;
+    _aiVoteTriggered = false;
+    _billResolving = false;
     renderAllPanels();
   }
 }
