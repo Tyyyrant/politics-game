@@ -31,10 +31,18 @@ export function decideAIActions(factionId) {
     }
   }
 
-  // 抢夺对手席位
+  // 抢夺对手席位（只抢席位比自己多的对手，每轮最多考虑1次）
+  let stealConsidered = false;
   for (const seat of gameState.npcSeats) {
+    if (stealConsidered) break;
     if (seat.visitorId && seat.visitorId !== factionId && !seat.lockedById && faction.influence >= 2) {
-      candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: seat.id }, score: sit.seatGap * p.aggression * (sit.threatMap[seat.visitorId] || 0.5) * 15 });
+      const targetSeats = gameState.factions[seat.visitorId]?.lockedSeats || 0;
+      // Only steal from factions with more locked seats, or high aggression
+      if (targetSeats > faction.lockedSeats || p.aggression > 0.7) {
+        stealConsidered = true;
+        const score = sit.seatGap * p.aggression * (sit.threatMap[seat.visitorId] || 0.5) * 10;
+        candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: seat.id }, score });
+      }
     }
   }
 
