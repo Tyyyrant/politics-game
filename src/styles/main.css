@@ -230,9 +230,18 @@ body {
 }
 .resource-line { font-size: 0.75em; color: var(--text-secondary); margin-top: 4px; word-break: break-all; }
 .effect-item {
-  font-size: 0.78em; color: var(--text-primary); padding: 3px 8px;
-  background: rgba(200,164,92,0.05); border-radius: 3px; margin: 2px 0;
+  font-size: 0.78em; color: var(--text-primary); padding: 5px 8px;
+  background: rgba(200,164,92,0.05); border-radius: 3px; margin: 3px 0;
+  line-height: 1.8;
 }
+.btn-effect-convert {
+  display: inline-block; padding: 2px 8px; margin-left: 4px;
+  background: rgba(139,26,26,0.25); color: var(--accent-gold);
+  border: 1px solid rgba(200,164,92,0.3); border-radius: 3px;
+  cursor: pointer; font-size: 0.9em; white-space: nowrap;
+  transition: all 0.12s;
+}
+.btn-effect-convert:hover { background: rgba(139,26,26,0.4); border-color: var(--accent-gold); }
 .bill-effects-box {
   border: 1px solid rgba(200,164,92,0.3); border-radius: 6px;
   padding: 8px; background: rgba(200,164,92,0.04);

@@ -1,7 +1,8 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
-import { getBillEffectDescriptions } from '../../logic/bills.js';
+import { renderAllPanels } from '../screens/game-screen.js';
+import { showAlert, showSelect, showPrompt } from '../modal.js';
 
 export function renderLeftPanel() {
   const el = document.getElementById('left-panel');
@@ -33,13 +34,46 @@ export function renderLeftPanel() {
   }
   h += '</div>';
 
-  // 生效法案效果（紧挨资源，显眼位置）
-  const effectsDesc = getBillEffectDescriptions();
-  if (effectsDesc.length) {
-    h += '<div class="panel-section bill-effects-box">';
-    for (const d of effectsDesc) {
-      const isPassed = d.includes('（通过）');
-      h += `<div class="effect-item">${isPassed ? '✅ 已通过' : '❌ 未通过'} ${d}</div>`;
+  // 生效法案效果 + 可点击的置换入口
+  if (gameState.activeBillEffects.length) {
+    h += '<div class="panel-section bill-effects-box"><h4>📜 生效法案</h4>';
+    for (const be of gameState.activeBillEffects) {
+      const eff = be.effects;
+      const isPassed = be.name.includes('（通过）');
+      const icon = isPassed ? '✅' : '❌';
+      // Build description
+      const descParts = [];
+      if (eff.globalResourceBonus) descParts.push(`全体资源+${eff.globalResourceBonus}`);
+      if (eff.govResourceBonus) descParts.push(`政府资源+${eff.govResourceBonus}`);
+      if (eff.taskCostReduction) descParts.push(`任务消耗-${eff.taskCostReduction}`);
+      if (eff.appointmentCostReduction) descParts.push(`任用消耗-${eff.appointmentCostReduction}`);
+      if (eff.govPartyExchange) descParts.push('政府↔党委互通');
+      if (eff.blockPublicSecurity) descParts.push('公安资源封锁');
+      if (eff.disableResources) descParts.push('目标资源瘫痪');
+      if (eff.partySchoolBonus) descParts.push('党校额外+1');
+      if (eff.disciplineSuccessBoost) descParts.push('查处成功率↑');
+      if (eff.banDisciplineAction) descParts.push('禁纪委行动');
+      if (eff.propagandaToInfluence) descParts.push('宣传可换影响力');
+      if (eff.govOfficeToGeneric) descParts.push('办公厅可换通用');
+      if (eff.publicSecurityAsGeneric) descParts.push('公安可当政府资源');
+
+      h += `<div class="effect-item">${icon} ${be.name}：${descParts.join('，')}（剩${be.duration}轮）`;
+
+      // Inline conversion buttons for actionable effects
+      if (eff.propagandaToInfluence && (pf.resources.propaganda || 0) >= 2) {
+        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">换→(2宣传=1影响)</button>`;
+      }
+      if (eff.govPartyExchange) {
+        h += ` <button class="btn-effect-convert" data-action="convertGovParty">跨部门互通</button>`;
+      }
+      if (eff.govOfficeToGeneric) {
+        h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用</button>`;
+      }
+      if (eff.publicSecurityAsGeneric && (pf.resources.publicSecurity || 0) >= 1) {
+        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府</button>`;
+      }
+
+      h += '</div>';
     }
     h += '</div>';
   }
@@ -92,4 +126,72 @@ export function renderLeftPanel() {
   h += '</div>';
 
   el.innerHTML = h;
+
+  // Bind inline conversion buttons in bill effects
+  el.querySelectorAll('.btn-effect-convert').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const action = btn.dataset.action;
+      const pf = gameState.factions[gameState.playerFactionId];
+      switch (action) {
+        case 'convertPropaganda': {
+          if ((pf.resources.propaganda || 0) < 2) { await showAlert('宣传资源不足（需2）'); break; }
+          pf.resources.propaganda -= 2;
+          pf.influence += 1;
+          await showAlert('已兑换：2宣传资源 → 1影响力');
+          renderAllPanels();
+          break;
+        }
+        case 'convertGovParty': {
+          const isGov = (d) => ['govOffice','ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'].includes(d);
+          const isParty = (d) => ['partyOffice','organization','propaganda','discipline','legalAffairs'].includes(d);
+          const deptLabel = (d) => `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`;
+          const govDepts = Object.keys(pf.resources).filter(d => isGov(d) && pf.resources[d] > 0);
+          const partyDepts = Object.keys(pf.resources).filter(d => isParty(d) && pf.resources[d] > 0);
+          if (!govDepts.length && !partyDepts.length) { await showAlert('没有可兑换的资源'); break; }
+          const allFrom = [...govDepts.map(d => ({ label: `政府·${deptLabel(d)}`, value: d })),
+                           ...partyDepts.map(d => ({ label: `党委·${deptLabel(d)}`, value: d }))];
+          const from = await showSelect('选择要兑换的来源部门', allFrom);
+          if (!from) break;
+          const toTargets = (isGov(from) ? partyDepts : govDepts).map(d => ({ label: deptLabel(d), value: d }));
+          const to = await showSelect('选择目标部门', toTargets.length ? toTargets : [{ label: '无可用目标', value: '' }]);
+          if (!to) break;
+          const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
+          if (amt <= 0 || (pf.resources[from] || 0) < amt) { await showAlert('资源不足'); break; }
+          pf.resources[from] -= amt;
+          pf.resources[to] = (pf.resources[to] || 0) + amt;
+          await showAlert(`已兑换：${amt}${DEPT_NAMES[from] || from} → ${DEPT_NAMES[to] || to}`);
+          renderAllPanels();
+          break;
+        }
+        case 'convertGovOfficeToGeneric': {
+          const choices = [];
+          if ((pf.resources.govOffice || 0) > 0) choices.push({ label: `政府办公厅→通用(1:1) 当前${pf.resources.govOffice}`, value: 'govOffice' });
+          if ((pf.resources.partyOffice || 0) > 0) choices.push({ label: `党委办公厅→通用(1:1) 当前${pf.resources.partyOffice}`, value: 'partyOffice' });
+          if (!choices.length) { await showAlert('没有办公厅资源'); break; }
+          const type = await showSelect('选择办公厅类型', choices);
+          if (!type) break;
+          const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
+          if (amt <= 0 || (pf.resources[type] || 0) < amt) { await showAlert('资源不足'); break; }
+          pf.resources[type] -= amt;
+          pf.genericResources = (pf.genericResources || 0) + amt;
+          await showAlert(`已兑换！${amt}${type === 'govOffice' ? '政府' : '党委'}办公厅→${amt}通用资源`);
+          renderAllPanels();
+          break;
+        }
+        case 'convertEmergency': {
+          if ((pf.resources.publicSecurity || 0) < 1) { await showAlert('公安资源不足'); break; }
+          const govDepts = ['govOffice','ndrc','sasac','hrss','finance','housing','education','audit'];
+          const opts = govDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
+          const to = await showSelect('公安→哪个政府资源(1:1)', opts);
+          if (!to) break;
+          const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
+          if (amt <= 0 || (pf.resources.publicSecurity || 0) < amt) { await showAlert('资源不足'); break; }
+          pf.resources.publicSecurity -= amt;
+          pf.resources[to] = (pf.resources[to] || 0) + amt;
+          renderAllPanels();
+          break;
+        }
+      }
+    });
+  });
 }
