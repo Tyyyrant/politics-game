@@ -45,8 +45,8 @@ export function resolveBill() {
       for (const d of Object.keys(f.resources)) f.resources[d] = Math.floor(f.resources[d] / 2);
     }
   }
-  if (passed && bill.passEffects) gameState.activeBillEffects.push({ id: bill.id, effects: bill.passEffects, duration: bill.passEffects.duration || 1 });
-  if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
+  if (passed && bill.passEffects) gameState.activeBillEffects.push({ id: bill.id, name: bill.name + '（通过）', effects: bill.passEffects, duration: bill.passEffects.duration || 1 });
+  if (!passed && bill.failEffects && Object.keys(bill.failEffects).length > 0) gameState.activeBillEffects.push({ id: bill.id + '_fail', name: bill.name + '（未通过）', effects: bill.failEffects, duration: bill.failEffects.duration || 1 });
   const result = { passed, supportWeight, opposeWeight, billName: bill.name };
   emit('bill:resolved', result);
   gameState.currentBill = null;
@@ -81,6 +81,6 @@ export function getBillEffectDescriptions() {
     if (eff.partySchoolBonus) parts.push('党校+1');
     if (eff.disciplineSuccessBoost) parts.push('查处强化');
     if (eff.banDisciplineAction) parts.push('禁纪委行动');
-    return `${e.id}：${parts.join('，')}（剩${e.duration}轮）`;
+    return `${e.name || e.id}：${parts.join('，')}（剩${e.duration}轮）`;
   });
 }

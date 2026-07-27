@@ -10,6 +10,36 @@ import { renderAllPanels } from '../screens/game-screen.js';
 import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
+function describeEffects(eff) {
+  const parts = [];
+  if (eff.globalResourceBonus) parts.push(`全体资源+${eff.globalResourceBonus}`);
+  if (eff.govResourceBonus) parts.push(`政府资源+${eff.govResourceBonus}`);
+  if (eff.financeResourceBonus) parts.push(`财政资源+${eff.financeResourceBonus}`);
+  if (eff.taskCostReduction) parts.push(`任务消耗-${eff.taskCostReduction}`);
+  if (eff.appointmentCostReduction) parts.push(`任用消耗-${eff.appointmentCostReduction}`);
+  if (eff.govPartyExchange) parts.push('跨部门互通');
+  if (eff.blockPublicSecurity) parts.push('公安封锁');
+  if (eff.disableResources) parts.push('资源瘫痪');
+  if (eff.partySchoolBonus) parts.push('党校+1');
+  if (eff.disciplineSuccessBoost) parts.push('查处强化');
+  if (eff.banDisciplineAction) parts.push('禁纪委行动');
+  if (eff.supporterInfluenceBonus) parts.push(`支持方影响力+${eff.supporterInfluenceBonus}`);
+  if (eff.disciplineMarksBonus) parts.push(`纪委标记+${eff.disciplineMarksBonus}`);
+  if (eff.governmentResourceBonus) parts.push(`政府资源+${eff.governmentResourceBonus}`);
+  if (eff.propagandaToInfluence) parts.push('宣传换影响力');
+  if (eff.govOfficeToGeneric) parts.push('办公厅换通用');
+  if (eff.hrssResourcePenalty) parts.push(`人社资源-${eff.hrssResourcePenalty}`);
+  if (eff.propagandaResourcePenalty) parts.push(`宣传资源-${eff.propagandaResourcePenalty}`);
+  if (eff.partyResourcePenalty) parts.push(`党委资源-${eff.partyResourcePenalty}`);
+  if (eff.financeVoteWeight) parts.push(`财政投票权重调整`);
+  if (eff.payPartyResourceOrInfluence) parts.push('支付党委资源或影响力');
+  if (eff.banOpinionGuide) parts.push('禁舆论引导');
+  if (eff.govAppointmentCostIncrease) parts.push('任用消耗增加');
+  if (eff.supporterPropagandaPenalty) parts.push('宣传方资源惩罚');
+  if (eff.immunityAuditStorm) parts.push('免疫审计风暴');
+  return parts.join('，');
+}
+
 let _playerVoted = false;
 let _aiVoteTriggered = false;
 let _billResolving = false;
@@ -97,7 +127,17 @@ function renderBillPhase(el) {
   const bill = gameState.currentBill;
   let h = '<div class="center-content"><div class="bill-phase">';
   h += `<div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>`;
-  h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}<br><small>通过需票数过半</small></div></div>`;
+  h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}`;
+  // Show what happens on pass/fail
+  if (bill.passEffects) {
+    const passEff = describeEffects(bill.passEffects);
+    if (passEff) h += `<br><span class="bill-effect-pass">✅ 通过：${passEff}</span>`;
+  }
+  if (bill.failEffects && Object.keys(bill.failEffects).length) {
+    const failEff = describeEffects(bill.failEffects);
+    if (failEff) h += `<br><span class="bill-effect-fail">❌ 未通过：${failEff}</span>`;
+  }
+  h += `<br><small>通过需票数过半</small></div></div>`;
   h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
   h += '<div class="action-grid">';
   h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';

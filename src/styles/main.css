@@ -151,6 +151,8 @@ body {
 .support-btn { background: rgba(39, 174, 96, 0.2) !important; border-color: var(--accent-green) !important; }
 .oppose-btn { background: rgba(192, 57, 43, 0.2) !important; border-color: var(--accent-red) !important; }
 .abstain-btn { background: rgba(160, 160, 176, 0.2) !important; }
+.bill-effect-pass { color: var(--accent-green); font-size: 0.85em; }
+.bill-effect-fail { color: var(--accent-red); font-size: 0.85em; }
 .end-turn-btn { background: rgba(212, 167, 116, 0.2) !important; border-color: var(--accent-gold) !important; font-weight: bold; }
 
 /* === Modal === */
