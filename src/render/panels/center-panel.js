@@ -86,6 +86,12 @@ export function renderCenterPanel() {
     h += btn('干部任用', 'appoint', '消耗5-15组织部资源，扩张派系编制');
     h += btn('提升忠诚度', 'boostLoyalty', '消耗10影响力或1笔资金，提升成员忠诚+1');
     h += btn('商人上门', 'merchant', '消耗2影响力，随机获得资金（带风险）');
+    // 检查是否有宣传→影响力转换效果
+    const canConvert = gameState.activeBillEffects.some(e => e.effects.propagandaToInfluence) ||
+      (gameState.currentEvent?.effects?.propagandaToGeneric);
+    if (canConvert) {
+      h += '<button class="action-btn convert-btn" data-action="convertPropaganda">🔄 宣传换影响力(2宣传→1影响)</button>';
+    }
     h += '<button class="action-btn end-turn-btn" data-action="endTurn" title="结束本回合行动">✅ 结束回合</button>';
     h += '</div></div>';
   } else {
@@ -379,6 +385,15 @@ async function handlePlayerAction(factionId, action) {
             await showAlert(m.boostLoyalty(factionId, mid, method).message);
           }
         }
+        break;
+      }
+      case 'convertPropaganda': {
+        const pf = gameState.factions[factionId];
+        if ((pf.resources.propaganda || 0) < 2) { await showAlert('宣传资源不足（需要2宣传资源换1影响力）'); break; }
+        pf.resources.propaganda -= 2;
+        pf.influence += 1;
+        gameState.roundLog.push({ factionId, action: 'convertPropaganda', result: '宣传→影响力' });
+        await showAlert('已置换！消耗2宣传资源，获得1影响力。');
         break;
       }
       case 'merchant': {

@@ -31,7 +31,7 @@ function visitSeat(factionId, seatId) {
   if (factionId === gameState.playerFactionId) seat.revealed = true;
   gameState.factions[factionId].visitsThisTurn++;
   emit('seat:visited', { factionId, seatId, task: seat.revealed ? seat.task : null });
-  gameState.roundLog.push({ factionId, action: 'visitSeat', target: seatId });
+  gameState.roundLog.push({ factionId, action: 'visitSeat', target: `${seat.name}(${seatId})`, result: '开始攻略' });
   return { success: true, message: `已拜访${seat.name}`, data: seat.revealed ? seat.task : null };
 }
 
@@ -44,7 +44,7 @@ function completeTask(factionId, seatId) {
   seat.lockedById = factionId; seat.visitorId = null;
   gameState.factions[factionId].lockedSeats++;
   emit('seat:locked', { factionId, seatId });
-  gameState.roundLog.push({ factionId, action: 'completeTask', target: seatId });
+  gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${seatId})`, result: '锁定成功' });
   return { success: true, message: `成功锁定${seat.name}！` };
 }
 
@@ -71,7 +71,7 @@ function stealSeat(factionId, seatId) {
   seat.lockedById = factionId;
   seat.visitorId = null;
   gameState.factions[factionId].lockedSeats++;
-  gameState.roundLog.push({ factionId, action: 'stealSeat', target: seatId, victim: victimId, result: '直接锁定' });
+  gameState.roundLog.push({ factionId, action: 'stealSeat', target: `${seat.name}(${seatId})`, victim: victimId, result: '抢夺锁定' });
   emit('seat:locked', { factionId, seatId });
   return { success: true, message: `抢夺成功！${seat.name}已直接锁定` };
 }
