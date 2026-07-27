@@ -11,39 +11,31 @@ export function decideAIActions(factionId) {
   const faction = gameState.factions[factionId];
   const candidates = [];
 
-  // 拜访未攻略席位
+  // 拜访未攻略席位（只看空闲席位，不知道谁在攻略）
   const unvisited = gameState.npcSeats.filter(s => !s.visitorId && !s.lockedById);
   if (unvisited.length && faction.influence >= 1) {
     candidates.push({ type: ACTION_TYPES.VISIT_SEAT, params: { seatId: unvisited[0].id }, score: sit.seatGap * (1 - p.aggression) * 10 });
   }
 
-  // 完成已有席位任务（只能完成上回合拜访的，且确实有资源）
+  // 完成自己的席位任务
   for (const seat of gameState.npcSeats) {
     if (seat.visitorId === factionId && seat.visitedOnTurn !== gameState.turn) {
       const canAfford = seat.task.resourceType === 'any'
         ? Object.values(faction.resources).reduce((s, v) => s + v, 0) >= seat.task.cost
         : (faction.resources[seat.task.resourceType] || 0) >= seat.task.cost;
       if (canAfford) {
-        // Higher score when seat gap is large, lower when resources are tight
         const score = 15 + sit.seatGap * 2 + sit.resourceHealth * 5;
         candidates.push({ type: ACTION_TYPES.COMPLETE_TASK, params: { seatId: seat.id }, score });
       }
     }
   }
 
-  // 抢夺对手席位（只抢席位比自己多的对手，每轮最多考虑1次）
-  let stealConsidered = false;
-  for (const seat of gameState.npcSeats) {
-    if (stealConsidered) break;
-    if (seat.visitorId && seat.visitorId !== factionId && !seat.lockedById && faction.influence >= 2) {
-      const targetSeats = gameState.factions[seat.visitorId]?.lockedSeats || 0;
-      // Only steal from factions with more locked seats, or high aggression
-      if (targetSeats > faction.lockedSeats || p.aggression > 0.7) {
-        stealConsidered = true;
-        const score = sit.seatGap * p.aggression * (sit.threatMap[seat.visitorId] || 0.5) * 10;
-        candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: seat.id }, score });
-      }
-    }
+  // 抢夺席位（AI 不知道谁在攻略哪个席位，随机选被占用的）
+  const occupiedByOther = gameState.npcSeats.filter(s => s.visitorId && s.visitorId !== factionId && !s.lockedById);
+  if (occupiedByOther.length && faction.influence >= 2) {
+    const target = occupiedByOther[Math.floor(Math.random() * occupiedByOther.length)];
+    // AI 随机抢，不针对特定玩家
+    candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: target.id }, score: sit.seatGap * p.aggression * 3 });
   }
 
   // 查处玩家干部
