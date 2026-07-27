@@ -238,7 +238,7 @@ export function showAppointmentUI(factionId) {
           const infCost = PROMOTION_INFLUENCE_COST[p.rank] || '—';
           const resCost = APPOINTMENT_COST[p.rank] || '—';
           const ctrlClass = p.isControlled ? '' : ' pos-noncontrolled';
-          html += `<button class="btn-position-pick${ctrlClass}" data-dept="${p.deptId}" data-rank="${p.rank}" data-controlled="${p.isControlled ? '1' : '0'}">
+          html += `<button class="btn-position-pick${ctrlClass}" data-dept="${p.deptId}" data-rank="${p.rank}" data-title="${p.title}" data-controlled="${p.isControlled ? '1' : '0'}">
             <span class="pos-title">${p.title}</span>
             <span class="pos-rank">${p.rank}</span>
             <span class="pos-vacant">缺${p.vacant}/${p.total}</span>
@@ -267,10 +267,11 @@ export function showAppointmentUI(factionId) {
       btn.addEventListener('click', async () => {
         const dept = btn.dataset.dept;
         const rank = btn.dataset.rank;
+        const title = btn.dataset.title;
         const isControlled = btn.dataset.controlled === '1';
         overlay.remove();
         // Show step 2: candidate list
-        const result = await showCandidateUI(factionId, dept, rank, isControlled);
+        const result = await showCandidateUI(factionId, dept, rank, title, isControlled);
         resolve(result);
       });
     });
@@ -278,13 +279,12 @@ export function showAppointmentUI(factionId) {
 }
 
 // Step 2: Show candidates for a specific position
-function showCandidateUI(factionId, deptId, targetRank, isControlled = true) {
+function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlled = true) {
   return new Promise(resolve => {
     const faction = gameState.factions[factionId];
     const dept = DEPARTMENTS[deptId];
     const deptName = dept ? dept.name : deptId;
-    const targetPos = dept ? dept.positions.find(p => p.rank === targetRank) : null;
-    const posTitle = targetPos ? targetPos.title : `${targetRank}`;
+    const posTitle = targetTitle || `${targetRank}`;
 
     const rankOrder = ['副处', '正处', '副厅', '正厅'];
     const targetIdx = rankOrder.indexOf(targetRank);
@@ -332,7 +332,7 @@ function showCandidateUI(factionId, deptId, targetRank, isControlled = true) {
         html += `<div class="candidate-row">
           <span class="candidate-info">${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
           <span class="candidate-path">招募→${targetRank}</span>
-          <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}">招募</button>
+          <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button>
         </div>`;
       }
     } else {
@@ -365,7 +365,7 @@ function showCandidateUI(factionId, deptId, targetRank, isControlled = true) {
     overlay.querySelectorAll('.btn-recruit').forEach(btn => {
       btn.addEventListener('click', () => {
         overlay.remove();
-        resolve({ action: 'recruit', officialName: btn.dataset.name, officialDept: btn.dataset.dept, officialRank: btn.dataset.rank, targetRank: btn.dataset.target });
+        resolve({ action: 'recruit', officialName: btn.dataset.name, officialDept: btn.dataset.dept, officialRank: btn.dataset.rank, targetRank: btn.dataset.target, targetTitle: btn.dataset.targetTitle });
       });
     });
   });

@@ -50,15 +50,18 @@ export function promoteMember(factionId, memberId) {
   const influenceCost = PROMOTION_INFLUENCE_COST[member.rank] || 5;
   const resourceCost = APPOINTMENT_COST[newRank] || 8;
 
-  // Check if target position is vacant in the department
+  // Find a vacant position at the new rank in this department
   const dept = DEPARTMENTS[member.dept];
   if (!dept) return { success: false, message: '部门不存在' };
-  const matchingPos = dept.positions.find(p => p.rank === newRank);
-  if (!matchingPos) return { success: false, message: `该部门没有${newRank}级职位` };
+  const candidates = dept.positions.filter(p => p.rank === newRank);
+  if (!candidates.length) return { success: false, message: `该部门没有${newRank}级职位` };
 
-  // Count how many faction members hold this specific position
-  const holders = faction.members.filter(m => m.dept === member.dept && m.position === matchingPos.title && m.id !== member.id);
-  if (holders.length >= matchingPos.count) return { success: false, message: `${dept.name}的${matchingPos.title}职位已满（${matchingPos.count}个）` };
+  let matchingPos = null;
+  for (const pos of candidates) {
+    const holders = faction.members.filter(m => m.dept === member.dept && m.position === pos.title && m.id !== member.id);
+    if (holders.length < pos.count) { matchingPos = pos; break; }
+  }
+  if (!matchingPos) return { success: false, message: `${dept.name}的所有${newRank}职位已满` };
 
   // Spend resources
   if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
@@ -76,8 +79,8 @@ export function promoteMember(factionId, memberId) {
 }
 
 // 招募无派系干部：消耗影响力 + 组织部资源，该干部获得"曾受你的提拔"特性
-// targetRank: 目标职位级别（可能与干部当前级别不同，如招募正处填补副厅职位）
-export function recruitOfficial(factionId, officialName, officialDept, targetRank) {
+// targetRank: 目标职位级别  targetTitle: 具体职位名称（如"舆论处处长"，避免find取到同级别第一个）
+export function recruitOfficial(factionId, officialName, officialDept, targetRank, targetTitle) {
   const faction = gameState.factions[factionId];
   const pool = gameState.independentOfficials;
 
@@ -89,11 +92,11 @@ export function recruitOfficial(factionId, officialName, officialDept, targetRan
   const influenceCost = RECRUIT_INFLUENCE_COST[targetRank] || 5;
   const resourceCost = RECRUIT_RESOURCE_COST[targetRank] || 8;
 
-  // Check vacancy at target rank
+  // Check vacancy for the specific target position
   const dept = DEPARTMENTS[officialDept];
   if (!dept) return { success: false, message: '部门不存在' };
-  const matchingPos = dept.positions.find(p => p.rank === targetRank);
-  if (!matchingPos) return { success: false, message: `该部门没有${targetRank}级职位` };
+  const matchingPos = dept.positions.find(p => p.title === targetTitle) || dept.positions.find(p => p.rank === targetRank);
+  if (!matchingPos) return { success: false, message: `该部门没有${targetTitle || targetRank}职位` };
 
   const holders = faction.members.filter(m => m.dept === officialDept && m.position === matchingPos.title);
   if (holders.length >= matchingPos.count) return { success: false, message: `${dept.name}的${matchingPos.title}职位已满` };

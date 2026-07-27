@@ -375,7 +375,7 @@ async function handlePlayerAction(factionId, action) {
         if (result.action === 'promote') {
           await showAlert(m.promoteMember(factionId, result.memberId).message);
         } else if (result.action === 'recruit') {
-          await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank).message);
+          await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle).message);
         }
         renderAllPanels();
         break;
