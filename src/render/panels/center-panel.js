@@ -73,12 +73,24 @@ export function renderCenterPanel() {
 
 // === BILL PHASE (fixed — waits for player) ===
 function renderBillPhase(el) {
-  _playerVoted = false;
-  _aiVoteTriggered = false;
-  _billResolving = false;
-
+  // Bill not yet drawn — draw it synchronously
   if (!gameState.currentBill) {
-    import('../../logic/bills.js').then(m => { m.drawBill(); renderBillPhase(el); });
+    _playerVoted = false;
+    _aiVoteTriggered = false;
+    _billResolving = false;
+    // Dynamic import cached from first use — near-instant
+    import('../../logic/bills.js').then(m => { m.drawBill(); el.innerHTML = ''; renderBillPhase(el); });
+    return;
+  }
+
+  // Player already voted — show waiting state with no re-trigger
+  if (_playerVoted || _billResolving) {
+    const b = gameState.currentBill;
+    el.innerHTML = `<div class="center-content"><div class="bill-phase">
+      <div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>
+      <div class="event-card-body"><b>${b.name}</b><br>已投票，等待其他派系投票和结算...</div></div>
+      <div class="bill-vote-status">✅支持${b.votes.support.length} ❌反对${b.votes.oppose.length} ⏸️弃权${b.votes.abstain.length}</div>
+    </div></div>`;
     return;
   }
 
@@ -86,16 +98,6 @@ function renderBillPhase(el) {
   let h = '<div class="center-content"><div class="bill-phase">';
   h += `<div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>`;
   h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}<br><small>通过需票数过半</small></div></div>`;
-
-  // If already voted, show disabled UI
-  if (_playerVoted) {
-    h += '<div class="bill-vote-section"><h4>✅ 已投票，等待结算...</h4>';
-    h += `<div class="bill-vote-status">当前票数 — ✅支持${bill.votes.support.length} ❌反对${bill.votes.oppose.length} ⏸️弃权${bill.votes.abstain.length}</div>`;
-    h += '</div></div>';
-    el.innerHTML = h;
-    return;
-  }
-
   h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
   h += '<div class="action-grid">';
   h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';
