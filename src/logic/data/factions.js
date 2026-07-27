@@ -89,7 +89,8 @@ export function createInitialFactionState(factionId) {
     isPlayerControllable: def.leader.isPlayerControllable, members,
     resources: {}, influence: 0, funds: 0, briberyMarks: [], disciplineMarks: 0,
     lockedSeats: def.leader.initialSeats || 0, activeSeatTasks: [],
-    fiveYearPlanCooldown: 0, projectBidUsed: false, interrogateUsed: 0, raidUsed: false, projectVetoUsed: false
+    fiveYearPlanCooldown: 0, projectBidUsed: false, interrogateUsed: 0, raidUsed: false, projectVetoUsed: false,
+    visitsThisTurn: 0  // 每轮最多拜访3个席位
   };
 }
 

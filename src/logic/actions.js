@@ -19,7 +19,8 @@ export function executeAction(factionId, actionType, params = {}) {
 }
 
 function visitSeat(factionId, seatId) {
-  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足' };
+  if (gameState.factions[factionId].visitsThisTurn >= 3) return { success: false, message: '每轮最多拜访3个席位' };
+  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat) return { success: false, message: '席位不存在' };
   if (seat.lockedById) return { success: false, message: '该席位已被锁定' };
@@ -27,6 +28,7 @@ function visitSeat(factionId, seatId) {
   seat.visitorId = factionId;
   seat.roundsRemaining = 2;
   if (factionId === gameState.playerFactionId) seat.revealed = true;
+  gameState.factions[factionId].visitsThisTurn++;
   emit('seat:visited', { factionId, seatId, task: seat.revealed ? seat.task : null });
   gameState.roundLog.push({ factionId, action: 'visitSeat', target: seatId });
   return { success: true, message: `已拜访${seat.name}`, data: seat.revealed ? seat.task : null };

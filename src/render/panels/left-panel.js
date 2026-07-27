@@ -13,7 +13,9 @@ export function renderLeftPanel() {
   // === 我的派系详情 ===
   h += '<div class="panel-section player-full"><h3>👤 我的派系 — ' + pf.leaderName + '</h3>';
   h += `<div class="stat-row">📊 影响力: <b>${pf.influence}</b> &nbsp;|&nbsp; 💰 资金: <b>${pf.funds}</b></div>`;
+  const visitsLeft = 3 - (pf.visitsThisTurn || 0);
   h += `<div class="stat-row">🔒 席位: <b>${pf.lockedSeats}/27</b> &nbsp;|&nbsp; 🔴 纪委标记: <b>${pf.disciplineMarks}</b></div>`;
+  h += `<div class="stat-row">👁️ 剩余拜访: <b>${visitsLeft}/3</b> &nbsp;|&nbsp; 👥 攻略中: <b>${pf.activeSeatTasks.length || gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId).length}</b></div>`;
 
   // 资源明细
   h += '<div class="resource-section"><h4>📦 资源</h4>';

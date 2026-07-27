@@ -104,6 +104,7 @@ export function showConfirm(message) {
 
 // Seat matrix — show all 27 seats as a clickable grid
 import { gameState } from '../logic/state.js';
+import { SEAT_TASK_NAMES_CN, DEPT_NAMES } from '../logic/data/constants.js';
 
 export function showSeatPicker(title, filterFn = null) {
   return new Promise(resolve => {
@@ -130,8 +131,10 @@ export function showSeatPicker(title, filterFn = null) {
         icon = '🟢';
         info = '空闲';
       }
+      const taskName = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
+      const deptName = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
       const detail = s.visitorId === playerId && s.revealed
-        ? `\n任务: ${s.task.type} 费${s.task.cost} ${s.task.resourceType}`
+        ? `\n${taskName}\n${s.task.cost} ${deptName}`
         : '';
       gridHtml += `<div class="${cls}" data-seat-id="${s.id}" title="${s.name}${detail}">
         <div class="seat-icon">${icon}</div>

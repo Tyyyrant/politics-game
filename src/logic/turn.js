@@ -40,6 +40,7 @@ export function startNewRound() {
     gameState.factions[fid].raidUsed = false;
     gameState.factions[fid].interrogateUsed = 0;
     gameState.factions[fid].projectVetoUsed = false;
+    gameState.factions[fid].visitsThisTurn = 0;
     if (gameState.factions[fid].fiveYearPlanCooldown > 0) gameState.factions[fid].fiveYearPlanCooldown--;
   }
   emit('turn:new-round', { turn: gameState.turn });

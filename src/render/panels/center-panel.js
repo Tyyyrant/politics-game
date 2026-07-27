@@ -8,7 +8,7 @@ import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
 import { showPrompt, showSelect, showAlert, showSeatPicker } from '../modal.js';
-import { FACTION_NAMES_CN, DEPT_NAMES } from '../../logic/data/constants.js';
+import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 let _playerVoted = false;
 let _billResolveTimeout = null;
@@ -34,7 +34,8 @@ export function renderCenterPanel() {
   }
 
   if (isPlayer) {
-    h += '<div class="action-panel"><h3>选择行动</h3><div class="action-grid">';
+    const visitsLeft = 3 - (gameState.factions[factionId].visitsThisTurn || 0);
+    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/3）</h3><div class="action-grid">';
     h += btn('拜访人大席位', 'visitSeat');
     h += btn('完成席位任务', 'completeTask');
     h += btn('打探对手席位', 'scoutSeat');
@@ -157,7 +158,8 @@ async function handlePlayerAction(factionId, action) {
         const sid = await showSeatPicker('拜访人大席位 — 点击一个空闲席位');
         if (sid) {
           const r = executeAction(factionId, ACTION_TYPES.VISIT_SEAT, { seatId: sid });
-          await showAlert(r.message + (r.data ? '\n任务: ' + r.data.type + '\n费用: ' + r.data.cost + ' ' + r.data.resourceType : ''));
+          const detail = r.data ? '\n任务: ' + (SEAT_TASK_NAMES_CN[r.data.type] || r.data.type) + '\n费用: ' + r.data.cost + ' ' + (DEPT_NAMES[r.data.resourceType] || r.data.resourceType) : '';
+          await showAlert(r.message + detail);
         }
         break;
       }
