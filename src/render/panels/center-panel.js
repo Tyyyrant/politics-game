@@ -74,7 +74,7 @@ export function renderCenterPanel() {
     h += btn('拜访人大席位', 'visitSeat', '消耗1影响力，查看席位任务');
     h += btn('完成席位任务', 'completeTask', '消耗对应资源，锁定席位（本回合拜访的需下回合完成）');
     h += btn('打探对手席位', 'scoutSeat', '消耗2影响力，查看对手攻略的席位详情');
-    h += btn('抢夺对手席位', 'stealSeat', '消耗2影响力+双倍任务资源，抢走对手的席位');
+    h += btn('抢夺对手席位', 'stealSeat', '先打探(1影响)+抢夺(2影响)+双倍资源，直接锁定对手的席位');
     h += btn('查处对手干部', 'investigate', '消耗纪委标记，骰子判决定，查处对手干部');
     h += btn('公安审讯', 'interrogate', '消耗2公安资源，目标下回合无法产出');
     h += btn('突击检查', 'raid', '消耗3公安资源，使目标任务失败');
@@ -270,7 +270,7 @@ async function handlePlayerAction(factionId, action) {
           const scouted = s.scoutedBy?.includes(factionId);
           const prefix = scouted ? '👁️' : '❓';
           const info = scouted
-            ? `${(SEAT_TASK_NAMES_CN[s.task.type] || s.task.type)} 双倍${s.task.cost * 2}${DEPT_NAMES[s.task.resourceType] || s.task.resourceType}`
+            ? `${(SEAT_TASK_NAMES_CN[s.task.type] || s.task.type)} | 双倍${s.task.cost * 2}${DEPT_NAMES[s.task.resourceType] || s.task.resourceType} | 直接锁定`
             : '未打探（需先花1影响力打探）';
           return { label: `${prefix} ${s.name} | ${info} | 剩${s.roundsRemaining}轮`, value: s.id };
         });
@@ -283,7 +283,7 @@ async function handlePlayerAction(factionId, action) {
           if (!scoutR.success) { await showAlert(scoutR.message); break; }
           // Show what we found
           const data = scoutR.data;
-          const ok = await showConfirm(`打探结果：\n攻略者：${data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n消耗2影响力+${data.task.cost * 2}资源抢夺？`);
+          const ok = await showConfirm(`打探结果：\n攻略者：${data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n原费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n抢夺 = 花双倍资源(${data.task.cost * 2})直接锁定该席位！\n确定要抢吗？`);
           if (!ok) break;
         }
         await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);

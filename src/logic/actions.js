@@ -66,9 +66,14 @@ function stealSeat(factionId, seatId) {
   if (!spendInfluence(factionId, 2)) return { success: false, message: '影响力不足' };
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, seat.task.cost * 2) : spendResources(factionId, seat.task.resourceType, seat.task.cost * 2);
   if (!spent) return { success: false, message: '双倍资源不足' };
-  const victimId = seat.visitorId; seat.visitorId = factionId; seat.roundsRemaining = 2;
-  gameState.roundLog.push({ factionId, action: 'stealSeat', target: seatId, victim: victimId });
-  return { success: true, message: `抢夺成功！` };
+  const victimId = seat.visitorId;
+  // 直接锁定席位（抢夺就是花双倍资源直接完成）
+  seat.lockedById = factionId;
+  seat.visitorId = null;
+  gameState.factions[factionId].lockedSeats++;
+  gameState.roundLog.push({ factionId, action: 'stealSeat', target: seatId, victim: victimId, result: '直接锁定' });
+  emit('seat:locked', { factionId, seatId });
+  return { success: true, message: `抢夺成功！${seat.name}已直接锁定` };
 }
 
 function investigate(factionId, targetFactionId, memberId) {
