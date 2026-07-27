@@ -174,6 +174,7 @@ function renderBillPhase(el) {
     // Short delay for visual feedback, then resolve
     setTimeout(async () => {
       (await import('../../logic/bills.js')).resolveBill();
+      gameState.phase = 'cleanup';  // Prevent re-entering bill phase
       renderAllPanels();
 
       setTimeout(async () => {
