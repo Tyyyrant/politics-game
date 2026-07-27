@@ -18,6 +18,8 @@ export function createNewGame(playerFactionId) {
     factions[fid].influence = getFactionInfluenceFromMembers(factions[fid]);
   }
   const npcSeats = generateSeatTasks(TOTAL_NPC_SEATS);
+  // Ensure visitedOnTurn is set (backward compat)
+  for (const s of npcSeats) { if (s.visitedOnTurn === undefined) s.visitedOnTurn = 0; }
   if (npcSeats.length >= 2) {
     npcSeats[0].lockedById = 'npcCongress';
     npcSeats[1].lockedById = 'npcCongress';

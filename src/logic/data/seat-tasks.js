@@ -16,7 +16,7 @@ export function generateSeatTasks(count = 27) {
       id: `seat_${String(i + 1).padStart(2, '0')}`,
       name: names[i] || `代表${i + 1}`,
       task: { type: def.type, cost, resourceType: def.resource },
-      visitorId: null, lockedById: null, roundsRemaining: 2, revealed: false
+      visitorId: null, lockedById: null, roundsRemaining: 2, revealed: false, visitedOnTurn: 0
     });
   }
   return tasks;
