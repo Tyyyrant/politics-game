@@ -174,10 +174,13 @@ function countFactionInPosition(faction, deptId, positionTitle) {
   return faction.members.filter(m => m.dept === deptId && m.position === positionTitle).length;
 }
 
-// Helper: get vacant positions for a faction across all departments
+// Helper: get vacant positions for a faction — only in departments the faction controls
 function getVacantPositions(faction) {
+  // A faction "controls" a department if it has at least one member there
+  const controlledDepts = new Set(faction.members.map(m => m.dept));
   const result = [];
   for (const [deptId, dept] of Object.entries(DEPARTMENTS)) {
+    if (!controlledDepts.has(deptId)) continue; // 只显示本派系控制的部门
     for (const pos of dept.positions) {
       if (pos.rank === '副部' || pos.rank === '正部') continue; // 不可任命副部及以上
       const filled = countFactionInPosition(faction, deptId, pos.title);
