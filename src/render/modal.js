@@ -102,7 +102,6 @@ export function showConfirm(message) {
   });
 }
 
-// Seat matrix — show all 27 seats as a clickable grid
 // Appointment interface
 import { gameState } from '../logic/state.js';
 import { DEPARTMENTS } from '../logic/data/departments.js';
@@ -207,36 +206,7 @@ export function showResourcePicker(cost, factionResources, genericResources) {
   });
 }
 
-// Opponent faction detail modal
-export function showOpponentDetail(factionId) {
-  return new Promise(resolve => {
-    const faction = gameState.factions[factionId];
-    const factionName = FACTION_NAMES_CN[factionId] || factionId;
-
-    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName} [TEST v99]</h4>`;
-    html += `<div class="opponent-stats">🔒 ${faction.lockedSeats}席 | 👥 ${faction.members.length}人</div>`;
-    html += '<div class="opponent-members">';
-
-    for (const m of faction.members) {
-      html += `<div class="opponent-member-row">
-        <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
-        <div class="om-info">
-          <div class="om-name">${m.name} · ${m.rank}</div>
-          <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>
-        </div></div>`;
-    }
-
-    html += '</div>';
-    html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
-
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.innerHTML = `<div class="modal-box modal-opponent">${html}</div>`;
-    document.body.appendChild(overlay);
-    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
-  });
-}
-
+// Seat picker
 export function showSeatPicker(title, filterFn = null) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
@@ -298,48 +268,137 @@ export function showSeatPicker(title, filterFn = null) {
   });
 }
 
-// Helper: count how many faction members hold a specific position title
+// === OPPONENT DETAIL (CLEAN VERSION) ===
+export function showOpponentDetail(factionId) {
+  return new Promise(resolve => {
+    const faction = gameState.factions[factionId];
+    const factionName = FACTION_NAMES_CN[factionId] || factionId;
+    const playerId = gameState.playerFactionId;
+
+    function isScouted(member) {
+      return Array.isArray(member.scoutedQuestsBy) && member.scoutedQuestsBy.includes(playerId);
+    }
+
+    function loyaltyText(member) {
+      if (!isScouted(member)) return '';
+      if (member.loyalty >= 7) return ' 🟢高';
+      if (member.loyalty >= 4) return ' 🟡中';
+      return ' 🔴低';
+    }
+
+    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName}</h4>`;
+    html += `<div class="opponent-stats">🔒 ${faction.lockedSeats}席 | 👥 ${faction.members.length}人</div>`;
+    html += '<div class="opponent-members">';
+
+    for (const m of faction.members) {
+      const scouted = isScouted(m);
+      html += `<div class="opponent-member-row">
+        <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
+        <div class="om-info">
+          <div class="om-name">${m.name} · ${m.rank}${loyaltyText(m)}</div>
+          <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>`;
+
+      if (scouted) {
+        if (m.personalQuests.length > 0) {
+          html += '<div class="om-quests">';
+          for (const q of m.personalQuests) {
+            const qcost = { '小孩升学': '1教育', '购买新房': '1住建', '安排工作': '1国资委', '结识贵人': '2任意' }[q] || '?';
+            html += `<button class="btn-small btn-do-quest" data-fid="${factionId}" data-mid="${m.id}" data-quest="${q}">🎁 ${q}(${qcost})</button>`;
+          }
+          html += '</div>';
+        } else {
+          html += '<div style="color:var(--text-muted);font-size:0.75em;">无个人追求</div>';
+        }
+      } else {
+        html += `<button class="btn-small btn-scout-quests" data-fid="${factionId}" data-mid="${m.id}">🔍 打探追求(1影响)</button>`;
+      }
+
+      html += '</div></div>';
+    }
+
+    html += '</div>';
+    html += `<div class="om-actions"><button class="btn-small btn-bribe" data-fid="${factionId}">💰 收买干部(资金)</button></div>`;
+    html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `<div class="modal-box modal-opponent">${html}</div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+
+    // Scout
+    overlay.querySelectorAll('.btn-scout-quests').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const r = executeAction(playerId, 'scoutQuests', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
+        if (r.success) {
+          const member = gameState.factions[btn.dataset.fid].members.find(m => m.id === btn.dataset.mid);
+          if (member) {
+            if (!Array.isArray(member.scoutedQuestsBy)) member.scoutedQuestsBy = [];
+            if (!member.scoutedQuestsBy.includes(playerId)) member.scoutedQuestsBy.push(playerId);
+          }
+        }
+        await showAlert(r.message);
+        overlay.remove();
+        showOpponentDetail(factionId).then(resolve);
+      });
+    });
+
+    // Complete quest
+    overlay.querySelectorAll('.btn-do-quest').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const r = executeAction(playerId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
+        await showAlert(r.message);
+        overlay.remove();
+        showOpponentDetail(factionId).then(resolve);
+      });
+    });
+
+    // Bribe
+    overlay.querySelector('.btn-bribe')?.addEventListener('click', async () => {
+      const members = faction.members.map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
+      const mid = await showSelect('选择收买目标', members);
+      if (mid) {
+        const { tryBribeMember } = await import('../../logic/loyalty.js');
+        const r = tryBribeMember(playerId, factionId, mid);
+        await showAlert(r.message);
+        overlay.remove();
+        showOpponentDetail(factionId).then(resolve);
+      }
+    });
+  });
+}
+
+// === APPOINTMENT ===
+let _appointScrollTop = 0;
+export function resetAppointScroll() { _appointScrollTop = 0; }
+
 function countFactionInPosition(faction, deptId, positionTitle) {
   return faction.members.filter(m => m.dept === deptId && m.position === positionTitle).length;
 }
 
-// Helper: get vacant positions for a faction across all departments
 function getVacantPositions(faction) {
   const controlledDepts = new Set(faction.members.map(m => m.dept));
   const result = [];
   for (const [deptId, dept] of Object.entries(DEPARTMENTS)) {
     const isControlled = controlledDepts.has(deptId);
     for (const pos of dept.positions) {
-      if (pos.rank === '副部' || pos.rank === '正部') continue; // 不可任命副部及以上
+      if (pos.rank === '副部' || pos.rank === '正部') continue;
       const filled = countFactionInPosition(faction, deptId, pos.title);
       const vacant = Math.max(0, pos.count - filled);
       if (vacant > 0) {
-        result.push({
-          deptId,
-          deptName: dept.name,
-          title: pos.title,
-          rank: pos.rank,
-          total: pos.count,
-          filled,
-          vacant,
-          isControlled  // 是否已有成员在该部门
-        });
+        result.push({ deptId, deptName: dept.name, title: pos.title, rank: pos.rank, total: pos.count, filled, vacant, isControlled });
       }
     }
   }
   return result;
 }
 
-// Step 1: Show position table — all vacant positions the faction can fill
-let _appointScrollTop = 0;
-export function resetAppointScroll() { _appointScrollTop = 0; }
-
 export function showAppointmentUI(factionId) {
   return new Promise(async (resolve) => {
     const faction = gameState.factions[factionId];
     const positions = getVacantPositions(faction);
 
-    // Group by department
     const byDept = {};
     for (const p of positions) {
       if (!byDept[p.deptId]) byDept[p.deptId] = { deptName: p.deptName, positions: [] };
@@ -355,7 +414,6 @@ export function showAppointmentUI(factionId) {
     if (!deptIds.length) {
       html += '<div style="padding:16px;text-align:center;color:var(--text-secondary);">暂无空缺职位</div>';
     } else {
-      // Show controlled departments first, then others
       const sortedDeptIds = deptIds.sort((a, b) => {
         const aCtrl = byDept[a].positions[0]?.isControlled ? 0 : 1;
         const bCtrl = byDept[b].positions[0]?.isControlled ? 0 : 1;
@@ -378,10 +436,7 @@ export function showAppointmentUI(factionId) {
           const resCost = APPOINTMENT_COST[p.rank] || '—';
           const ctrlClass = p.isControlled ? '' : ' pos-noncontrolled';
           html += `<button class="btn-position-pick${ctrlClass}" data-dept="${p.deptId}" data-rank="${p.rank}" data-title="${p.title}" data-controlled="${p.isControlled ? '1' : '0'}">
-            <span class="pos-title">${p.title}</span>
-            <span class="pos-rank">${p.rank}</span>
-            <span class="pos-vacant">缺${p.vacant}/${p.total}</span>
-            <span class="pos-cost">💰${infCost}影响+${resCost}资源</span>
+            <span class="pos-title">${p.title}</span><span class="pos-rank">${p.rank}</span><span class="pos-vacant">缺${p.vacant}/${p.total}</span><span class="pos-cost">💰${infCost}影响+${resCost}资源</span>
           </button>`;
         }
         html += '</div>';
@@ -392,7 +447,6 @@ export function showAppointmentUI(factionId) {
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `<div class="modal-box modal-appoint">${html}</div>`;
     document.body.appendChild(overlay);
-    // 恢复上次滚动位置
     overlay.querySelector('.modal-appoint').scrollTop = _appointScrollTop;
 
     overlay.querySelectorAll('.modal-cancel').forEach(btn => {
@@ -402,15 +456,11 @@ export function showAppointmentUI(factionId) {
       });
     });
 
-    // Click a position → show candidate list
     const posButtons = overlay.querySelectorAll('.btn-position-pick');
     posButtons.forEach(btn => {
       btn.addEventListener('click', async () => {
         _appointScrollTop = overlay.querySelector('.modal-appoint').scrollTop;
-        const dept = btn.dataset.dept;
-        const rank = btn.dataset.rank;
-        const title = btn.dataset.title;
-        const isControlled = btn.dataset.controlled === '1';
+        const dept = btn.dataset.dept, rank = btn.dataset.rank, title = btn.dataset.title, isControlled = btn.dataset.controlled === '1';
         overlay.remove();
         const result = await showCandidateUI(factionId, dept, rank, title, isControlled);
         resolve(result);
@@ -419,7 +469,6 @@ export function showAppointmentUI(factionId) {
   });
 }
 
-// Step 2: Show candidates for a specific position
 function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlled = true) {
   return new Promise(resolve => {
     const faction = gameState.factions[factionId];
@@ -429,7 +478,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
 
     const rankOrder = ['副处', '正处', '副厅', '正厅'];
     const targetIdx = rankOrder.indexOf(targetRank);
-    const sourceRank = targetIdx > 0 ? rankOrder[targetIdx - 1] : targetRank; // one rank below; for 副处, use same rank
+    const sourceRank = targetIdx > 0 ? rankOrder[targetIdx - 1] : targetRank;
 
     const infCost = PROMOTION_INFLUENCE_COST[targetRank] || 10;
     const resCost = APPOINTMENT_COST[targetRank] || 8;
@@ -440,11 +489,8 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
 
     let hasAny = false;
 
-    // === Section 1: Internal promotion (only for controlled departments) ===
     if (isControlled && targetIdx > 0) {
-      const internalCandidates = faction.members.filter(m =>
-        m.dept === deptId && m.rank === sourceRank
-      );
+      const internalCandidates = faction.members.filter(m => m.dept === deptId && m.rank === sourceRank);
       html += '<div class="appoint-section"><h5>🔵 内部提拔 — 本派系' + sourceRank + '级成员</h5>';
       if (internalCandidates.length) {
         hasAny = true;
@@ -452,8 +498,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
           html += `<div class="candidate-row">
             <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
             <span class="candidate-path">${sourceRank}→${targetRank}</span>
-            <button class="btn-small btn-promote" data-mid="${m.id}">提拔</button>
-          </div>`;
+            <button class="btn-small btn-promote" data-mid="${m.id}">提拔</button></div>`;
         }
       } else {
         html += '<div class="candidate-empty">本派系在该部门无' + sourceRank + '级成员可提拔</div>';
@@ -461,24 +506,19 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
       html += '</div>';
     }
 
-    // === Section 2: External recruitment ===
     const pool = gameState.independentOfficials || [];
-    // For recruitment, look for officials at sourceRank (one below target, or same for 副处)
     const externalCandidates = pool.filter(o => o.dept === deptId && o.rank === sourceRank);
     html += '<div class="appoint-section"><h5>🟢 外部招募 — 无派系' + sourceRank + '级干部（加入后获"曾受你的提拔"特性）</h5>';
     if (externalCandidates.length) {
       hasAny = true;
-      const recInfCost = RECRUIT_INFLUENCE_COST[targetRank] || infCost;
-      const recResCost = RECRUIT_RESOURCE_COST[targetRank] || resCost;
       for (const o of externalCandidates) {
         html += `<div class="candidate-row">
           <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${o.dept}">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
           <span class="candidate-path">招募→${targetRank}</span>
-          <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button>
-        </div>`;
+          <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button></div>`;
       }
     } else {
-      html += '<div class="candidate-empty">暂无可招募的' + (sourceRank || targetRank) + '级无派系干部</div>';
+      html += '<div class="candidate-empty">暂无可招募的' + sourceRank + '级无派系干部</div>';
     }
     html += '</div>';
 
@@ -500,10 +540,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
     });
 
     overlay.querySelectorAll('.btn-promote').forEach(btn => {
-      btn.addEventListener('click', () => {
-        overlay.remove();
-        resolve({ action: 'promote', memberId: btn.dataset.mid });
-      });
+      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'promote', memberId: btn.dataset.mid }); });
     });
 
     overlay.querySelectorAll('.btn-recruit').forEach(btn => {
