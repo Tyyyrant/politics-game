@@ -3,6 +3,8 @@ import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 import { showAlert, showSelect, showSlider } from '../modal.js';
 
+let memberSortMode = 'loyalty'; // 'loyalty' | 'rank'
+
 export function renderLeftPanel() {
   const el = document.getElementById('left-panel');
   if (!el) return;
@@ -140,8 +142,22 @@ const hasRes = s.task.resourceType === 'any'
   }
 
   // 成员列表
-  h += '<div class="member-section"><h4>👥 派系成员 (' + pf.members.length + '人)</h4>';
-  for (const m of pf.members) {
+  const rankWeight = { '正厅': 5, '副厅': 4, '正处': 3, '副处': 2 };
+  const sorted = [...pf.members].sort((a, b) => {
+    if (memberSortMode === 'loyalty') {
+      if (b.loyalty !== a.loyalty) return b.loyalty - a.loyalty;
+      return (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0);
+    } else {
+      if (b.rank !== a.rank) return (rankWeight[b.rank] || 0) - (rankWeight[a.rank] || 0);
+      return b.loyalty - a.loyalty;
+    }
+  });
+  h += `<div class="member-section"><h4>👥 派系成员 (${pf.members.length}人)
+    <span class="sort-btns">
+      <button class="sort-btn${memberSortMode === 'loyalty' ? ' sort-active' : ''}" data-sort="loyalty">忠↓</button>
+      <button class="sort-btn${memberSortMode === 'rank' ? ' sort-active' : ''}" data-sort="rank">级↓</button>
+    </span></h4>`;
+  for (const m of sorted) {
     const statusIcon = m.investigationStatus === 'evidence' ? '🔴' : m.investigationStatus === 'suspect' ? '🟡' : '🟢';
     const traits = m.traits.slice(0, 2).join(' · ');
     h += `<div class="member-row">
@@ -164,6 +180,14 @@ const hasRes = s.task.resourceType === 'any'
   h += '</div>';
 
   el.innerHTML = h;
+
+  // Sort buttons
+  el.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      memberSortMode = btn.dataset.sort;
+      (await import('../screens/game-screen.js')).renderAllPanels();
+    });
+  });
 
   // Bind inline conversion buttons in bill effects
   el.querySelectorAll('.btn-effect-convert').forEach(btn => {

@@ -348,6 +348,10 @@ body {
 .empty-hint { font-size: 0.75em; color: var(--text-muted); font-style: italic; }
 
 .member-section { margin-top: 10px; }
+.sort-btns { float: right; display: inline-flex; gap: 3px; }
+.sort-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-muted); padding: 1px 8px; border-radius: 3px; cursor: pointer; font-size: 0.75em; transition: all 0.12s; }
+.sort-btn:hover { border-color: var(--accent-gold); color: var(--text-primary); }
+.sort-btn.sort-active { background: rgba(200,164,92,0.12); border-color: var(--accent-gold); color: var(--accent-gold); }
 .member-section h4 {
   font-size: 0.8em; color: var(--accent-gold); margin: 8px 0 4px 0;
   font-weight: normal; letter-spacing: 0.04em;
