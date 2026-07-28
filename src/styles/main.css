@@ -638,15 +638,15 @@ body {
 /* ================================================================
    SEAT GRID
    ================================================================ */
-.modal-seats { max-width: 720px; max-height: 82vh; }
-.seat-grid-wrapper { max-height: 58vh; overflow-y: auto; }
+.modal-seats { max-width: 720px; max-height: 82vh; overflow-x: hidden; }
+.seat-grid-wrapper { max-height: 58vh; overflow-y: auto; overflow-x: hidden; }
 .seat-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; }
 .seat-cell {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 4px; padding: 7px 4px; cursor: pointer; text-align: center;
   transition: all 0.15s; font-size: 0.72em;
 }
-.seat-cell:hover { border-color: var(--accent-gold); transform: scale(1.04); }
+.seat-cell:hover { border-color: var(--accent-gold); background: rgba(200,164,92,0.08); }
 .seat-cell.seat-free { border-color: rgba(74,140,92,0.25); }
 .seat-cell.seat-visiting { border-color: rgba(200,164,92,0.4); background: rgba(200,164,92,0.06); }
 .seat-cell.seat-locked { border-color: rgba(196,59,59,0.4); background: rgba(196,59,59,0.06); cursor: not-allowed; opacity: 0.7; }
