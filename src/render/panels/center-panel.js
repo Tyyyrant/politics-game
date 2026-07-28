@@ -127,8 +127,6 @@ export function renderCenterPanel() {
 
   if (isPlayer) {
     bindButtons(el, cf);
-  } else if (gameState.phase === 'action') {
-    setTimeout(() => executeAITurn(cf), 400);
   }
 }
 
