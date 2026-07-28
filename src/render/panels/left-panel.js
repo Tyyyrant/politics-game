@@ -61,11 +61,11 @@ export function renderLeftPanel() {
       h += `<div class="effect-item">${icon} ${be.name}：${descParts.join('，')}（剩${be.duration}轮）`;
 
       // Inline conversion buttons for actionable effects
-      if (eff.propagandaToInfluence && (pf.resources.propaganda || 0) >= 2) {
-        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
+      if (eff.propagandaToInfluence) {
+        h += ` <button class="btn-effect-convert${(pf.resources.propaganda || 0) >= 2 ? '' : ' btn-disabled'}" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
       }
-      if (eff.propagandaToGeneric && (pf.resources.propaganda || 0) >= 2) {
-        h += ` <button class="btn-effect-convert" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
+      if (eff.propagandaToGeneric) {
+        h += ` <button class="btn-effect-convert${(pf.resources.propaganda || 0) >= 2 ? '' : ' btn-disabled'}" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
       }
       if (eff.govPartyExchange) {
         h += ` <button class="btn-effect-convert" data-action="convertGovParty">政府↔党委(1:1)</button>`;
@@ -73,8 +73,8 @@ export function renderLeftPanel() {
       if (eff.govOfficeToGeneric) {
         h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>`;
       }
-      if (eff.publicSecurityAsGeneric && (pf.resources.publicSecurity || 0) >= 1) {
-        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府(1:1)</button>`;
+      if (eff.publicSecurityAsGeneric) {
+        h += ` <button class="btn-effect-convert${(pf.resources.publicSecurity || 0) >= 1 ? '' : ' btn-disabled'}" data-action="convertEmergency">公安→政府(1:1)</button>`;
       }
 
       h += '</div>';
@@ -95,11 +95,11 @@ export function renderLeftPanel() {
       h += '<div class="panel-section bill-effects-box"><h4>⚡ 当前事件效果</h4>';
       h += `<div class="effect-item">📋 ${gameState.currentEvent.name}：${evParts.join('，')}`;
 
-      if (evEff.propagandaToInfluence && (pf.resources.propaganda || 0) >= 2) {
-        h += ` <button class="btn-effect-convert" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
+      if (evEff.propagandaToInfluence) {
+        h += ` <button class="btn-effect-convert${(pf.resources.propaganda || 0) >= 2 ? '' : ' btn-disabled'}" data-action="convertPropaganda">宣传→影响(2:1)</button>`;
       }
-      if (evEff.propagandaToGeneric && (pf.resources.propaganda || 0) >= 2) {
-        h += ` <button class="btn-effect-convert" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
+      if (evEff.propagandaToGeneric) {
+        h += ` <button class="btn-effect-convert${(pf.resources.propaganda || 0) >= 2 ? '' : ' btn-disabled'}" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>`;
       }
       if (evEff.govPartyExchange) {
         h += ` <button class="btn-effect-convert" data-action="convertGovParty">政府↔党委(1:1)</button>`;
@@ -107,8 +107,8 @@ export function renderLeftPanel() {
       if (evEff.govOfficeToGeneric) {
         h += ` <button class="btn-effect-convert" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>`;
       }
-      if (evEff.publicSecurityAsGeneric && (pf.resources.publicSecurity || 0) >= 1) {
-        h += ` <button class="btn-effect-convert" data-action="convertEmergency">公安→政府(1:1)</button>`;
+      if (evEff.publicSecurityAsGeneric) {
+        h += ` <button class="btn-effect-convert${(pf.resources.publicSecurity || 0) >= 1 ? '' : ' btn-disabled'}" data-action="convertEmergency">公安→政府(1:1)</button>`;
       }
 
       h += '</div></div>';
