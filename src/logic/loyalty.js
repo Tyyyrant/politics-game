@@ -167,5 +167,5 @@ export function tryBribeMember(fromFactionId, toFactionId, memberId) {
     gameState.factions[fromFactionId].members.push(member);
     return { success: true, message: `良禽择木而栖，${member.name}已加入您的派系。` };
   }
-  return { success: true, message: `${member.name}收下了你的资金，态度有所松动。` };
+  return { success: true, message: `${member.name}收下了您的资金，表示来日必当百倍奉还。` };
 }
