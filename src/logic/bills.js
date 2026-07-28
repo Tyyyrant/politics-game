@@ -5,6 +5,16 @@ import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
 export function drawBill() {
   if (gameState.currentBill) return;  // 已有法案在投票中，不重复抽
   if (gameState.billDeck.length === 0) gameState.billDeck = shuffleDeck([...BILL_POOL]);
+  // TEST: 第一轮固定出《舆情应急管理法案》测试宣传置换
+  if (gameState.turn === 1) {
+    const testBill = BILL_POOL.find(b => b.id === 'bill_opinion_emergency');
+    if (testBill) {
+      gameState.currentBill = { ...testBill, votes: { support: [], oppose: [], abstain: [] } };
+      gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
+      emit('bill:drawn', { bill: gameState.currentBill });
+      return;
+    }
+  }
   gameState.currentBill = { ...gameState.billDeck.shift(), votes: { support: [], oppose: [], abstain: [] } };
   gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
   emit('bill:drawn', { bill: gameState.currentBill });
