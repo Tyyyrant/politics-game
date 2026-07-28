@@ -391,14 +391,19 @@ export function showOpponentDetail(factionId) {
     });
 
     // Bribe
-    // Bribe — direct onclick
+    // Bribe — onclick with debug
     const bribeBtn = overlay.querySelector('#bribe-button');
     if (bribeBtn) {
       bribeBtn.onclick = async (e) => {
+        e.preventDefault();
         e.stopPropagation();
-        const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
+        const pf = gameState.factions[playerId];
+        const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({
+          label: `${m.name} · ${m.rank}`,
+          value: m.id
+        }));
         if (!members.length) { await showAlert('该派系没有可收买的干部'); return; }
-        const mid = await showSelect('选择收买目标', members);
+        const mid = await showSelect(`选择收买目标（可用资金：${pf.funds}笔）`, members);
         if (!mid) return;
         const { tryBribeMember } = await import('../../logic/loyalty.js');
         const r = tryBribeMember(playerId, factionId, mid);
