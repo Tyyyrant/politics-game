@@ -4,7 +4,7 @@ const T = TRAITS;
 
 export const FACTION_DEFS = {
   propaganda: {
-    id: 'propaganda', leader: { name: '江泰来', title: '省委常委、宣传部部长', dept: 'propaganda', rank: '副部', isPlayerControllable: true },
+    id: 'propaganda', leader: { name: '刘泰来', title: '省委常委、宣传部部长', dept: 'propaganda', rank: '副部', isPlayerControllable: true },
     members: [
       { name: '王卫东', dept: 'publicSecurity', position: '公安厅副厅长', rank: '副厅', loyalty: 8, traits: [T.trustedAide, T.mentored, T.alumni] },
       { name: '李宁远', dept: 'govOffice', position: '秘书一处处长', rank: '正处', loyalty: 8, traits: [T.trustedAide, T.mentored, T.alumni] },
@@ -75,7 +75,7 @@ export const FACTION_DEFS = {
 export function createInitialFactionState(factionId) {
   const def = FACTION_DEFS[factionId];
   if (!def) throw new Error(`Unknown faction: ${factionId}`);
-  const memberIdPrefix = { propaganda: '江', discipline: '陈', organization: '米', publicSecurity: '万', npcCongress: '任', npcCppcc: '郑' };
+  const memberIdPrefix = { propaganda: '刘', discipline: '陈', organization: '米', publicSecurity: '万', npcCongress: '任', npcCppcc: '郑' };
   const members = def.members.map((m, i) => ({
     id: `${memberIdPrefix[factionId] || factionId}_${m.name}`, name: m.name, dept: m.dept, position: m.position, rank: m.rank,
     loyalty: m.loyalty, maxLoyalty: 9, traits: [...m.traits], isUnderInvestigation: false,
