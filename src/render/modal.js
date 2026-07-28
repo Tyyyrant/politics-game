@@ -231,8 +231,14 @@ export function showAppointmentUI(factionId) {
       for (const deptId of sortedDeptIds) {
         const g = byDept[deptId];
         const isControlled = g.positions[0]?.isControlled;
-        const memberCount = faction.members.filter(m => m.dept === deptId).length;
-        const ctrlLabel = isControlled ? `🔵 本派系${memberCount}人` : `⚪ 未渗透 · 仅可外部招募`;
+        let ctrlLabel;
+        if (isControlled) {
+          const deptMembers = faction.members.filter(m => m.dept === deptId);
+          const memberNames = deptMembers.map(m => `<span class="dept-member-chip">${m.name}·${m.position}</span>`).join('');
+          ctrlLabel = `🔵 ${memberNames}`;
+        } else {
+          ctrlLabel = `⚪ 未渗透 · 仅可外部招募`;
+        }
         html += `<div class="appoint-dept"><div class="dept-header"><span class="dept-name">${g.deptName}</span><span class="dept-count">${ctrlLabel}</span></div>`;
         for (const p of g.positions) {
           const infCost = PROMOTION_INFLUENCE_COST[p.rank] || '—';
