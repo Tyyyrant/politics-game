@@ -48,12 +48,26 @@ function showFactionSelect() {
   const grid = root.querySelector('#faction-grid');
   for (const [fid, def] of Object.entries(FACTION_DEFS)) {
     if (!def.leader.isPlayerControllable) continue;
+    const info = getFactionInfo(fid);
     const card = document.createElement('div');
-    card.className = 'faction-select-card';
-    card.innerHTML = `<div class="faction-card-header">${def.leader.title}</div>
-      <div class="faction-card-leader">首领：${def.leader.name}</div>
-      <div class="faction-card-stats">👥 ${def.members.length}名干部 · ${def.leader.rank}级</div>
-      <div class="faction-card-desc">${getDesc(fid)}</div>`;
+    card.className = `faction-card tw-card ${info.cssClass}`;
+    card.innerHTML = `
+      <div class="tw-card-bg"></div>
+      <div class="tw-portrait">
+        <div class="tw-portrait-placeholder">${def.leader.name[0]}</div>
+        <div class="tw-portrait-ring"></div>
+      </div>
+      <div class="tw-card-content">
+        <div class="tw-card-title">${def.leader.title}</div>
+        <div class="tw-card-name">${def.leader.name}</div>
+        <div class="tw-card-traits">
+          ${info.traits.map(t => `<span class="tw-trait">${t}</span>`).join('')}
+        </div>
+        <div class="tw-card-footer">
+          <span>👥 ${def.members.length}名干部</span>
+          <span>${def.leader.rank}级</span>
+        </div>
+      </div>`;
     card.addEventListener('click', () => { showFactionPreview(fid); });
     grid.appendChild(card);
   }
@@ -122,6 +136,16 @@ function getDesc(fid) {
     publicSecurity: '政法铁三角。审讯突击，暴力压制。'
   };
   return m[fid] || '';
+}
+
+function getFactionInfo(fid) {
+  const m = {
+    propaganda: { cssClass: 'tw-fac-propaganda', color: '#c8a45c', traits: ['舆论引导', '跨部门网络', '宣传核心'] },
+    discipline:   { cssClass: 'tw-fac-discipline', color: '#8a9ba8', traits: ['查处干部', '执法双线', '纪律铁腕'] },
+    organization: { cssClass: 'tw-fac-organization', color: '#5a8a9a', traits: ['干部任用', '门生故吏', '组织大师'] },
+    publicSecurity: { cssClass: 'tw-fac-security', color: '#6a8a6a', traits: ['公安审讯', '突击检查', '政法铁三角'] }
+  };
+  return m[fid] || { cssClass: '', color: '#888', traits: [] };
 }
 
 // === 派系预览 ===
