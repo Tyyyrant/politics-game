@@ -27,7 +27,7 @@ export function resolveEvent(factionId) {
   if (eff.housingDouble) faction.resources.housing = (faction.resources.housing || 0) * 2;
   if (eff.ndrcHalve) faction.resources.ndrc = Math.floor((faction.resources.ndrc || 0) / 2);
   if (eff.payFinanceOrInfluence) { if (!spendResources(factionId, 'finance', 2)) spendInfluence(factionId, 1); }
-  if (eff.blockPublicSecurityResource) gameState.activeBillEffects.push({ id: 'event_leader_patrol', effects: { blockPublicSecurity: true }, duration: 1 });
+  if (eff.blockPublicSecurityResource) gameState.activeBillEffects.push({ id: 'event_leader_patrol', name: '领导巡查（事件）', effects: { blockPublicSecurity: true }, duration: 1 });
   if (eff.educationResourceBonus) faction.resources.education = (faction.resources.education || 0) + eff.educationResourceBonus;
   if (eff.randomDeptDouble) {
     const depts = Object.keys(faction.resources).filter(d => faction.resources[d] > 0);
