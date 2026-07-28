@@ -149,7 +149,7 @@ function completeEnemyQuest(factionId, targetFactionId, memberId) {
     member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
     member.id = `${factionId}_${member.name}`;
     gameState.factions[factionId].members.push(member);
-    return { success: true, message: `${member.name}已叛变到你的派系！忠诚度降至0后成功策反` };
+    return { success: true, message: `${member.name}很感谢您的帮助，承诺若来日有机会愿效犬马之劳。已加入你的派系！` };
   }
   return { success: true, message: `完成${member.name}的${quest}，忠诚度-3（当前${member.loyalty}）` };
 }

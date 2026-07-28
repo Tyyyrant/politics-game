@@ -165,7 +165,7 @@ export function tryBribeMember(fromFactionId, toFactionId, memberId) {
     member.loyalty = 4; member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
     member.id = `${fromFactionId}_${member.name}`;
     gameState.factions[fromFactionId].members.push(member);
-    return { success: true, message: `${member.name}已叛变到你的派系！` };
+    return { success: true, message: `${member.name}权衡利弊后决定投靠你的派系。识时务者为俊杰。` };
   }
   return { success: true, message: `${member.name}忠诚度-2（当前${member.loyalty}）` };
 }
