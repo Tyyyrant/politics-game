@@ -154,17 +154,23 @@ export function appointOfficial(factionId, dept, rank) {
 
 export function tryBribeMember(fromFactionId, toFactionId, memberId) {
   const targetFaction = gameState.factions[toFactionId];
+  if (!targetFaction) return { success: false, message: '目标派系不存在' };
   const member = targetFaction.members.find(m => m.id === memberId);
-  if (!member) return { success: false, message: '目标不存在' };
+  if (!member) return { success: false, message: `目标不存在(${memberId})` };
   if (member.traits.includes('利益共同体')) return { success: false, message: '利益共同体无法收买' };
+  if (member.name === targetFaction.leaderName) return { success: false, message: '派系首领无法被收买' };
   const bribeCost = Math.max(1, Math.ceil((9 - member.loyalty) / 2));
-  if (gameState.factions[fromFactionId].funds < bribeCost) return { success: false, message: `资金不足（需${bribeCost}笔）` };
-  gameState.factions[fromFactionId].funds -= bribeCost; member.loyalty -= 2;
+  const playerFaction = gameState.factions[fromFactionId];
+  if (!playerFaction) return { success: false, message: '你的派系不存在' };
+  if (playerFaction.funds < bribeCost) return { success: false, message: `资金不足（需${bribeCost}笔，当前${playerFaction.funds}笔）` };
+  playerFaction.funds -= bribeCost;
+  member.loyalty -= 2;
   if (member.loyalty <= 0) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
-    member.loyalty = 4; member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.loyalty = 4;
+    member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
     member.id = `${fromFactionId}_${member.name}`;
-    gameState.factions[fromFactionId].members.push(member);
+    playerFaction.members.push(member);
     return { success: true, message: `良禽择木而栖，${member.name}已加入您的派系。` };
   }
   return { success: true, message: `${member.name}收下了您的资金，表示来日必当百倍奉还。` };
