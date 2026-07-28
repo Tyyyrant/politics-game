@@ -148,17 +148,19 @@ export function showResourcePicker(cost, factionResources, genericResources) {
 
     let rowsHtml = '';
     if (genericResources > 0) {
+      const genMax = Math.min(genericResources, cost);
       rowsHtml += `<div class="res-pick-row">
         <span class="res-pick-label">🧱 通用资源: ${genericResources}</span>
-        <input type="range" class="res-pick-slider" min="0" max="${genericResources}" value="0" data-key="generic">
+        <input type="range" class="res-pick-slider" min="0" max="${genMax}" value="0" data-key="generic">
         <span class="res-pick-val">0</span>
       </div>`;
     }
     for (const [dept, amt] of entries) {
       const deptName = DEPT_NAMES[dept] || dept;
+      const deptMax = Math.min(amt, cost);
       rowsHtml += `<div class="res-pick-row">
         <span class="res-pick-label">${deptName}: ${amt}</span>
-        <input type="range" class="res-pick-slider" min="0" max="${amt}" value="0" data-key="${dept}">
+        <input type="range" class="res-pick-slider" min="0" max="${deptMax}" value="0" data-key="${dept}">
         <span class="res-pick-val">0</span>
       </div>`;
     }
