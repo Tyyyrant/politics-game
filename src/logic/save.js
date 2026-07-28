@@ -19,6 +19,12 @@ export async function loadGame(slot) {
   else { const raw = localStorage.getItem(`policy_save_${slot}`); if (raw) data = JSON.parse(raw); }
   if (!data?.gameState) return { success: false, message: '存档不存在' };
   deserializeState(data.gameState);
+  // Clear stale scouted data from loaded saves
+  for (const fid of Object.keys(gameState.factions)) {
+    for (const m of gameState.factions[fid].members) {
+      delete m.scoutedQuestsBy;
+    }
+  }
   emit('load:success', { slot, meta: data.meta });
   return { success: true, meta: data.meta };
 }
