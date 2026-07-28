@@ -317,7 +317,7 @@ export function showOpponentDetail(factionId) {
     }
 
     html += '</div>';
-    html += `<div class="om-actions"><button class="btn-small btn-bribe" data-fid="${factionId}">💰 收买干部(资金)</button></div>`;
+    html += `<div class="om-actions"><button class="btn-small btn-bribe" id="bribe-button">💰 收买干部(资金)</button></div>`;
     html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
 
     const overlay = document.createElement('div');
@@ -391,18 +391,20 @@ export function showOpponentDetail(factionId) {
     });
 
     // Bribe
-    const bribeBtn = overlay.querySelector('.btn-bribe');
+    // Bribe — direct onclick
+    const bribeBtn = overlay.querySelector('#bribe-button');
     if (bribeBtn) {
-      bribeBtn.addEventListener('click', async (e) => {
+      bribeBtn.onclick = async (e) => {
         e.stopPropagation();
         const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
+        if (!members.length) { await showAlert('该派系没有可收买的干部'); return; }
         const mid = await showSelect('选择收买目标', members);
         if (!mid) return;
         const { tryBribeMember } = await import('../../logic/loyalty.js');
         const r = tryBribeMember(playerId, factionId, mid);
         await showAlert(r.message);
         refresh();
-      });
+      };
     }
   });
 }
