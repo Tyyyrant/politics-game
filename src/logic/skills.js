@@ -1,6 +1,7 @@
 // src/logic/skills.js
 import { gameState, emit } from './state.js';
 import { spendResources } from './resources.js';
+import { FACTION_NAMES_CN } from './data/constants.js';
 
 export function executeSkill(factionId, skillId, params = {}) {
   const faction = gameState.factions[factionId];
@@ -30,6 +31,20 @@ export function executeSkill(factionId, skillId, params = {}) {
       if (faction.raidUsed) return { success: false, message: '本轮已使用' };
       if (!spendResources(factionId, 'publicSecurity', 3)) return { success: false, message: '公安资源不足' };
       faction.raidUsed = true;
+      // 释放目标正在攻略的席位
+      const targetId = params.targetFactionId;
+      if (targetId) {
+        let freed = 0;
+        for (const seat of gameState.npcSeats) {
+          if (seat.visitorId === targetId && !seat.lockedById) {
+            seat.visitorId = null;
+            seat.roundsRemaining = 2;
+            seat.revealed = false;
+            freed++;
+          }
+        }
+        return { success: true, message: `突击检查已执行，释放了${targetId === factionId ? '自己' : FACTION_NAMES_CN[targetId] || targetId}的${freed}个席位` };
+      }
       return { success: true, message: '突击检查已执行' };
     case 'projectBid':
       if (faction.projectBidUsed) return { success: false, message: '本轮已使用' };
