@@ -82,21 +82,21 @@ export function renderCenterPanel() {
   if (isPlayer) {
     const visitsLeft = 2 - (gameState.factions[cf].visitsThisTurn || 0);
     h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/2）</h3><div class="action-grid">';
-    h += btn('拜访人大席位 (1影响)', 'visitSeat', '查看席位任务，下回合可完成任务锁定');
-    h += btn('完成席位任务 (对应资源)', 'completeTask', '消耗对应部门资源或通用资源，锁定席位');
-    h += btn('打探对手席位 (1影响)', 'scoutSeat', '查看对手攻略的席位详情和任务');
-    h += btn('抢夺对手席位 (2影响+双倍资源)', 'stealSeat', '需先打探。直接锁定对手正在攻略的席位');
-    h += btn('查处对手干部 (纪委标记)', 'investigate', '消耗纪委标记，骰子判定查处对手干部');
-    h += btn('公安审讯 (2公安资源)', 'interrogate', '目标下回合无法产出资源');
-    h += btn('突击检查 (3公安资源)', 'raid', '使目标任务失败');
-    h += btn('正面宣传 (2宣传资源)', 'positivePropaganda', '指定任务类型，全体该任务消耗-1');
-    h += btn('负面曝光 (2宣传资源)', 'negativePropaganda', '目标派系影响力-2');
-    h += btn('项目招标 (2住建资源)', 'projectBid', '完成商人项目+免费拜访1次');
-    h += btn('五年计划 (5发改资源)', 'fiveYearPlan', '3轮CD，发起经济投票');
-    h += btn('资金变现 (5国资委资源)', 'sasacCash', '获得1笔不留痕迹的资金');
-    h += btn('干部任用 (影响+组织部资源)', 'appoint', '提拔内部成员或从外部招募无派系干部');
-    h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '提升本派系成员忠诚度+1');
-    h += btn('商人上门 (2影响)', 'merchant', '随机获得资金，但可能留下把柄');
+    h += btn('拜访人大席位 (1影响)', 'visitSeat', '消耗1点影响力，拜访一位人大代表席位，查看其任务需求。下回合可消耗对应资源完成任务，锁定该席位。每轮最多2次。');
+    h += btn('完成席位任务 (对应资源)', 'completeTask', '消耗席位所需的部门资源或通用资源，完成该人大代表的任务，将该席位锁定为本派系票仓。本回合刚拜访的席位需下回合才能完成。');
+    h += btn('打探对手席位 (1影响)', 'scoutSeat', '消耗1点影响力，查看对手正在攻略的席位详情（任务类型、所需资源、剩余时间），为抢夺做准备。');
+    h += btn('抢夺对手席位 (2影响+双倍资源)', 'stealSeat', '必须先打探该席位。消耗2点影响力+双倍任务资源，直接从对手手中锁定该席位为己有。第一轮不可使用。');
+    h += btn('查处对手干部 (纪委标记)', 'investigate', '消耗纪委标记（副处1·正处2·副厅3·正厅4），掷骰子判定：1-2无证据、3-4嫌疑（限制1轮）、5-6证据确凿（资源产出暂停）。');
+    h += btn('公安审讯 (2公安资源)', 'interrogate', '消耗2公安资源，对目标派系进行审讯。目标下回合所有成员无法产出资源，影响力和资源均被封锁一轮。');
+    h += btn('突击检查 (3公安资源)', 'raid', '消耗3公安资源，对目标派系进行突击检查。目标当前正在进行的席位任务直接失败，席位恢复空闲。');
+    h += btn('正面宣传 (2宣传资源)', 'positivePropaganda', '消耗2宣传资源，选择一种任务类型进行舆论引导。本轮全体玩家完成该类型任务时资源消耗-1。');
+    h += btn('负面曝光 (2宣传资源)', 'negativePropaganda', '消耗2宣传资源，对目标派系进行负面舆论曝光。目标派系影响力-2。');
+    h += btn('项目招标 (2住建资源)', 'projectBid', '消耗2住建资源，发起项目招标。直接完成一个商人项目类型的席位任务，并免费获得一次额外拜访机会。');
+    h += btn('五年计划 (5发改资源)', 'fiveYearPlan', '消耗5发改委资源，发起五年计划提案。触发一轮特殊的经济投票，冷却3轮。');
+    h += btn('资金变现 (5国资委资源)', 'sasacCash', '消耗5国资委资源，通过国企渠道变现，获得1笔不留下审计痕迹的可用资金。');
+    h += btn('干部任用 (影响+组织部资源)', 'appoint', '消耗影响力+组织部（或本部门）资源，提拔本派系内部成员到更高职位，或从无派系干部池中招募新人加入本派系。招募者获得「曾受你的提拔」特性。');
+    h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '消耗10点影响力或1笔资金，提升选定的本派系成员忠诚度1点。忠诚度影响成员叛变概率和工作效率。');
+    h += btn('商人上门 (2影响)', 'merchant', '消耗2点影响力，邀请商人上门。随机获得一笔可用资金，但有概率被纪委盯上，留下受贿标记。');
     // 资源置换按钮
     const pf = gameState.factions[cf];
     const billEffects = gameState.activeBillEffects.flatMap(e => Object.keys(e.effects));
@@ -225,7 +225,7 @@ function renderBillPhase(el) {
 }
 
 // === PLAYER ACTIONS (using custom modals) ===
-function btn(label, action, tip) { return `<button class="action-btn" data-action="${action}" title="${tip || ''}">${label}</button>`; }
+function btn(label, action, desc) { return `<button class="action-btn" data-action="${action}" data-tooltip="${desc || ''}">${label}</button>`; }
 
 function bindButtons(el, factionId) {
   el.querySelectorAll('.action-btn').forEach(b => {

@@ -413,10 +413,32 @@ body {
   border: 1px solid var(--border-color); padding: 11px 8px;
   border-radius: 4px; cursor: pointer; font-size: 0.84em;
   transition: all 0.15s; text-align: center; line-height: 1.35;
+  position: relative;
 }
 .action-btn:hover {
   border-color: var(--accent-gold); background: rgba(200,164,92,0.08);
   box-shadow: 0 2px 8px rgba(200,164,92,0.08);
+}
+/* Delayed tooltip (2s hover) */
+.action-btn[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%);
+  background: #1a1410; color: var(--text-primary);
+  border: 1px solid var(--accent-gold); border-radius: 6px;
+  padding: 10px 14px; font-size: 0.85em; line-height: 1.55;
+  white-space: pre-wrap; max-width: 300px; min-width: 200px;
+  z-index: 999; pointer-events: none; text-align: left;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  animation: tooltip-appear 0.2s 2s both;
+}
+@keyframes tooltip-appear { from { opacity: 0; } to { opacity: 1; } }
+/* Arrow */
+.action-btn[data-tooltip]:hover::before {
+  content: ''; position: absolute; bottom: calc(100% + 2px); left: 50%;
+  transform: translateX(-50%); border: 6px solid transparent;
+  border-top-color: var(--accent-gold); z-index: 999; pointer-events: none;
+  animation: tooltip-appear 0.2s 2s both;
 }
 .end-turn-btn {
   background: rgba(139,26,26,0.2) !important; border-color: var(--accent-darkred) !important;
