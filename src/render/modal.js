@@ -410,6 +410,9 @@ function getVacantPositions(faction) {
 }
 
 // Step 1: Show position table — all vacant positions the faction can fill
+let _appointScrollTop = 0;
+export function resetAppointScroll() { _appointScrollTop = 0; }
+
 export function showAppointmentUI(factionId) {
   return new Promise(async (resolve) => {
     const faction = gameState.factions[factionId];
@@ -468,21 +471,26 @@ export function showAppointmentUI(factionId) {
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `<div class="modal-box modal-appoint">${html}</div>`;
     document.body.appendChild(overlay);
+    // 恢复上次滚动位置
+    overlay.querySelector('.modal-appoint').scrollTop = _appointScrollTop;
 
     overlay.querySelectorAll('.modal-cancel').forEach(btn => {
-      btn.addEventListener('click', () => { overlay.remove(); resolve(null); });
+      btn.addEventListener('click', () => {
+        _appointScrollTop = overlay.querySelector('.modal-appoint').scrollTop;
+        overlay.remove(); resolve(null);
+      });
     });
 
     // Click a position → show candidate list
     const posButtons = overlay.querySelectorAll('.btn-position-pick');
     posButtons.forEach(btn => {
       btn.addEventListener('click', async () => {
+        _appointScrollTop = overlay.querySelector('.modal-appoint').scrollTop;
         const dept = btn.dataset.dept;
         const rank = btn.dataset.rank;
         const title = btn.dataset.title;
         const isControlled = btn.dataset.controlled === '1';
         overlay.remove();
-        // Show step 2: candidate list
         const result = await showCandidateUI(factionId, dept, rank, title, isControlled);
         resolve(result);
       });

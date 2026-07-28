@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, showOpponentDetail } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, showOpponentDetail, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -417,6 +417,7 @@ async function handlePlayerAction(factionId, action) {
         await showAlert(executeSkill(factionId, 'sasacCash', {}).message);
         break;
       case 'appoint': {
+        resetAppointScroll();
         while (true) {
           const result = await showAppointmentUI(factionId);
           if (!result) break;
@@ -427,7 +428,6 @@ async function handlePlayerAction(factionId, action) {
             await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle).message);
           }
           renderAllPanels();
-          // Loop: re-open appointment UI so user can keep appointing
         }
         break;
       }
