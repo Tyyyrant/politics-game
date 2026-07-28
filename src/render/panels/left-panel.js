@@ -1,7 +1,7 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
-import { showAlert, showSelect, showSlider } from '../modal.js';
+import { showAlert, showSelect, showSlider, showOpponentDetail } from '../modal.js';
 
 let memberSortMode = 'loyalty'; // 'loyalty' | 'rank'
 
@@ -172,7 +172,7 @@ const hasRes = s.task.resourceType === 'any'
   h += '<div class="panel-section"><h3>对手派系</h3>';
   for (const [fid, f] of opponents) {
     const active = fid === gameState.turnOrder[gameState.currentPlayerIndex];
-    h += `<div class="opponent-row ${active ? 'active' : ''}">
+    h += `<div class="opponent-row ${active ? 'active' : ''}" data-faction="${fid}">
       <div class="opponent-name">${FACTION_NAMES[fid]} · ${f.leaderName}</div>
       <div class="opponent-seats">🔒${f.lockedSeats}席 📊${f.influence}影 🔴${f.disciplineMarks}标</div>
     </div>`;
@@ -180,6 +180,14 @@ const hasRes = s.task.resourceType === 'any'
   h += '</div>';
 
   el.innerHTML = h;
+
+  // Opponent row click → show detail
+  el.querySelectorAll('.opponent-row').forEach(row => {
+    row.addEventListener('click', async () => {
+      const fid = row.dataset.faction;
+      if (fid) await showOpponentDetail(fid);
+    });
+  });
 
   // Sort buttons
   el.querySelectorAll('.sort-btn').forEach(btn => {

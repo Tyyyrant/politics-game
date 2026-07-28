@@ -294,8 +294,9 @@ body {
 .opponent-row {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 4px; padding: 8px 10px; margin-bottom: 6px;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s; cursor: pointer;
 }
+.opponent-row:hover { border-color: var(--accent-gold); }
 .opponent-row.active { border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); }
 .opponent-name { font-weight: bold; color: var(--text-primary); }
 .opponent-seats { font-size: 0.78em; color: var(--text-secondary); margin-top: 4px; }
@@ -634,6 +635,22 @@ body {
 .candidate-empty { font-size: 0.78em; color: var(--text-muted); padding: 6px 0; }
 .btn-recruit { background: rgba(74,140,92,0.12) !important; border-color: rgba(74,140,92,0.3) !important; }
 .btn-recruit:hover { background: rgba(74,140,92,0.2) !important; }
+
+/* Opponent detail modal */
+.modal-opponent { max-width: 520px; max-height: 78vh; overflow-y: auto; }
+.opponent-detail h4 { color: var(--accent-gold); margin-bottom: 8px; font-family: var(--font-serif); }
+.opponent-stats { color: var(--text-secondary); font-size: 0.85em; margin-bottom: 12px; }
+.opponent-member-row { display: flex; align-items: flex-start; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.om-info { flex: 1; }
+.om-name { font-weight: bold; color: var(--text-primary); font-size: 0.9em; }
+.om-dept { color: var(--text-secondary); font-size: 0.8em; margin: 2px 0; }
+.om-quests { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+.btn-do-quest { background: rgba(200,164,92,0.1) !important; border-color: rgba(200,164,92,0.3) !important; font-size: 0.75em !important; }
+.btn-do-quest:hover { background: rgba(200,164,92,0.2) !important; }
+.btn-scout-quests { font-size: 0.75em !important; }
+.btn-bribe { width: 100%; margin-top: 8px; background: rgba(196,59,59,0.1) !important; border-color: rgba(196,59,59,0.3) !important; }
+.btn-bribe:hover { background: rgba(196,59,59,0.2) !important; }
+.om-actions { margin-top: 8px; }
 
 /* ================================================================
    SEAT GRID

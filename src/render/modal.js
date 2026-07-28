@@ -106,7 +106,8 @@ export function showConfirm(message) {
 // Appointment interface
 import { gameState } from '../logic/state.js';
 import { DEPARTMENTS } from '../logic/data/departments.js';
-import { SEAT_TASK_NAMES_CN, DEPT_NAMES, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, APPOINTMENT_COST } from '../logic/data/constants.js';
+import { executeAction } from '../logic/actions.js';
+import { SEAT_TASK_NAMES_CN, DEPT_NAMES, FACTION_NAMES_CN, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, APPOINTMENT_COST } from '../logic/data/constants.js';
 
 // Slider input for choosing an amount
 export function showSlider(title, max, defaultValue = 1) {
@@ -202,6 +203,97 @@ export function showResourcePicker(cost, factionResources, genericResources) {
       });
       overlay.remove();
       resolve(allocation);
+    });
+  });
+}
+
+// Opponent faction detail modal — public member info + scout/poach actions
+export function showOpponentDetail(factionId) {
+  return new Promise(resolve => {
+    const faction = gameState.factions[factionId];
+    const factionName = FACTION_NAMES_CN[factionId] || factionId;
+    const playerFaction = gameState.factions[gameState.playerFactionId];
+
+    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName}</h4>`;
+    html += `<div class="opponent-stats">🔒 ${faction.lockedSeats}席 | 👥 ${faction.members.length}人</div>`;
+    html += '<div class="opponent-members">';
+
+    for (const m of faction.members) {
+      const scouted = m.scoutedQuestsBy?.includes(gameState.playerFactionId);
+      html += `<div class="opponent-member-row">
+        <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
+        <div class="om-info">
+          <div class="om-name">${m.name} · ${m.rank}</div>
+          <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>`;
+
+      if (scouted && m.personalQuests.length > 0) {
+        html += `<div class="om-quests">`;
+        for (const q of m.personalQuests) {
+          const qcost = { '小孩升学': '1教育', '购买新房': '1住建', '安排工作': '1国资委', '结识贵人': '2任意' }[q] || '?';
+          html += `<button class="btn-small btn-do-quest" data-fid="${factionId}" data-mid="${m.id}" data-quest="${q}">🎁 ${q}(${qcost})</button>`;
+        }
+        html += '</div>';
+      } else if (!scouted) {
+        html += `<button class="btn-small btn-scout-quests" data-fid="${factionId}" data-mid="${m.id}">🔍 打探追求(1影响)</button>`;
+      }
+
+      html += '</div></div>';
+    }
+
+    html += '</div>';
+    html += `<div class="om-actions"><button class="btn-small btn-bribe" data-fid="${factionId}">💰 收买干部(资金)</button></div>`;
+    html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `<div class="modal-box modal-opponent">${html}</div>`;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+
+    // Scout quests
+    overlay.querySelectorAll('.btn-scout-quests').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const r = executeAction(gameState.playerFactionId, 'scoutQuests', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
+        if (r.success) {
+          const member = gameState.factions[btn.dataset.fid].members.find(m => m.id === btn.dataset.mid);
+          if (member) {
+            if (!member.scoutedQuestsBy) member.scoutedQuestsBy = [];
+            member.scoutedQuestsBy.push(gameState.playerFactionId);
+          }
+        }
+        overlay.remove();
+        showOpponentDetail(factionId).then(resolve);
+      });
+    });
+
+    // Complete enemy quest (poach)
+    overlay.querySelectorAll('.btn-do-quest').forEach(btn => {
+      btn.addEventListener('click', () => {
+        import('./panels/center-panel.js').then(() => {
+          const r = executeAction(gameState.playerFactionId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
+          showAlert(r.message).then(() => {
+            overlay.remove();
+            showOpponentDetail(factionId).then(resolve);
+          });
+        });
+      });
+    });
+
+    // Bribe
+    overlay.querySelector('.btn-bribe')?.addEventListener('click', async () => {
+      const members = faction.members.map(m => ({
+        label: `${m.name} · ${m.rank} · 费用${Math.max(1, Math.ceil((9 - m.loyalty) / 2))}笔`,
+        value: m.id
+      }));
+      const mid = await showSelect('选择收买目标', members);
+      if (mid) {
+        const m = await import('../../logic/loyalty.js');
+        const r = m.tryBribeMember(gameState.playerFactionId, factionId, mid);
+        await showAlert(r.message);
+        overlay.remove();
+        showOpponentDetail(factionId).then(resolve);
+      }
     });
   });
 }

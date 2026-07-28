@@ -13,6 +13,8 @@ export function executeAction(factionId, actionType, params = {}) {
     case ACTION_TYPES.SCOUT_LOYALTY: return scoutLoyalty(factionId, params.targetFactionId, params.memberId);
     case ACTION_TYPES.SCOUT_RESOURCES: return scoutResources(factionId, params.targetFactionId);
     case ACTION_TYPES.INVESTIGATE: return investigate(factionId, params.targetFactionId, params.memberId);
+    case ACTION_TYPES.SCOUT_QUESTS: return scoutQuests(factionId, params.targetFactionId, params.memberId);
+    case ACTION_TYPES.COMPLETE_ENEMY_QUEST: return completeEnemyQuest(factionId, params.targetFactionId, params.memberId);
     case ACTION_TYPES.END_TURN: emit('action:end-turn', { factionId }); return { success: true, message: '结束回合' };
     default: return { success: false, message: '未知行动' };
   }
@@ -108,4 +110,46 @@ function scoutResources(factionId, targetFactionId) {
   if (!spendInfluence(factionId, 3)) return { success: false, message: '影响力不足' };
   const target = gameState.factions[targetFactionId];
   return { success: true, message: '打探成功', data: { resources: { ...target.resources }, influence: target.influence } };
+}
+
+// 打探对手成员的个人追求
+function scoutQuests(factionId, targetFactionId, memberId) {
+  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需1点）' };
+  const member = gameState.factions[targetFactionId]?.members.find(m => m.id === memberId);
+  if (!member) return { success: false, message: '目标不存在' };
+  return { success: true, message: `已打探${member.name}的个人追求`, data: { quests: member.personalQuests, traits: member.traits } };
+}
+
+// 帮对手成员完成个人追求来拉拢
+function completeEnemyQuest(factionId, targetFactionId, memberId) {
+  const targetFaction = gameState.factions[targetFactionId];
+  const member = targetFaction?.members.find(m => m.id === memberId);
+  if (!member || member.personalQuests.length === 0) return { success: false, message: '该成员无待完成的个人追求' };
+  const quest = member.personalQuests[0];
+  let cost = 0, dept = null;
+  switch (quest) {
+    case '小孩升学': cost = 1; dept = 'education'; break;
+    case '购买新房': cost = 1; dept = 'housing'; break;
+    case '安排工作': cost = 1; dept = 'sasac'; break;
+    case '结识贵人': cost = 2; dept = 'any'; break;
+    default: return { success: false, message: '无法完成的追求类型' };
+  }
+  if (dept === 'any') {
+    if (!spendAnyResources(factionId, cost)) return { success: false, message: '资源不足' };
+  } else {
+    if (!spendResources(factionId, dept, cost)) return { success: false, message: `资源不足（需${cost} ${dept}资源）` };
+  }
+  member.personalQuests.shift();
+  member.completedQuests.push(quest);
+  member.loyalty = Math.max(0, member.loyalty - 3);
+  gameState.roundLog.push({ factionId, action: 'completeEnemyQuest', target: `${member.name}(${targetFactionId})`, result: `完成${quest}，忠诚-3` });
+  if (member.loyalty <= 0) {
+    targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
+    member.loyalty = 4;
+    member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.id = `${factionId}_${member.name}`;
+    gameState.factions[factionId].members.push(member);
+    return { success: true, message: `${member.name}已叛变到你的派系！忠诚度降至0后成功策反` };
+  }
+  return { success: true, message: `完成${member.name}的${quest}，忠诚度-3（当前${member.loyalty}）` };
 }
