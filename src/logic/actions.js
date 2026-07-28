@@ -149,7 +149,7 @@ function completeEnemyQuest(factionId, targetFactionId, memberId) {
     member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
     member.id = `${factionId}_${member.name}`;
     gameState.factions[factionId].members.push(member);
-    return { success: true, message: `${member.name}很感谢您的知遇之恩，承诺来日必效犬马之劳。已加入你的派系！` };
+    return { success: true, message: `良禽择木而栖，${member.name}已加入您的派系。` };
   }
-  return { success: true, message: `${member.name}收下你的好意，但仍在观望。忠诚度-3（当前${member.loyalty}）` };
+  return { success: true, message: `${member.name}十分感谢您的帮助，来日有机会愿效犬马之劳。` };
 }
