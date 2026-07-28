@@ -262,10 +262,10 @@ async function handlePlayerAction(factionId, action) {
           const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
           const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
           const canDo = s.visitedOnTurn !== gameState.turn;
-        const totalRes = Object.values(pf.resources).reduce((a, b) => a + b, 0) + (pf.genericResources || 0);
-        const hasRes = s.task.resourceType === 'any'
-          ? totalRes >= s.task.cost
-          : (pf.resources[s.task.resourceType] || 0) + (pf.genericResources || 0) >= s.task.cost;
+          const totalRes = Object.values(pf.resources).reduce((a, b) => a + b, 0) + (pf.genericResources || 0);
+          const hasRes = s.task.resourceType === 'any'
+            ? totalRes >= s.task.cost
+            : (pf.resources[s.task.resourceType] || 0) + (pf.genericResources || 0) >= s.task.cost;
           if (!canDo) prefix = '⏳';
           else if (!hasRes) prefix = '❌';
           else prefix = '✅';
