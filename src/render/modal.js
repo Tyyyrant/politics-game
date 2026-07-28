@@ -217,7 +217,7 @@ export function showOpponentDetail(factionId) {
       return ''; // DEBUG: force hide
     }
 
-    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName}</h4>`;
+    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName} <span style="color:red;font-size:0.7em">[DEBUG:scouted=OFF]</span></h4>`;
     html += `<div class="opponent-stats">🔒 ${faction.lockedSeats}席 | 👥 ${faction.members.length}人</div>`;
     html += '<div class="opponent-members">';
 
@@ -226,7 +226,7 @@ export function showOpponentDetail(factionId) {
       html += `<div class="opponent-member-row">
         <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
         <div class="om-info">
-          <div class="om-name">${m.name} · ${m.rank}${loyaltyLabel(m)}</div>
+          <div class="om-name">${m.name} · ${m.rank}</div>
           <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>`;
 
       // 显示特质（公开信息）
@@ -234,21 +234,7 @@ export function showOpponentDetail(factionId) {
         html += `<div class="om-traits">${m.traits.map(t => TRAITS[t] || t).join(' · ')}</div>`;
       }
 
-      if (scouted) {
-        // 显示个人追求
-        if (m.personalQuests.length > 0) {
-          html += `<div class="om-quests">`;
-          for (const q of m.personalQuests) {
-            const qcost = { '小孩升学': '1教育', '购买新房': '1住建', '安排工作': '1国资委', '结识贵人': '2任意' }[q] || '?';
-            html += `<button class="btn-small btn-do-quest" data-fid="${factionId}" data-mid="${m.id}" data-quest="${q}">🎁 ${q}(${qcost})</button>`;
-          }
-          html += '</div>';
-        } else {
-          html += '<div class="om-quests" style="color:var(--text-muted);font-size:0.75em;">无个人追求</div>';
-        }
-      } else {
-        html += `<button class="btn-small btn-scout-quests" data-fid="${factionId}" data-mid="${m.id}">🔍 打探追求(1影响)</button>`;
-      }
+      html += `<button class="btn-small btn-scout-quests" data-fid="${factionId}" data-mid="${m.id}">🔍 打探追求(1影响)</button>`;
 
       html += '</div></div>';
     }
