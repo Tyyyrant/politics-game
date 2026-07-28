@@ -209,6 +209,7 @@ function renderBillPhase(el) {
       setTimeout(async () => {
         const t = await import('../../logic/turn.js');
         t.enterCleanup();
+        if (gameState.phase === 'gameOver') { renderAllPanels(); return; }
         t.startNewRound();
         t.determineTurnOrder();
         renderAllPanels();
