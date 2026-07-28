@@ -55,15 +55,15 @@ export function renderCenterPanel() {
   }
 
   // === Action phase ===
-  if (gameState.phase === 'dice' || gameState.phase === 'cleanup') {
-    // Safety: auto-transition dice/cleanup to action
+  // 仅在turnOrder为空（游戏未初始化）时自动从dice推进到action
+  if (gameState.phase === 'dice' && !gameState.turnOrder.length) {
     import('../../logic/turn.js').then(t => {
-      if (gameState.phase === 'dice' || gameState.phase === 'cleanup') {
+      if (gameState.phase === 'dice' && !gameState.turnOrder.length) {
         t.determineTurnOrder();
         renderAllPanels();
       }
     });
-    el.innerHTML = '<div class="ai-display">⏳ 正在确定顺位...</div>';
+    el.innerHTML = '<div class="ai-display">⏳ 正在初始化...</div>';
     return;
   }
   if (gameState.phase !== 'action' || !gameState.turnOrder.length) {
