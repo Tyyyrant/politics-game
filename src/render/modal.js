@@ -327,9 +327,18 @@ export function showOpponentDetail(factionId) {
 
     overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
 
-    // Scout
-    overlay.querySelectorAll('.btn-scout-quests').forEach(btn => {
-      btn.addEventListener('click', async () => {
+    // Use event delegation for all action buttons inside the modal
+    overlay.addEventListener('click', async (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const refresh = async () => {
+        overlay.remove();
+        (await import('../screens/game-screen.js')).renderAllPanels();
+        showOpponentDetail(factionId).then(resolve);
+      };
+
+      // Scout quests
+      if (btn.classList.contains('btn-scout-quests')) {
         const r = executeAction(playerId, 'scoutQuests', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
         if (r.success) {
           const member = gameState.factions[btn.dataset.fid].members.find(m => m.id === btn.dataset.mid);
@@ -339,33 +348,58 @@ export function showOpponentDetail(factionId) {
           }
         }
         await showAlert(r.message);
-        overlay.remove();
-        showOpponentDetail(factionId).then(resolve);
-      });
-    });
+        await refresh();
+      }
 
-    // Complete quest
-    overlay.querySelectorAll('.btn-do-quest').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      // Complete quest (poach)
+      if (btn.classList.contains('btn-do-quest')) {
+        const questType = btn.dataset.quest;
+        // 结识贵人(2any) → show resource picker
+        if (questType === '结识贵人') {
+          const alloc = await showResourcePicker(2, gameState.factions[playerId].resources, gameState.factions[playerId].genericResources || 0);
+          if (!alloc) return;
+          const pf = gameState.factions[playerId];
+          for (const [key, amt] of Object.entries(alloc)) {
+            if (key === 'generic') pf.genericResources -= amt;
+            else pf.resources[key] = (pf.resources[key] || 0) - amt;
+          }
+          // Now complete the quest manually
+          const targetFaction = gameState.factions[btn.dataset.fid];
+          const member = targetFaction?.members.find(m => m.id === btn.dataset.mid);
+          if (member) {
+            member.personalQuests.shift();
+            member.completedQuests.push('结识贵人');
+            member.loyalty = Math.max(0, member.loyalty - 3);
+            gameState.roundLog.push({ factionId: playerId, action: 'completeEnemyQuest', target: `${member.name}(${btn.dataset.fid})`, result: '完成结识贵人' });
+            if (member.loyalty <= 0) {
+              targetFaction.members = targetFaction.members.filter(m => m.id !== btn.dataset.mid);
+              member.loyalty = 4;
+              member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+              member.id = `${playerId}_${member.name}`;
+              gameState.factions[playerId].members.push(member);
+              await showAlert(`良禽择木而栖，${member.name}已加入您的派系。`);
+            } else {
+              await showAlert(`${member.name}十分感谢您的帮助，来日有机会愿效犬马之劳。`);
+            }
+          }
+          await refresh();
+          return;
+        }
         const r = executeAction(playerId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
         await showAlert(r.message);
-        overlay.remove();
-        (await import('../screens/game-screen.js')).renderAllPanels();
-        showOpponentDetail(factionId).then(resolve);
-      });
-    });
+        await refresh();
+      }
 
-    // Bribe
-    overlay.querySelector('.btn-bribe')?.addEventListener('click', async () => {
-      const members = faction.members.map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
-      const mid = await showSelect('选择收买目标', members);
-      if (mid) {
-        const { tryBribeMember } = await import('../../logic/loyalty.js');
-        const r = tryBribeMember(playerId, factionId, mid);
-        await showAlert(r.message);
-        overlay.remove();
-        (await import('../screens/game-screen.js')).renderAllPanels();
-        showOpponentDetail(factionId).then(resolve);
+      // Bribe
+      if (btn.classList.contains('btn-bribe')) {
+        const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
+        const mid = await showSelect('选择收买目标', members);
+        if (mid) {
+          const { tryBribeMember } = await import('../../logic/loyalty.js');
+          const r = tryBribeMember(playerId, factionId, mid);
+          await showAlert(r.message);
+          await refresh();
+        }
       }
     });
   });

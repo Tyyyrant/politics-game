@@ -127,29 +127,25 @@ function scoutQuests(factionId, targetFactionId, memberId) {
   return { success: true, message: `已打探${member.name}的个人追求`, data: { quests: member.personalQuests, traits: member.traits } };
 }
 
-// 帮对手成员完成个人追求来拉拢
+// 帮对手成员完成个人追求来拉拢（结识贵人由UI层处理资源选择）
 function completeEnemyQuest(factionId, targetFactionId, memberId) {
   const targetFaction = gameState.factions[targetFactionId];
   const member = targetFaction?.members.find(m => m.id === memberId);
   if (!member || member.personalQuests.length === 0) return { success: false, message: '该成员无待完成的个人追求' };
   const quest = member.personalQuests[0];
+  if (quest === '结识贵人') return { success: false, message: '请使用界面按钮完成' };
   let cost = 0, dept = null;
   switch (quest) {
     case '小孩升学': cost = 1; dept = 'education'; break;
     case '购买新房': cost = 1; dept = 'housing'; break;
     case '安排工作': cost = 1; dept = 'sasac'; break;
-    case '结识贵人': cost = 2; dept = 'any'; break;
     default: return { success: false, message: '无法完成的追求类型' };
   }
-  if (dept === 'any') {
-    if (!spendAnyResources(factionId, cost)) return { success: false, message: '资源不足' };
-  } else {
-    if (!spendResources(factionId, dept, cost)) return { success: false, message: `资源不足（需${cost} ${dept}资源）` };
-  }
+  if (!spendResources(factionId, dept, cost)) return { success: false, message: `资源不足（需${cost} ${dept}资源）` };
   member.personalQuests.shift();
   member.completedQuests.push(quest);
   member.loyalty = Math.max(0, member.loyalty - 3);
-  gameState.roundLog.push({ factionId, action: 'completeEnemyQuest', target: `${member.name}(${targetFactionId})`, result: `完成${quest}，忠诚-3` });
+  gameState.roundLog.push({ factionId, action: 'completeEnemyQuest', target: `${member.name}(${targetFactionId})`, result: `完成${quest}` });
   if (member.loyalty <= 0) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4;
