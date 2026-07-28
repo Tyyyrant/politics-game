@@ -214,7 +214,7 @@ export function showOpponentDetail(factionId) {
     const factionName = FACTION_NAMES_CN[factionId] || factionId;
 
     function loyaltyLabel(member) {
-      const scouted = !!(member.scoutedQuestsBy && member.scoutedQuestsBy.includes(gameState.playerFactionId));
+      const scouted = Array.isArray(member.scoutedQuestsBy) && member.scoutedQuestsBy.includes(gameState.playerFactionId);
       if (!scouted) return '';
       if (member.loyalty >= 7) return ' 🟢高';
       if (member.loyalty >= 4) return ' 🟡中';
@@ -227,7 +227,7 @@ export function showOpponentDetail(factionId) {
     html += '<div class="opponent-members">';
 
     for (const m of faction.members) {
-      const scouted = !!(m.scoutedQuestsBy && m.scoutedQuestsBy.includes(gameState.playerFactionId));
+      const scouted = Array.isArray(m.scoutedQuestsBy) && m.scoutedQuestsBy.includes(gameState.playerFactionId);
       html += `<div class="opponent-member-row">
         <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
         <div class="om-info">
