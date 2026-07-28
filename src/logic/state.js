@@ -25,6 +25,13 @@ export function createNewGame(playerFactionId) {
     npcSeats[0].lockedById = 'npcCongress';
     npcSeats[1].lockedById = 'npcCongress';
   }
+  // Clear any stale scouted state
+  for (const fid of FACTION_IDS) {
+    for (const m of factions[fid].members) {
+      delete m.scoutedQuestsBy;
+    }
+  }
+
   // TEST: boost propaganda faction for testing
   if (factions.propaganda) {
     factions.propaganda.influence = 100;
