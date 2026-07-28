@@ -266,6 +266,7 @@ async function handlePlayerAction(factionId, action) {
           const hasRes = s.task.resourceType === 'any'
             ? totalRes >= s.task.cost
             : (pf.resources[s.task.resourceType] || 0) + (pf.genericResources || 0) >= s.task.cost;
+          let prefix;
           if (!canDo) prefix = '⏳';
           else if (!hasRes) prefix = '❌';
           else prefix = '✅';
