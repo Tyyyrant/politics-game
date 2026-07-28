@@ -417,15 +417,18 @@ async function handlePlayerAction(factionId, action) {
         await showAlert(executeSkill(factionId, 'sasacCash', {}).message);
         break;
       case 'appoint': {
-        const result = await showAppointmentUI(factionId);
-        if (!result) break;
-        const m = await import('../../logic/loyalty.js');
-        if (result.action === 'promote') {
-          await showAlert(m.promoteMember(factionId, result.memberId).message);
-        } else if (result.action === 'recruit') {
-          await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle).message);
+        while (true) {
+          const result = await showAppointmentUI(factionId);
+          if (!result) break;
+          const m = await import('../../logic/loyalty.js');
+          if (result.action === 'promote') {
+            await showAlert(m.promoteMember(factionId, result.memberId).message);
+          } else if (result.action === 'recruit') {
+            await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle).message);
+          }
+          renderAllPanels();
+          // Loop: re-open appointment UI so user can keep appointing
         }
-        renderAllPanels();
         break;
       }
       case 'poach': {

@@ -424,7 +424,8 @@ export function showAppointmentUI(factionId) {
 
     const deptIds = Object.keys(byDept);
 
-    let html = '<div class="appointment-panel"><h4>📋 可任命职位表</h4>';
+    let html = '<div class="appointment-panel">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><h4>📋 可任命职位表</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>';
     html += '<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;">点击职位查看候选人 | 所有任命均消耗影响力+组织部或本部门资源</p>';
 
     if (!deptIds.length) {
@@ -463,16 +464,13 @@ export function showAppointmentUI(factionId) {
       }
     }
 
-    html += '<button class="modal-btn modal-cancel" style="margin-top:12px;width:100%;">关闭</button></div>';
-
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `<div class="modal-box modal-appoint">${html}</div>`;
     document.body.appendChild(overlay);
 
-    overlay.querySelector('.modal-cancel').addEventListener('click', () => {
-      overlay.remove();
-      resolve(null);
+    overlay.querySelectorAll('.modal-cancel').forEach(btn => {
+      btn.addEventListener('click', () => { overlay.remove(); resolve(null); });
     });
 
     // Click a position → show candidate list
@@ -507,7 +505,8 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
     const infCost = PROMOTION_INFLUENCE_COST[targetRank] || 10;
     const resCost = APPOINTMENT_COST[targetRank] || 8;
 
-    let html = '<div class="appointment-panel"><h4>📋 任命：' + deptName + ' · ' + targetRank + '（' + posTitle + '）</h4>';
+    let html = '<div class="appointment-panel">';
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><h4>📋 任命：${deptName} · ${targetRank}（${posTitle}）</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>`;
     html += `<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;">消耗 💰${infCost}影响力 + ${resCost}组织部或本部门资源</p>`;
 
     let hasAny = false;
@@ -556,16 +555,18 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
 
     if (!hasAny) html += '<div style="padding:12px;text-align:center;color:var(--text-secondary);">暂无可用的候选人</div>';
 
-    html += `<button class="modal-btn modal-cancel" style="margin-top:12px;width:100%;">返回职位列表</button></div>`;
+    html += `<button class="modal-btn" style="margin-top:12px;width:100%;" id="btn-back-to-positions">↩️ 返回职位列表</button></div>`;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `<div class="modal-box modal-appoint">${html}</div>`;
     document.body.appendChild(overlay);
 
-    overlay.querySelector('.modal-cancel').addEventListener('click', () => {
+    overlay.querySelectorAll('.modal-cancel').forEach(btn => {
+      btn.addEventListener('click', () => { overlay.remove(); resolve(null); });
+    });
+    overlay.querySelector('#btn-back-to-positions')?.addEventListener('click', () => {
       overlay.remove();
-      // Go back to position table
       showAppointmentUI(factionId).then(resolve);
     });
 
