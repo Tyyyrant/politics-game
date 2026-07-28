@@ -5,6 +5,7 @@ import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
 export function drawBill() {
   if (gameState.billDeck.length === 0) gameState.billDeck = shuffleDeck([...BILL_POOL]);
   gameState.currentBill = { ...gameState.billDeck.shift(), votes: { support: [], oppose: [], abstain: [] } };
+  gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
   emit('bill:drawn', { bill: gameState.currentBill });
 }
 

@@ -41,8 +41,8 @@ export function renderRightPanel() {
       else if (e.action === 'billResult') h += `<div class="log-bill">📜 ${e.target}：${e.result}（${e.detail || ''}）</div>`;
       else h += `<div class="log-system">${e.target} ${e.result || ''}</div>`;
     } else {
-      const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId;
-      const actionName = ACTION_NAMES_CN[e.action] || e.action;
+      const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId || '未知';
+      const actionName = ACTION_NAMES_CN[e.action] || e.action || '未知行动';
       let target = e.target || '';
       // Translate faction IDs in target to Chinese
       for (const [fid, fname] of Object.entries(FACTION_NAMES_CN)) {
