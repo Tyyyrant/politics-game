@@ -350,6 +350,7 @@ export function showOpponentDetail(factionId) {
         const r = executeAction(playerId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
         await showAlert(r.message);
         overlay.remove();
+        (await import('../screens/game-screen.js')).renderAllPanels();
         showOpponentDetail(factionId).then(resolve);
       });
     });
@@ -363,6 +364,7 @@ export function showOpponentDetail(factionId) {
         const r = tryBribeMember(playerId, factionId, mid);
         await showAlert(r.message);
         overlay.remove();
+        (await import('../screens/game-screen.js')).renderAllPanels();
         showOpponentDetail(factionId).then(resolve);
       }
     });
