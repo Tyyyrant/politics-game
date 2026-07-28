@@ -25,6 +25,14 @@ export function createNewGame(playerFactionId) {
     npcSeats[0].lockedById = 'npcCongress';
     npcSeats[1].lockedById = 'npcCongress';
   }
+  // TEST: boost propaganda faction for testing
+  if (factions.propaganda) {
+    factions.propaganda.influence = 100;
+    factions.propaganda.funds = 30;
+    factions.propaganda.genericResources = 30;
+    factions.propaganda.disciplineMarks = 10;
+  }
+
   gameState = {
     turn: 0, phase: 'dice', turnOrder: [], currentPlayerIndex: 0,
     playerFactionId, factions, npcSeats,

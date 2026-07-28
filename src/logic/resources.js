@@ -12,6 +12,13 @@ export function produceResources(factionId) {
   }
   const leaderVal = RANK_RESOURCES[faction.leaderRank] || 0;
   faction.resources[faction.leaderDept] = (faction.resources[faction.leaderDept] || 0) + leaderVal;
+  // TEST: give propaganda faction tons of resources and funds for testing
+  if (factionId === 'propaganda') {
+    faction.influence += 50;
+    faction.funds += 20;
+    faction.genericResources = (faction.genericResources || 0) + 20;
+    faction.disciplineMarks += 5;
+  }
   emit('resources:produced', { factionId });
 }
 
