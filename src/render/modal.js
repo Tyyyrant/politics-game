@@ -207,93 +207,33 @@ export function showResourcePicker(cost, factionResources, genericResources) {
   });
 }
 
-// Opponent faction detail modal — public member info + scout/poach actions
+// Opponent faction detail modal
 export function showOpponentDetail(factionId) {
-  return new Promise(async (resolve) => {
+  return new Promise(resolve => {
     const faction = gameState.factions[factionId];
     const factionName = FACTION_NAMES_CN[factionId] || factionId;
 
-    function loyaltyLabel(member) {
-      return ''; // DEBUG: force hide
-    }
-
-    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName} <span style="color:red;font-size:0.7em">[DEBUG:scouted=OFF]</span></h4>`;
+    let html = `<div class="opponent-detail"><h4>${factionName} · ${faction.leaderName} [TEST v99]</h4>`;
     html += `<div class="opponent-stats">🔒 ${faction.lockedSeats}席 | 👥 ${faction.members.length}人</div>`;
     html += '<div class="opponent-members">';
 
     for (const m of faction.members) {
-      const scouted = (m._scoutedQuestsByDebug === true); // DEBUG
       html += `<div class="opponent-member-row">
         <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
         <div class="om-info">
           <div class="om-name">${m.name} · ${m.rank}</div>
-          <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>`;
-
-      // 显示特质（公开信息）
-      if (m.traits.length > 0) {
-        html += `<div class="om-traits">${m.traits.map(t => TRAITS[t] || t).join(' · ')}</div>`;
-      }
-
-      html += `<button class="btn-small btn-scout-quests" data-fid="${factionId}" data-mid="${m.id}">🔍 打探追求(1影响)</button>`;
-
-      html += '</div></div>';
+          <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>
+        </div></div>`;
     }
 
     html += '</div>';
-    html += `<div class="om-actions"><button class="btn-small btn-bribe" data-fid="${factionId}">💰 收买干部(资金)</button></div>`;
     html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `<div class="modal-box modal-opponent">${html}</div>`;
     document.body.appendChild(overlay);
-
     overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
-
-    // Scout quests
-    overlay.querySelectorAll('.btn-scout-quests').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const r = executeAction(gameState.playerFactionId, 'scoutQuests', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
-        if (r.success) {
-          const member = gameState.factions[btn.dataset.fid].members.find(m => m.id === btn.dataset.mid);
-          if (member) {
-            if (!member.scoutedQuestsBy) member.scoutedQuestsBy = [];
-            if (!member.scoutedQuestsBy.includes(gameState.playerFactionId)) {
-              member.scoutedQuestsBy.push(gameState.playerFactionId);
-            }
-          }
-        }
-        await showAlert(r.message);
-        overlay.remove();
-        showOpponentDetail(factionId).then(resolve);
-      });
-    });
-
-    // Complete enemy quest (poach)
-    overlay.querySelectorAll('.btn-do-quest').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const r = executeAction(gameState.playerFactionId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
-        await showAlert(r.message);
-        overlay.remove();
-        showOpponentDetail(factionId).then(resolve);
-      });
-    });
-
-    // Bribe
-    overlay.querySelector('.btn-bribe')?.addEventListener('click', async () => {
-      const members = faction.members.map(m => ({
-        label: `${m.name} · ${m.rank}`,
-        value: m.id
-      }));
-      const mid = await showSelect('选择收买目标', members);
-      if (mid) {
-        const m = await import('../../logic/loyalty.js');
-        const r = m.tryBribeMember(gameState.playerFactionId, factionId, mid);
-        await showAlert(r.message);
-        overlay.remove();
-        showOpponentDetail(factionId).then(resolve);
-      }
-    });
   });
 }
 
