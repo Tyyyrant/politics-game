@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -262,10 +262,10 @@ async function handlePlayerAction(factionId, action) {
           const tname = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
           const dname = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
           const canDo = s.visitedOnTurn !== gameState.turn;
-          const hasRes = s.task.resourceType === 'any'
-            ? Object.values(pf.resources).reduce((a, b) => a + b, 0) >= s.task.cost
-            : (pf.resources[s.task.resourceType] || 0) >= s.task.cost;
-          let prefix;
+        const totalRes = Object.values(pf.resources).reduce((a, b) => a + b, 0) + (pf.genericResources || 0);
+        const hasRes = s.task.resourceType === 'any'
+          ? totalRes >= s.task.cost
+          : (pf.resources[s.task.resourceType] || 0) + (pf.genericResources || 0) >= s.task.cost;
           if (!canDo) prefix = '⏳';
           else if (!hasRes) prefix = '❌';
           else prefix = '✅';
@@ -273,7 +273,27 @@ async function handlePlayerAction(factionId, action) {
           return { label: `${prefix} ${s.name} | ${tname} | ${s.task.cost}${dname} | ${status}`, value: s.id };
         });
         const sid = await showSelect('选择要完成的席位', opts);
-        if (sid) {
+        if (!sid) break;
+        const seat = gameState.npcSeats.find(s => s.id === sid);
+        if (seat && seat.task.resourceType === 'any') {
+          // Let player choose which resources to spend
+          const alloc = await showResourcePicker(seat.task.cost, pf.resources, pf.genericResources || 0);
+          if (!alloc) break;
+          // Spend chosen resources
+          for (const [key, amt] of Object.entries(alloc)) {
+            if (key === 'generic') {
+              pf.genericResources -= amt;
+            } else {
+              pf.resources[key] = (pf.resources[key] || 0) - amt;
+            }
+          }
+          // Complete the seat
+          seat.lockedById = factionId;
+          seat.visitorId = null;
+          pf.lockedSeats++;
+          gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${sid})`, result: '锁定成功' });
+          await showAlert(`成功锁定${seat.name}！`);
+        } else {
           await showAlert(executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid }).message);
         }
         break;

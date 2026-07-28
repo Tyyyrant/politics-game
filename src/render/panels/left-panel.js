@@ -123,9 +123,10 @@ export function renderLeftPanel() {
       const taskName = SEAT_TASK_NAMES_CN[s.task.type] || s.task.type;
       const deptName = DEPT_NAMES[s.task.resourceType] || s.task.resourceType;
       const canComplete = s.visitedOnTurn !== gameState.turn;
-      const hasRes = s.task.resourceType === 'any'
-        ? Object.values(pf.resources).reduce((a, b) => a + b, 0) >= s.task.cost
-        : (pf.resources[s.task.resourceType] || 0) >= s.task.cost;
+      const totalRes = Object.values(pf.resources).reduce((a, b) => a + b, 0) + (pf.genericResources || 0);
+const hasRes = s.task.resourceType === 'any'
+        ? totalRes >= s.task.cost
+        : (pf.resources[s.task.resourceType] || 0) + (pf.genericResources || 0) >= s.task.cost;
       let statusText;
       if (!canComplete) statusText = '⏳下轮可完成';
       else if (!hasRes) statusText = `❌资源不足(需${s.task.cost}${deptName})`;

@@ -541,6 +541,17 @@ body {
 .modal-slider { -webkit-appearance: none; appearance: none; height: 6px; background: var(--bg-primary); border-radius: 3px; outline: none; }
 .modal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-darkred); cursor: pointer; border: 2px solid var(--accent-gold); }
 .modal-slider-val { font-size: 1.4em; font-weight: bold; color: var(--accent-gold); min-width: 40px; text-align: center; }
+
+/* Resource picker */
+.modal-respick { max-width: 420px; }
+.res-pick-list { max-height: 260px; overflow-y: auto; margin-bottom: 12px; }
+.res-pick-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.res-pick-label { flex: 1; font-size: 0.85em; min-width: 120px; }
+.res-pick-slider { flex: 2; -webkit-appearance: none; appearance: none; height: 4px; background: var(--bg-primary); border-radius: 2px; outline: none; }
+.res-pick-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent-darkred); cursor: pointer; border: 2px solid var(--accent-gold); }
+.res-pick-val { min-width: 28px; text-align: center; font-weight: bold; color: var(--accent-gold); }
+.res-pick-total { text-align: center; font-size: 1em; padding: 8px 0; color: var(--text-primary); }
+.res-pick-total b { color: var(--accent-gold); font-size: 1.2em; }
 .modal-message {
   color: var(--text-primary); font-size: 0.9em; line-height: 1.7;
   white-space: pre-wrap; margin-bottom: 14px;

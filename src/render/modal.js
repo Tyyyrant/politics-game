@@ -136,6 +136,74 @@ export function showSlider(title, max, defaultValue = 1) {
   });
 }
 
+// Resource picker for "any" type seat tasks — pick which resources to spend
+export function showResourcePicker(cost, factionResources, genericResources) {
+  return new Promise(resolve => {
+    const entries = Object.entries(factionResources).filter(([, v]) => v > 0);
+    const totalMax = entries.reduce((s, [, v]) => s + v, 0) + (genericResources || 0);
+    if (totalMax < cost) { resolve(null); return; }
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+
+    let rowsHtml = '';
+    if (genericResources > 0) {
+      rowsHtml += `<div class="res-pick-row">
+        <span class="res-pick-label">🧱 通用资源: ${genericResources}</span>
+        <input type="range" class="res-pick-slider" min="0" max="${genericResources}" value="0" data-key="generic">
+        <span class="res-pick-val">0</span>
+      </div>`;
+    }
+    for (const [dept, amt] of entries) {
+      const deptName = DEPT_NAMES[dept] || dept;
+      rowsHtml += `<div class="res-pick-row">
+        <span class="res-pick-label">${deptName}: ${amt}</span>
+        <input type="range" class="res-pick-slider" min="0" max="${amt}" value="0" data-key="${dept}">
+        <span class="res-pick-val">0</span>
+      </div>`;
+    }
+
+    overlay.innerHTML = `
+      <div class="modal-box modal-respick">
+        <div class="modal-title">选择消耗的资源（需凑满 ${cost}）</div>
+        <div class="res-pick-list">${rowsHtml}</div>
+        <div class="res-pick-total">已选：<b id="res-pick-total">0</b> / ${cost}</div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-cancel">取消</button>
+          <button class="modal-btn modal-ok" id="res-pick-ok" disabled>确定</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const sliders = overlay.querySelectorAll('.res-pick-slider');
+    const totalEl = overlay.querySelector('#res-pick-total');
+    const okBtn = overlay.querySelector('#res-pick-ok');
+
+    function updateTotal() {
+      let total = 0;
+      sliders.forEach(s => { total += parseInt(s.value); });
+      totalEl.textContent = total;
+      okBtn.disabled = total < cost;
+    }
+
+    sliders.forEach(s => {
+      const valEl = s.parentElement.querySelector('.res-pick-val');
+      s.addEventListener('input', () => { valEl.textContent = s.value; updateTotal(); });
+    });
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+    okBtn.addEventListener('click', () => {
+      const allocation = {};
+      sliders.forEach(s => {
+        const v = parseInt(s.value);
+        if (v > 0) allocation[s.dataset.key] = v;
+      });
+      overlay.remove();
+      resolve(allocation);
+    });
+  });
+}
+
 export function showSeatPicker(title, filterFn = null) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
