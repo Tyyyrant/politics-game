@@ -76,7 +76,11 @@ export function enterCleanup() {
       }
     }
   }
-  gameState.activeBillEffects = gameState.activeBillEffects.filter(e => { e.duration--; return e.duration > 0; });
+  gameState.activeBillEffects = gameState.activeBillEffects.filter(e => {
+    const keep = e.duration > 0;
+    if (keep) e.duration--;
+    return keep;
+  });
   if (gameState.turn % 2 === 0) gameState.globalDisciplineMarkPool++;
   emit('turn:cleanup-done');
 }
