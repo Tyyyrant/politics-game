@@ -38,6 +38,7 @@ export function renderLeftPanel() {
     h += '<div class="panel-section bill-effects-box"><h4>📜 生效法案</h4>';
     for (const be of gameState.activeBillEffects) {
       const eff = be.effects;
+      if (!be || !be.name || !eff) continue;
       const isPassed = be.name.includes('（通过）');
       const icon = isPassed ? '✅' : '❌';
       // Build description
