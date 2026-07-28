@@ -10,8 +10,7 @@ export function generateSeatTasks(count = 27) {
   ];
   const tasks = [];
   for (let i = 0; i < count; i++) {
-    // Round-robin to ensure even distribution
-    const def = taskDefs[i % taskDefs.length];
+    const def = taskDefs[Math.floor(Math.random() * taskDefs.length)];
     const cost = def.costMin + Math.floor(Math.random() * (def.costMax - def.costMin + 1));
     tasks.push({
       id: `seat_${String(i + 1).padStart(2, '0')}`,
