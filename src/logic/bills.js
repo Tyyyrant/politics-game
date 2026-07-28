@@ -3,6 +3,7 @@ import { gameState, emit } from './state.js';
 import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
 
 export function drawBill() {
+  if (gameState.currentBill) return;  // 已有法案在投票中，不重复抽
   if (gameState.billDeck.length === 0) gameState.billDeck = shuffleDeck([...BILL_POOL]);
   gameState.currentBill = { ...gameState.billDeck.shift(), votes: { support: [], oppose: [], abstain: [] } };
   gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
