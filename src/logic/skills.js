@@ -38,7 +38,7 @@ export function executeSkill(factionId, skillId, params = {}) {
       return { success: true, message: '项目招标成功！商人项目完成+免费拜访1次' };
     case 'positivePropaganda':
       if (!spendResources(factionId, 'propaganda', 2)) return { success: false, message: '宣传资源不足' };
-      gameState.activeBillEffects.push({ id: `positive_${params.taskType}`, effects: { taskCostReduction: 1 }, duration: 1 });
+      gameState.activeBillEffects.push({ id: `positive_${params.taskType}`, name: `正面宣传（${params.taskType}）`, effects: { taskCostReduction: 1, taskType: params.taskType }, duration: 1 });
       return { success: true, message: '正面宣传已发出' };
     case 'negativePropaganda':
       if (!spendResources(factionId, 'propaganda', 2)) return { success: false, message: '宣传资源不足' };

@@ -279,8 +279,14 @@ async function handlePlayerAction(factionId, action) {
         if (!sid) break;
         const seat = gameState.npcSeats.find(s => s.id === sid);
         if (seat && seat.task.resourceType === 'any') {
-          // Let player choose which resources to spend
-          const alloc = await showResourcePicker(seat.task.cost, pf.resources, pf.genericResources || 0);
+          // Apply task cost reduction
+          let cost = seat.task.cost;
+          for (const be of gameState.activeBillEffects) {
+            if (be.effects.taskCostReduction && (!be.effects.taskType || be.effects.taskType === seat.task.type)) {
+              cost = Math.max(1, cost - be.effects.taskCostReduction);
+            }
+          }
+          const alloc = await showResourcePicker(cost, pf.resources, pf.genericResources || 0);
           if (!alloc) break;
           // Spend chosen resources
           for (const [key, amt] of Object.entries(alloc)) {

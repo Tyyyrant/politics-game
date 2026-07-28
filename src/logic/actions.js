@@ -41,7 +41,14 @@ function completeTask(factionId, seatId) {
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat || seat.visitorId !== factionId) return { success: false, message: '你未在攻略此席位' };
   if (seat.visitedOnTurn === gameState.turn) return { success: false, message: '本回合刚拜访，请下回合再完成任务' };
-  const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, seat.task.cost) : spendResources(factionId, seat.task.resourceType, seat.task.cost);
+  // Apply task cost reduction from active effects (正面宣传等)
+  let cost = seat.task.cost;
+  for (const be of gameState.activeBillEffects) {
+    if (be.effects.taskCostReduction && (!be.effects.taskType || be.effects.taskType === seat.task.type)) {
+      cost = Math.max(1, cost - be.effects.taskCostReduction);
+    }
+  }
+  const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, cost) : spendResources(factionId, seat.task.resourceType, cost);
   if (!spent) return { success: false, message: '资源不足' };
   seat.lockedById = factionId; seat.visitorId = null;
   gameState.factions[factionId].lockedSeats++;
