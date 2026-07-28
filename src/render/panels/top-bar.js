@@ -16,7 +16,7 @@ export function renderTopBar() {
       <span class="phase-indicator">${labels[gameState.phase] || ''}</span>
     </div>
     <div class="top-bar-center ${isPlayer ? 'player-turn' : 'ai-turn'}">
-      ${isPlayer ? '🔔 你的行动回合' : `⏳ ${FACTION_NAMES[cf] || cf} 正在行动…`}
+      ${gameState.phase === 'bill' ? '📜 法案投票中' : (isPlayer ? '🔔 你的行动回合' : `⏳ ${FACTION_NAMES[cf] || cf} 正在行动…`)}
     </div>
     <div class="top-bar-right">
       <button class="btn-top" id="btn-save">💾 存档</button>
