@@ -82,7 +82,14 @@ export function enterCleanup() {
     if (keep) e.duration--;
     return keep;
   });
-  if (gameState.turn % 2 === 0) gameState.globalDisciplineMarkPool++;
+  if (gameState.turn % 2 === 0) {
+    // 每2轮所有派系获得纪委标记（基于纪委部门成员数量）
+    for (const fid of FACTION_IDS) {
+      const faction = gameState.factions[fid];
+      const discMembers = faction.members.filter(m => m.dept === 'discipline' && m.investigationStatus !== 'evidence');
+      faction.disciplineMarks += discMembers.length;
+    }
+  }
   checkVictory();
   emit('turn:cleanup-done');
 }

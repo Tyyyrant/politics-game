@@ -351,19 +351,22 @@ async function handlePlayerAction(factionId, action) {
         break;
       }
       case 'investigate': {
+        const myMarks = gameState.factions[factionId].disciplineMarks;
         const targets = Object.entries(gameState.factions)
           .filter(([id]) => id !== factionId)
           .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
-        const target = await showSelect('选择目标派系', targets);
+        const target = await showSelect('选择目标派系（纪委标记：' + myMarks + '）', targets);
         if (!target) break;
         const faction = gameState.factions[target];
         const members = faction.members.filter(m => !m.isUnderInvestigation);
         if (!members.length) { await showAlert('该派系没有可查处的干部'); break; }
-        const memberOpts = members.map(m => ({
-          label: `${m.name} · ${m.rank}`,
-          value: m.id
-        }));
-        const mid = await showSelect('选择查处目标', memberOpts);
+        const costMap = { '副处': 1, '正处': 2, '副厅': 3, '正厅': 4 };
+        const memberOpts = members.map(m => {
+          const cost = costMap[m.rank] || '?';
+          const can = myMarks >= cost;
+          return { label: `${can ? '✅' : '❌'} ${m.name} · ${m.rank}（${cost}标记）`, value: m.id };
+        });
+        const mid = await showSelect('选择查处目标（当前标记：' + myMarks + '）', memberOpts);
         if (mid) await showAlert(executeAction(factionId, ACTION_TYPES.INVESTIGATE, { targetFactionId: target, memberId: mid }).message);
         break;
       }
