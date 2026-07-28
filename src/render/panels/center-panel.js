@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showPrompt, showSelect, showAlert, showSeatPicker, showAppointmentUI } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -429,21 +429,23 @@ async function handlePlayerAction(factionId, action) {
       }
       case 'convertGovParty': {
         const pf = gameState.factions[factionId];
-        const isGov = (d) => ['govOffice','ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'].includes(d);
-        const isParty = (d) => ['partyOffice','organization','propaganda','discipline','legalAffairs'].includes(d);
+        const allGovDepts = ['govOffice','ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'];
+        const allPartyDepts = ['partyOffice','organization','propaganda','discipline','legalAffairs'];
+        const isGov = (d) => allGovDepts.includes(d);
         const deptLabel = (d) => `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`;
-        const govDepts = Object.keys(pf.resources).filter(d => isGov(d) && pf.resources[d] > 0);
-        const partyDepts = Object.keys(pf.resources).filter(d => isParty(d) && pf.resources[d] > 0);
-        if (!govDepts.length && !partyDepts.length) { await showAlert('没有可兑换的资源'); break; }
-        const allFrom = [...govDepts.map(d => ({ label: `政府·${deptLabel(d)}`, value: d })),
-                         ...partyDepts.map(d => ({ label: `党委·${deptLabel(d)}`, value: d }))];
-        const from = await showSelect('选择要兑换的来源部门', allFrom);
+        const srcGov = allGovDepts.filter(d => (pf.resources[d] || 0) > 0);
+        const srcParty = allPartyDepts.filter(d => (pf.resources[d] || 0) > 0);
+        if (!srcGov.length && !srcParty.length) { await showAlert('没有可兑换的资源'); break; }
+        const allFrom = [...srcGov.map(d => ({ label: `政府·${deptLabel(d)}`, value: d })),
+                         ...srcParty.map(d => ({ label: `党委·${deptLabel(d)}`, value: d }))];
+        const from = await showSelect('选择来源部门（只能用已有资源）', allFrom);
         if (!from) break;
-        const toTargets = (isGov(from) ? partyDepts : govDepts).map(d => ({ label: deptLabel(d), value: d }));
-        const to = await showSelect('选择目标部门', toTargets.length ? toTargets : [{ label: '无可用目标', value: '' }]);
+        const toList = (isGov(from) ? allPartyDepts : allGovDepts).map(d => ({ label: deptLabel(d), value: d }));
+        const to = await showSelect('选择目标部门', toList);
         if (!to) break;
-        const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
-        if (amt <= 0 || (pf.resources[from] || 0) < amt) { await showAlert('资源不足'); break; }
+        const maxAmt = pf.resources[from] || 0;
+        const amt = await showSlider('兑换数量', maxAmt, 1);
+        if (!amt) break;
         pf.resources[from] -= amt;
         pf.resources[to] = (pf.resources[to] || 0) + amt;
         renderAllPanels();
@@ -452,13 +454,14 @@ async function handlePlayerAction(factionId, action) {
       // 政府办公厅→任意政府部门（始终可用）
       case 'convertGovOffice': {
         const pf = gameState.factions[factionId];
-        if ((pf.resources.govOffice || 0) < 1) { await showAlert('政府办公厅资源不足'); break; }
+        const maxAmt = pf.resources.govOffice || 0;
+        if (maxAmt < 1) { await showAlert('政府办公厅资源不足'); break; }
         const govDepts = ['ndrc','sasac','publicSecurity','hrss','finance','housing','education','audit'];
         const opts = govDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
         const to = await showSelect('政府办公厅→哪个政府部门(1:1)', opts);
         if (!to) break;
-        const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
-        if (amt <= 0 || (pf.resources.govOffice || 0) < amt) { await showAlert('资源不足'); break; }
+        const amt = await showSlider('兑换数量', maxAmt, 1);
+        if (!amt) break;
         pf.resources.govOffice -= amt;
         pf.resources[to] = (pf.resources[to] || 0) + amt;
         await showAlert(`已兑换！${amt}政府办公厅→${DEPT_NAMES[to] || to}`);
@@ -468,13 +471,14 @@ async function handlePlayerAction(factionId, action) {
       // 党委办公厅→任意党委部门（始终可用）
       case 'convertPartyOffice': {
         const pf = gameState.factions[factionId];
-        if ((pf.resources.partyOffice || 0) < 1) { await showAlert('党委办公厅资源不足'); break; }
+        const maxAmt = pf.resources.partyOffice || 0;
+        if (maxAmt < 1) { await showAlert('党委办公厅资源不足'); break; }
         const partyDepts = ['organization','propaganda','discipline','legalAffairs'];
         const opts = partyDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
         const to = await showSelect('党委办公厅→哪个党委部门(1:1)', opts);
         if (!to) break;
-        const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
-        if (amt <= 0 || (pf.resources.partyOffice || 0) < amt) { await showAlert('资源不足'); break; }
+        const amt = await showSlider('兑换数量', maxAmt, 1);
+        if (!amt) break;
         pf.resources.partyOffice -= amt;
         pf.resources[to] = (pf.resources[to] || 0) + amt;
         await showAlert(`已兑换！${amt}党委办公厅→${DEPT_NAMES[to] || to}`);
@@ -490,8 +494,9 @@ async function handlePlayerAction(factionId, action) {
         if (!choices.length) { await showAlert('没有办公厅资源'); break; }
         const type = await showSelect('选择办公厅类型', choices);
         if (!type) break;
-        const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
-        if (amt <= 0 || (pf.resources[type] || 0) < amt) { await showAlert('资源不足'); break; }
+        const maxAmt = pf.resources[type] || 0;
+        const amt = await showSlider('兑换数量', maxAmt, 1);
+        if (!amt) break;
         pf.resources[type] -= amt;
         pf.genericResources = (pf.genericResources || 0) + amt;
         await showAlert(`已兑换！${amt}${type === 'govOffice' ? '政府' : '党委'}办公厅→${amt}通用资源`);
@@ -500,13 +505,14 @@ async function handlePlayerAction(factionId, action) {
       }
       case 'convertEmergency': {
         const pf = gameState.factions[factionId];
-        if ((pf.resources.publicSecurity || 0) < 1) { await showAlert('公安资源不足'); break; }
+        const maxAmt = pf.resources.publicSecurity || 0;
+        if (maxAmt < 1) { await showAlert('公安资源不足'); break; }
         const govDepts = ['govOffice','ndrc','sasac','hrss','finance','housing','education','audit'];
         const opts = govDepts.map(d => ({ label: `${DEPT_NAMES[d] || d}:${pf.resources[d] || 0}`, value: d }));
         const to = await showSelect('公安→哪个政府资源(1:1)', opts);
         if (!to) break;
-        const amt = parseInt(await showPrompt('兑换数量:', '1')) || 0;
-        if (amt <= 0 || (pf.resources.publicSecurity || 0) < amt) { await showAlert('资源不足'); break; }
+        const amt = await showSlider('兑换数量', maxAmt, 1);
+        if (!amt) break;
         pf.resources.publicSecurity -= amt;
         pf.resources[to] = (pf.resources[to] || 0) + amt;
         renderAllPanels();
@@ -514,10 +520,13 @@ async function handlePlayerAction(factionId, action) {
       }
       case 'convertInfluence': {
         const pf = gameState.factions[factionId];
-        if (pf.influence < 5) { await showAlert('影响力不足（5影响力→1通用资源）'); break; }
-        pf.influence -= 5;
-        pf.genericResources = (pf.genericResources || 0) + 1;
-        await showAlert('已兑换！5影响力 → 1通用资源');
+        const maxAmt = Math.floor(pf.influence / 5);
+        if (maxAmt < 1) { await showAlert('影响力不足（5影响力→1通用资源）'); break; }
+        const batches = await showSlider('兑换几份？（每份5影响力=1通用）', maxAmt, 1);
+        if (!batches) break;
+        pf.influence -= batches * 5;
+        pf.genericResources = (pf.genericResources || 0) + batches;
+        await showAlert(`已兑换！${batches * 5}影响力 → ${batches}通用资源`);
         renderAllPanels();
         break;
       }

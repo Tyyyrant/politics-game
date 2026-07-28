@@ -516,6 +516,9 @@ body {
   border-radius: 4px; font-size: 0.9em; font-family: var(--font-sans);
 }
 .modal-input:focus { outline: none; border-color: var(--accent-gold); }
+.modal-slider { -webkit-appearance: none; appearance: none; height: 6px; background: var(--bg-primary); border-radius: 3px; outline: none; }
+.modal-slider::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--accent-darkred); cursor: pointer; border: 2px solid var(--accent-gold); }
+.modal-slider-val { font-size: 1.4em; font-weight: bold; color: var(--accent-gold); min-width: 40px; text-align: center; }
 .modal-message {
   color: var(--text-primary); font-size: 0.9em; line-height: 1.7;
   white-space: pre-wrap; margin-bottom: 14px;

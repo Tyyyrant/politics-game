@@ -108,6 +108,34 @@ import { gameState } from '../logic/state.js';
 import { DEPARTMENTS } from '../logic/data/departments.js';
 import { SEAT_TASK_NAMES_CN, DEPT_NAMES, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, APPOINTMENT_COST } from '../logic/data/constants.js';
 
+// Slider input for choosing an amount
+export function showSlider(title, max, defaultValue = 1) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    overlay.innerHTML = `
+      <div class="modal-box" style="min-width:360px">
+        <div class="modal-title">${title}</div>
+        <div style="display:flex;align-items:center;gap:12px;margin:16px 0;">
+          <input type="range" class="modal-slider" id="modal-slider" min="1" max="${max}" value="${Math.min(defaultValue, max)}" style="flex:1">
+          <span class="modal-slider-val" id="modal-slider-val">${Math.min(defaultValue, max)}</span>
+        </div>
+        <div style="font-size:0.78em;color:var(--text-secondary);text-align:center">可兑换范围：1 ~ ${max}</div>
+        <div class="modal-buttons">
+          <button class="modal-btn modal-cancel">取消</button>
+          <button class="modal-btn modal-ok">确定</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    const slider = overlay.querySelector('#modal-slider');
+    const valEl = overlay.querySelector('#modal-slider-val');
+    slider.addEventListener('input', () => { valEl.textContent = slider.value; });
+    overlay.querySelector('.modal-ok').addEventListener('click', () => { overlay.remove(); resolve(parseInt(slider.value)); });
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+  });
+}
+
 export function showSeatPicker(title, filterFn = null) {
   return new Promise(resolve => {
     const overlay = document.createElement('div');
