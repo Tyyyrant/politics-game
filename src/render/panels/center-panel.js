@@ -43,6 +43,7 @@ function describeEffects(eff) {
 let _playerVoted = false;
 let _aiVoteTriggered = false;
 let _billResolving = false;
+let _billDrawnTurn = 0;  // 记录本轮是否已抽过法案
 
 export function renderCenterPanel() {
   const el = document.getElementById('center-panel');
@@ -137,6 +138,9 @@ function renderBillPhase(el) {
   // Bill not yet drawn — draw it only once per round
   if (!gameState.currentBill) {
     if (_billResolving) return;  // Guard: don't redraw if already resolving
+    // 每轮只允许抽一次法案
+    if (_billDrawnTurn >= gameState.turn) { el.innerHTML = ''; return; }
+    _billDrawnTurn = gameState.turn;
     _playerVoted = false;
     _aiVoteTriggered = false;
     _billResolving = false;
