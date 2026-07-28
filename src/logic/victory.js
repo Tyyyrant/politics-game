@@ -1,52 +1,58 @@
 // src/logic/victory.js
 import { gameState, emit } from './state.js';
-import { TOTAL_NPC_SEATS, MAX_ROUNDS, EXTENSION_ROUNDS } from './data/constants.js';
+import { TOTAL_NPC_SEATS, MAX_ROUNDS, MAJORITY_SEATS } from './data/constants.js';
 
 export function checkVictory() {
   const playerId = gameState.playerFactionId;
   const pf = gameState.factions[playerId];
-  const majority = Math.floor(TOTAL_NPC_SEATS / 2) + 1;
 
+  const result = doCheck(playerId, pf);
+  if (result.gameOver) {
+    gameState.lastVictory = result;
+  }
+  return result;
+}
+
+function doCheck(playerId, pf) {
+  // 提前失败：所有副厅以上干部被查处
   const senior = pf.members.filter(m => (m.rank === '副厅' || m.rank === '正厅') && m.investigationStatus !== 'evidence');
   if (senior.length === 0 && gameState.turn > 1) {
     gameState.phase = 'gameOver';
-    emit('victory:early-defeat', { reason: 'collapse', message: '所有副厅以上干部被查处，派系崩溃' });
-    return { gameOver: true, playerLost: true, reason: 'collapse' };
+    return { gameOver: true, playerLost: true, reason: 'collapse', playerWon: false };
   }
 
+  // 提前失败：半数以上成员忠诚崩溃
   const disloyal = pf.members.filter(m => m.loyalty <= 2).length;
   if (disloyal > pf.members.length / 2 && pf.members.length > 0) {
     gameState.phase = 'gameOver';
-    emit('victory:early-defeat', { reason: 'disloyalty', message: '半数以上成员忠诚度崩溃' });
-    return { gameOver: true, playerLost: true, reason: 'disloyalty' };
+    return { gameOver: true, playerLost: true, reason: 'disloyalty', playerWon: false };
   }
 
-  if (gameState.turn >= MAX_ROUNDS) {
-    if (pf.lockedSeats >= majority) {
-      gameState.phase = 'gameOver';
-      emit('victory:win', { type: 'majority', seats: pf.lockedSeats });
-      return { gameOver: true, playerWon: true, type: 'majority' };
-    }
-    if (gameState.turn < MAX_ROUNDS + EXTENSION_ROUNDS) {
-      if (pf.lockedSeats >= 12) {
-        gameState.phase = 'gameOver';
-        emit('victory:win', { type: 'extension', seats: pf.lockedSeats });
-        return { gameOver: true, playerWon: true, type: 'extension' };
-      }
-    }
-    if (gameState.turn >= MAX_ROUNDS + EXTENSION_ROUNDS) {
-      let maxSeats = 0, winner = null;
-      for (const [fid, f] of Object.entries(gameState.factions)) {
-        if (f.lockedSeats > maxSeats) { maxSeats = f.lockedSeats; winner = fid; }
-      }
-      gameState.phase = 'gameOver';
-      if (winner === playerId) {
-        emit('victory:win', { type: 'plurality', seats: maxSeats });
-        return { gameOver: true, playerWon: true, type: 'plurality' };
-      }
-      emit('victory:lose', { type: 'plurality', playerSeats: pf.lockedSeats, winnerSeats: maxSeats });
-      return { gameOver: true, playerLost: true, type: 'plurality' };
-    }
+  // 过半立即获胜（任何人）
+  const majorityWinner = findMajorityWinner();
+  if (majorityWinner) {
+    gameState.phase = 'gameOver';
+    const won = majorityWinner === playerId;
+    return { gameOver: true, playerWon: won, playerLost: !won, type: 'majority', winner: majorityWinner, seats: gameState.factions[playerId].lockedSeats };
   }
+
+  // 第20轮结算
+  if (gameState.turn >= MAX_ROUNDS) {
+    gameState.phase = 'gameOver';
+    let maxSeats = 0, winner = null;
+    for (const [fid, f] of Object.entries(gameState.factions)) {
+      if (f.lockedSeats > maxSeats) { maxSeats = f.lockedSeats; winner = fid; }
+    }
+    const won = winner === playerId;
+    return { gameOver: true, playerWon: won, playerLost: !won, type: 'final', seats: pf.lockedSeats, maxSeats };
+  }
+
   return { gameOver: false };
+}
+
+function findMajorityWinner() {
+  for (const [fid, f] of Object.entries(gameState.factions)) {
+    if (f.lockedSeats >= MAJORITY_SEATS) return fid;
+  }
+  return null;
 }

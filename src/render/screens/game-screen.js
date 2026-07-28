@@ -21,7 +21,14 @@ export function showGameScreen() {
 }
 
 export function renderAllPanels() {
-  if (!gameState || gameState.phase === 'gameOver') return;
+  if (!gameState) return;
+  if (gameState.phase === 'gameOver') {
+    import('./end-screen.js').then(m => {
+      const v = gameState.lastVictory || {};
+      m.showEndScreen(v.playerWon || false, v);
+    });
+    return;
+  }
   try {
     renderTopBar();
     renderLeftPanel();

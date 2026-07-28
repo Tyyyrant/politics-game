@@ -2,6 +2,7 @@
 import { gameState, emit } from './state.js';
 import { FACTION_IDS } from './data/constants.js';
 import { produceResources } from './resources.js';
+import { checkVictory } from './victory.js';
 
 export function rollDice(sides = 6) { return Math.floor(Math.random() * sides) + 1; }
 
@@ -82,5 +83,6 @@ export function enterCleanup() {
     return keep;
   });
   if (gameState.turn % 2 === 0) gameState.globalDisciplineMarkPool++;
+  checkVictory();
   emit('turn:cleanup-done');
 }
