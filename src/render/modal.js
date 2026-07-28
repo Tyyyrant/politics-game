@@ -327,18 +327,22 @@ export function showOpponentDetail(factionId) {
 
     overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
 
-    // Use event delegation for all action buttons inside the modal
-    overlay.addEventListener('click', async (e) => {
-      const btn = e.target.closest('button');
-      if (!btn) return;
-      const refresh = async () => {
-        overlay.remove();
-        (await import('../screens/game-screen.js')).renderAllPanels();
-        showOpponentDetail(factionId).then(resolve);
-      };
+    // Refresh helper: re-open this opponent detail after an action
+    async function refresh() {
+      overlay.remove();
+      (await import('../screens/game-screen.js')).renderAllPanels();
+      // Re-open with a fresh promise, chained to the original resolve
+      return new Promise(innerResolve => {
+        showOpponentDetail(factionId).then(result => {
+          innerResolve(result);
+          resolve(result);
+        });
+      });
+    }
 
-      // Scout quests
-      if (btn.classList.contains('btn-scout-quests')) {
+    // Scout quests
+    overlay.querySelectorAll('.btn-scout-quests').forEach(btn => {
+      btn.addEventListener('click', async () => {
         const r = executeAction(playerId, 'scoutQuests', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
         if (r.success) {
           const member = gameState.factions[btn.dataset.fid].members.find(m => m.id === btn.dataset.mid);
@@ -349,12 +353,13 @@ export function showOpponentDetail(factionId) {
         }
         await showAlert(r.message);
         await refresh();
-      }
+      });
+    });
 
-      // Complete quest (poach)
-      if (btn.classList.contains('btn-do-quest')) {
+    // Complete quest (poach)
+    overlay.querySelectorAll('.btn-do-quest').forEach(btn => {
+      btn.addEventListener('click', async () => {
         const questType = btn.dataset.quest;
-        // 结识贵人(2any) → show resource picker
         if (questType === '结识贵人') {
           const alloc = await showResourcePicker(2, gameState.factions[playerId].resources, gameState.factions[playerId].genericResources || 0);
           if (!alloc) return;
@@ -363,14 +368,12 @@ export function showOpponentDetail(factionId) {
             if (key === 'generic') pf.genericResources -= amt;
             else pf.resources[key] = (pf.resources[key] || 0) - amt;
           }
-          // Now complete the quest manually
           const targetFaction = gameState.factions[btn.dataset.fid];
           const member = targetFaction?.members.find(m => m.id === btn.dataset.mid);
           if (member) {
             member.personalQuests.shift();
             member.completedQuests.push('结识贵人');
             member.loyalty = Math.max(0, member.loyalty - 3);
-            gameState.roundLog.push({ factionId: playerId, action: 'completeEnemyQuest', target: `${member.name}(${btn.dataset.fid})`, result: '完成结识贵人' });
             if (member.loyalty <= 0) {
               targetFaction.members = targetFaction.members.filter(m => m.id !== btn.dataset.mid);
               member.loyalty = 4;
@@ -388,10 +391,13 @@ export function showOpponentDetail(factionId) {
         const r = executeAction(playerId, 'completeEnemyQuest', { targetFactionId: btn.dataset.fid, memberId: btn.dataset.mid });
         await showAlert(r.message);
         await refresh();
-      }
+      });
+    });
 
-      // Bribe
-      if (btn.classList.contains('btn-bribe')) {
+    // Bribe
+    const bribeBtn = overlay.querySelector('.btn-bribe');
+    if (bribeBtn) {
+      bribeBtn.addEventListener('click', async () => {
         const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
         const mid = await showSelect('选择收买目标', members);
         if (mid) {
@@ -400,8 +406,8 @@ export function showOpponentDetail(factionId) {
           await showAlert(r.message);
           await refresh();
         }
-      }
-    });
+      });
+    }
   });
 }
 
