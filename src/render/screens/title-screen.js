@@ -2,10 +2,11 @@
 import { createNewGame } from '../../logic/state.js';
 import { FACTION_DEFS, createInitialFactionState, getFactionResources, getFactionInfluence } from '../../logic/data/factions.js';
 import { showGameScreen } from './game-screen.js';
-import { listSaves, loadGame } from '../../logic/save.js';
+import { listSaves, loadGame, deleteSave } from '../../logic/save.js';
 import { DEPARTMENTS } from '../../logic/data/departments.js';
 import { DEPT_NAMES, TRAITS } from '../../logic/data/constants.js';
 
+// === 主菜单 ===
 export async function showTitleScreen() {
   const root = document.getElementById('app-root');
   root.innerHTML = `
@@ -14,9 +15,33 @@ export async function showTitleScreen() {
         <h1 class="title-main">政治模拟</h1>
         <h2 class="title-sub">派系斗争</h2>
         <p class="title-desc">省级官场政治博弈 · 回合制策略游戏</p>
+        <div class="title-menu" id="title-menu">
+          <button class="btn-menu" id="btn-new-game">🆕 新游戏</button>
+          <button class="btn-menu" id="btn-load-save">📂 读取存档</button>
+          <button class="btn-menu" id="btn-exit-game">🚪 退出游戏</button>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('btn-new-game').addEventListener('click', () => showFactionSelect());
+  document.getElementById('btn-load-save').addEventListener('click', () => showSaveManager());
+  document.getElementById('btn-exit-game').addEventListener('click', () => {
+    try { window.close(); } catch(e) {}
+    try { if (window.saveAPI) window.saveAPI.quit(); } catch(e) {}
+  });
+}
+
+// === 选择派系（无存档区） ===
+function showFactionSelect() {
+  const root = document.getElementById('app-root');
+  root.innerHTML = `
+    <div class="title-screen">
+      <div class="title-content">
+        <h1 class="title-main">政治模拟</h1>
+        <h2 class="title-sub">派系斗争</h2>
         <div class="title-choose-label">选择你的派系</div>
         <div class="faction-select-grid" id="faction-grid"></div>
-        <div class="title-saves" id="title-saves"></div>
+        <button class="btn-menu btn-back" id="btn-back-menu">↩️ 返回主菜单</button>
       </div>
     </div>`;
 
@@ -33,24 +58,62 @@ export async function showTitleScreen() {
     grid.appendChild(card);
   }
 
-  // 存档列表
-  const savesDiv = root.querySelector('#title-saves');
-  try {
-    const saves = await listSaves();
-    if (saves.length) {
-      savesDiv.innerHTML = '<h3>继续游戏</h3>' + saves.map(s =>
-        `<button class="btn-save-load" data-slot="${s.slot}">📁 ${s.meta?.playerFaction || '?'} · 第${s.meta?.turn || '?'}轮</button>`
-      ).join('');
-      savesDiv.querySelectorAll('.btn-save-load').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          await loadGame(btn.dataset.slot);
-          showGameScreen();
-        });
-      });
-    }
-  } catch (e) { /* no saves */ }
+  document.getElementById('btn-back-menu').addEventListener('click', () => showTitleScreen());
 }
 
+// === 存档管理 ===
+async function showSaveManager() {
+  const root = document.getElementById('app-root');
+  const saves = await listSaves().catch(() => []);
+
+  let savesHtml;
+  if (saves.length) {
+    savesHtml = saves.map(s => {
+      const date = s.timestamp ? new Date(s.timestamp).toLocaleString('zh-CN') : '未知时间';
+      return `<div class="save-row">
+        <div class="save-info">
+          <span class="save-slot">📁 ${s.slot}</span>
+          <span class="save-detail">${s.meta?.playerFaction || '?'} · 第${s.meta?.turn || '?'}轮 · ${date}</span>
+        </div>
+        <div class="save-actions">
+          <button class="btn-small btn-load-save" data-slot="${s.slot}">读取</button>
+          <button class="btn-small btn-delete-save" data-slot="${s.slot}">🗑️ 删除</button>
+        </div>
+      </div>`;
+    }).join('');
+  } else {
+    savesHtml = '<div class="empty-hint" style="padding:20px;text-align:center;">暂无存档</div>';
+  }
+
+  root.innerHTML = `
+    <div class="title-screen">
+      <div class="title-content">
+        <h1 class="title-main">读取存档</h1>
+        <div class="save-list" id="save-list">${savesHtml}</div>
+        <button class="btn-menu btn-back" id="btn-back-menu">↩️ 返回主菜单</button>
+      </div>
+    </div>`;
+
+  document.getElementById('btn-back-menu').addEventListener('click', () => showTitleScreen());
+
+  // Load
+  root.querySelectorAll('.btn-load-save').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await loadGame(btn.dataset.slot);
+      showGameScreen();
+    });
+  });
+
+  // Delete
+  root.querySelectorAll('.btn-delete-save').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      await deleteSave(btn.dataset.slot);
+      showSaveManager();  // Refresh
+    });
+  });
+}
+
+// === 辅助 ===
 function getDesc(fid) {
   const m = {
     propaganda: '宣传核心+纪委眼线。擅长舆论引导。',
@@ -61,13 +124,13 @@ function getDesc(fid) {
   return m[fid] || '';
 }
 
+// === 派系预览 ===
 function showFactionPreview(fid) {
   const def = FACTION_DEFS[fid];
   const state = createInitialFactionState(fid);
   const resources = getFactionResources(state);
   const influence = getFactionInfluence(state);
 
-  // Controlled departments
   const controlledDepts = [...new Set(state.members.map(m => m.dept))];
 
   const root = document.getElementById('app-root');
@@ -109,6 +172,6 @@ function showFactionPreview(fid) {
     showGameScreen();
   });
   document.getElementById('btn-back-select').addEventListener('click', () => {
-    showTitleScreen();
+    showFactionSelect();
   });
 }

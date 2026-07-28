@@ -23,6 +23,12 @@ export async function loadGame(slot) {
   return { success: true, meta: data.meta };
 }
 
+export async function deleteSave(slot) {
+  const api = getSaveAPI();
+  if (api) { await api.write(slot, null); }
+  else { localStorage.removeItem(`policy_save_${slot}`); }
+}
+
 export async function listSaves() {
   const api = getSaveAPI();
   if (api) return await api.list();

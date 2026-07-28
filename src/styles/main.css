@@ -66,6 +66,36 @@ body {
   margin-bottom: 0.3em; letter-spacing: 0.1em;
 }
 .title-desc { color: var(--text-secondary); margin-bottom: 2.5em; font-size: 0.95em; }
+
+/* Main menu buttons */
+.title-menu { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.btn-menu {
+  width: 260px; padding: 14px 0; border: 1px solid var(--accent-darkred);
+  border-radius: 4px; cursor: pointer; font-size: 1.1em;
+  background: rgba(139,26,26,0.15); color: var(--text-primary);
+  font-family: var(--font-serif); letter-spacing: 0.08em;
+  transition: all 0.2s;
+}
+.btn-menu:hover { background: rgba(139,26,26,0.3); border-color: var(--accent-gold); }
+.btn-back { width: auto; padding: 10px 24px; margin-top: 24px; font-size: 0.95em; }
+
+/* Save manager */
+.save-list { max-width: 500px; margin: 0 auto; }
+.save-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 16px; margin: 6px 0;
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 6px; gap: 12px;
+}
+.save-info { display: flex; flex-direction: column; text-align: left; }
+.save-slot { color: var(--accent-gold); font-weight: bold; }
+.save-detail { color: var(--text-secondary); font-size: 0.82em; margin-top: 2px; }
+.save-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.btn-load-save { background: rgba(139,26,26,0.2) !important; border-color: var(--accent-darkred) !important; }
+.btn-load-save:hover { background: rgba(139,26,26,0.35) !important; }
+.btn-delete-save { background: transparent !important; border-color: transparent !important; color: var(--text-muted) !important; font-size: 1em !important; }
+.btn-delete-save:hover { color: var(--danger) !important; border-color: var(--danger) !important; }
+
 .title-choose-label {
   font-size: 1.1em; margin-bottom: 1.2em; color: var(--accent-gold);
   letter-spacing: 0.08em;
