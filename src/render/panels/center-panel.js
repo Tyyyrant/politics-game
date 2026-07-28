@@ -5,7 +5,7 @@ import { executeSkill } from '../../logic/skills.js';
 import { nextPlayer, isCurrentPlayerAI } from '../../logic/turn.js';
 import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
-import { ACTION_TYPES } from '../../logic/data/constants.js';
+import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
 import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
@@ -582,13 +582,24 @@ function advanceAfterPlayer() {
     }
     renderAllPanels();
   } else {
-    gameState.phase = 'bill';
-    gameState.currentBill = null;
-    _playerVoted = false;
-    _aiVoteTriggered = false;
-    _billResolving = false;
-    renderAllPanels();
+    endTurnFlow();
   }
+}
+
+async function endTurnFlow() {
+  // 最后一轮跳过法案投票，直接结算
+  if (gameState.turn >= MAX_ROUNDS) {
+    const t = await import('../../logic/turn.js');
+    t.enterCleanup();
+    renderAllPanels();
+    return;
+  }
+  gameState.phase = 'bill';
+  gameState.currentBill = null;
+  _playerVoted = false;
+  _aiVoteTriggered = false;
+  _billResolving = false;
+  renderAllPanels();
 }
 
 // === AI TURN ===
@@ -630,11 +641,6 @@ async function executeAITurn(factionId) {
       setTimeout(() => executeAITurn(gameState.turnOrder[gameState.currentPlayerIndex]), 400);
     }
   } else {
-    gameState.phase = 'bill';
-    gameState.currentBill = null;
-    _playerVoted = false;
-    _aiVoteTriggered = false;
-    _billResolving = false;
-    renderAllPanels();
+    endTurnFlow();
   }
 }
