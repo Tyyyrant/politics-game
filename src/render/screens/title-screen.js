@@ -169,7 +169,7 @@ function showFactionPreview(fid) {
           <h3>👥 派系成员（${state.members.length}人）</h3>
           <table class="preview-table"><thead><tr><th>姓名</th><th>部门</th><th>职务</th><th>级别</th><th>忠诚</th><th>特质</th></tr></thead>
           <tbody>${state.members.map(m => `
-            <tr><td>${m.name}</td><td>${DEPT_NAMES[m.dept] || m.dept}</td><td>${m.position}</td><td>${m.rank}</td><td>${m.loyalty}/9</td><td>${m.traits.map(t => TRAITS[t] || t).join('、') || '—'}</td></tr>
+            <tr><td><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name}</td><td>${DEPT_NAMES[m.dept] || m.dept}</td><td>${m.position}</td><td>${m.rank}</td><td>${m.loyalty}/9</td><td>${m.traits.map(t => TRAITS[t] || t).join('、') || '—'}</td></tr>
           `).join('')}</tbody></table>
         </div>
 

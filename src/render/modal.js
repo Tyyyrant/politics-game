@@ -234,7 +234,7 @@ export function showAppointmentUI(factionId) {
         let ctrlLabel;
         if (isControlled) {
           const deptMembers = faction.members.filter(m => m.dept === deptId);
-          const memberNames = deptMembers.map(m => `<span class="dept-member-chip">${m.name}·${m.position}</span>`).join('');
+          const memberNames = deptMembers.map(m => `<span class="dept-member-chip"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name}·${m.position}</span>`).join('');
           ctrlLabel = `🔵 ${memberNames}`;
         } else {
           ctrlLabel = `⚪ 未渗透 · 仅可外部招募`;
@@ -314,7 +314,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
         hasAny = true;
         for (const m of internalCandidates) {
           html += `<div class="candidate-row">
-            <span class="candidate-info">${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
+            <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
             <span class="candidate-path">${sourceRank}→${targetRank}</span>
             <button class="btn-small btn-promote" data-mid="${m.id}">提拔</button>
           </div>`;
@@ -336,7 +336,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
       const recResCost = RECRUIT_RESOURCE_COST[targetRank] || resCost;
       for (const o of externalCandidates) {
         html += `<div class="candidate-row">
-          <span class="candidate-info">${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
+          <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${o.dept}">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
           <span class="candidate-path">招募→${targetRank}</span>
           <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button>
         </div>`;

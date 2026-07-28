@@ -53,8 +53,9 @@ body {
   background:
     radial-gradient(ellipse at 50% 30%, rgba(139,26,26,0.15) 0%, transparent 60%),
     linear-gradient(180deg, #1a1410 0%, #241c16 50%, #1a1410 100%);
+  overflow-y: auto;
 }
-.title-content { text-align: center; max-width: 720px; }
+.title-content { text-align: center; max-width: 720px; padding: 40px 20px; }
 
 .title-main {
   font-family: var(--font-serif); font-size: 3.2em; color: var(--accent-gold);
@@ -113,7 +114,7 @@ body {
   border: 2px solid #3d3228; border-radius: 6px;
   padding: 0; cursor: pointer; text-align: center;
   transition: all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1.2);
-  min-height: 280px; display: flex; flex-direction: column;
+  min-height: 240px; display: flex; flex-direction: column;
 }
 .tw-card:hover { transform: translateY(-4px); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
 .tw-card-bg {
@@ -123,14 +124,14 @@ body {
 }
 .tw-card:hover .tw-card-bg { opacity: 0.12; }
 .tw-portrait {
-  position: relative; width: 80px; height: 80px; margin: 20px auto 12px;
+  position: relative; width: 60px; height: 60px; margin: 16px auto 10px;
 }
 .tw-portrait-placeholder {
-  width: 80px; height: 80px; border-radius: 50%;
+  width: 60px; height: 60px; border-radius: 50%;
   background: linear-gradient(135deg, #3d3228, #2c221c);
   border: 3px solid var(--card-accent, #888);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-serif); font-size: 2em; color: var(--card-accent, #888);
+  font-family: var(--font-serif); font-size: 1.6em; color: var(--card-accent, #888);
   transition: all 0.3s;
 }
 .tw-card:hover .tw-portrait-placeholder {
@@ -138,7 +139,7 @@ body {
   box-shadow: 0 0 20px rgba(200,164,92,0.3);
 }
 .tw-portrait-ring {
-  position: absolute; top: -6px; left: -6px; width: 92px; height: 92px;
+  position: absolute; top: -6px; left: -6px; width: 72px; height: 72px;
   border-radius: 50%; border: 1px solid transparent;
   border-top-color: var(--card-accent, #888);
   opacity: 0.4; transition: opacity 0.3s;
@@ -148,8 +149,8 @@ body {
 .tw-card-content { flex: 1; padding: 0 16px 16px; display: flex; flex-direction: column; }
 .tw-card-title { font-size: 0.75em; color: var(--text-secondary); margin-bottom: 2px; letter-spacing: 0.05em; }
 .tw-card-name {
-  font-family: var(--font-serif); font-size: 1.6em; color: var(--card-accent, var(--accent-gold));
-  margin-bottom: 8px; letter-spacing: 0.08em; transition: color 0.3s;
+  font-family: var(--font-serif); font-size: 1.4em; color: var(--card-accent, var(--accent-gold));
+  margin-bottom: 6px; letter-spacing: 0.06em; transition: color 0.3s;
 }
 .tw-card:hover .tw-card-name { color: var(--accent-gold); }
 .tw-card-traits { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; margin-bottom: 12px; }
@@ -351,6 +352,33 @@ body {
   font-size: 0.8em; color: var(--accent-gold); margin: 8px 0 4px 0;
   font-weight: normal; letter-spacing: 0.04em;
 }
+/* Square portrait avatars for members */
+.avatar-sq {
+  width: 36px; height: 36px; min-width: 36px; border-radius: 3px;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 1em; font-weight: bold;
+  color: #e8dcc8; vertical-align: middle; margin-right: 6px;
+}
+.avatar-sq.av-sm { width: 28px; height: 28px; min-width: 28px; font-size: 0.8em; margin-right: 4px; }
+.av-dept-govOffice { background: #6b4e3d; }
+.av-dept-ndrc { background: #4a6b5d; }
+.av-dept-sasac { background: #5d5a8a; }
+.av-dept-publicSecurity { background: #3d5a4a; }
+.av-dept-hrss { background: #7a5c4a; }
+.av-dept-finance { background: #4a5d7a; }
+.av-dept-housing { background: #6b5d3d; }
+.av-dept-education { background: #4a6b6b; }
+.av-dept-audit { background: #5a4a6b; }
+.av-dept-partyOffice { background: #8b3d3d; }
+.av-dept-organization { background: #3d5a7a; }
+.av-dept-propaganda { background: #7a5a3d; }
+.av-dept-discipline { background: #5a3d4a; }
+.av-dept-legalAffairs { background: #4a4a6b; }
+.av-dept-partySchool { background: #6b4a3d; }
+.av-dept-congress { background: #6b3d3d; }
+.av-dept-cppcc { background: #3d6b5a; }
+.av-dept-procuratorate { background: #3d4a6b; }
+
 .member-row {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 4px; padding: 7px 10px; margin-bottom: 4px; font-size: 0.78em;

@@ -144,7 +144,7 @@ export function renderLeftPanel() {
     const statusIcon = m.investigationStatus === 'evidence' ? '🔴' : m.investigationStatus === 'suspect' ? '🟡' : '🟢';
     const traits = m.traits.slice(0, 2).join(' · ');
     h += `<div class="member-row">
-      <div class="member-name">${statusIcon} ${m.name} <span class="member-rank">${m.rank}</span></div>
+      <div class="member-name"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${statusIcon} ${m.name} <span class="member-rank">${m.rank}</span></div>
       <div class="member-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>
       <div class="member-loyalty">忠: ${m.loyalty}/9 ${traits ? '| ' + traits : ''}</div>
     </div>`;
