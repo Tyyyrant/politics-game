@@ -293,8 +293,18 @@ async function handlePlayerAction(factionId, action) {
           pf.lockedSeats++;
           gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${sid})`, result: '锁定成功' });
           await showAlert(`成功锁定${seat.name}！`);
+        } else if (seat) {
+          // Non-any task: handles resource spending with generic fallback
+          const r = executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid });
+          if (r.success) {
+            await showAlert(r.message);
+          } else {
+            const deptRes = pf.resources[seat.task.resourceType] || 0;
+            const genRes = pf.genericResources || 0;
+            await showAlert(`${r.message}\n\n所需：${seat.task.cost} ${DEPT_NAMES[seat.task.resourceType] || seat.task.resourceType}\n持有：${deptRes} 部门资源 + ${genRes} 通用资源 = ${deptRes + genRes}`);
+          }
         } else {
-          await showAlert(executeAction(factionId, ACTION_TYPES.COMPLETE_TASK, { seatId: sid }).message);
+          await showAlert('席位不存在');
         }
         break;
       }
