@@ -449,8 +449,9 @@ export function showAppointmentUI(factionId) {
     const deptIds = Object.keys(byDept);
 
     let html = '<div class="appointment-panel">';
-    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><h4>📋 可任命职位表</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>';
-    html += '<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;">点击职位查看候选人 | 所有任命均消耗影响力+组织部或本部门资源</p>';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><h4>📋 可任命职位表</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>';
+    html += '<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;flex-shrink:0">点击职位查看候选人 | 所有任命均消耗影响力+组织部或本部门资源</p>';
+    html += '<div class="appoint-scroll">';
 
     if (!deptIds.length) {
       html += '<div style="padding:16px;text-align:center;color:var(--text-secondary);">暂无空缺职位</div>';
@@ -483,6 +484,7 @@ export function showAppointmentUI(factionId) {
         html += '</div>';
       }
     }
+    html += '</div>'; // close appoint-scroll
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -525,8 +527,9 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
     const resCost = APPOINTMENT_COST[targetRank] || 8;
 
     let html = '<div class="appointment-panel">';
-    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;"><h4>📋 任命：${deptName} · ${targetRank}（${posTitle}）</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>`;
-    html += `<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;">消耗 💰${infCost}影响力 + ${resCost}组织部或本部门资源</p>`;
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><h4>📋 任命：${deptName} · ${targetRank}（${posTitle}）</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>`;
+    html += `<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;flex-shrink:0">消耗 💰${infCost}影响力 + ${resCost}组织部或本部门资源</p>`;
+    html += '<div class="appoint-scroll">';
 
     let hasAny = false;
 
@@ -564,8 +567,9 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
     html += '</div>';
 
     if (!hasAny) html += '<div style="padding:12px;text-align:center;color:var(--text-secondary);">暂无可用的候选人</div>';
+    html += '</div>'; // close appoint-scroll
 
-    html += `<button class="modal-btn" style="margin-top:12px;width:100%;" id="btn-back-to-positions">↩️ 返回职位列表</button></div>`;
+    html += `<button class="modal-btn" style="margin-top:8px;width:100%;flex-shrink:0" id="btn-back-to-positions">↩️ 返回职位列表</button></div>`;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';

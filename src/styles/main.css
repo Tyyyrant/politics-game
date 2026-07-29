@@ -588,8 +588,10 @@ body {
 /* ================================================================
    APPOINTMENT UI
    ================================================================ */
-.modal-appoint { max-width: 580px; max-height: 80vh; overflow-y: auto; }
+.modal-appoint { max-width: 580px; max-height: 80vh; }
+.appointment-panel { display: flex; flex-direction: column; max-height: 75vh; }
 .appointment-panel h4 { color: var(--accent-gold); margin-bottom: 8px; font-family: var(--font-serif); }
+.appoint-scroll { overflow-y: auto; flex: 1; }
 .appoint-section { margin-bottom: 14px; }
 .appoint-section h5 {
   color: var(--text-primary); font-size: 0.85em; margin-bottom: 6px;
