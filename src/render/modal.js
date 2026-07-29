@@ -327,10 +327,9 @@ export function showOpponentDetail(factionId) {
 
     overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
 
-    async function refresh() {
+    function refresh() {
       overlay.remove();
-      const m = await import('../screens/game-screen.js');
-      m.renderAllPanels();
+      import('../screens/game-screen.js').then(m => m.renderAllPanels());
       showOpponentDetail(factionId).then(resolve);
     }
 
