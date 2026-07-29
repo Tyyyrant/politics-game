@@ -88,11 +88,12 @@ export function enterCleanup() {
     if (seat.lockedById) {
       if (!seat.lockedOnTurn) seat.lockedOnTurn = gameState.turn;
       if (gameState.turn - seat.lockedOnTurn >= 3 && !seat._lockTaskRefreshed) {
+        const previousOwner = seat.lockedById;
         seat._lockTaskRefreshed = true;
         const def = taskDefs[Math.floor(Math.random() * taskDefs.length)];
         seat.refreshCount = (seat.refreshCount || 0) + 1;
         const baseCost = def.costMin + Math.floor(Math.random() * (def.costMax - def.costMin + 1));
-        const cost = baseCost + (seat.refreshCount - 1) * 2;  // 每次+2
+        const cost = baseCost + (seat.refreshCount - 1) * 2;
         seat.task = { type: def.type, cost, resourceType: def.resource };
         seat.visitorId = seat.lockedById;
         seat.lockedById = null;
@@ -101,18 +102,24 @@ export function enterCleanup() {
         seat.visitedOnTurn = gameState.turn;
         seat.revealed = true;
         seat._lockTaskRefreshed = false;
-        seat._pendingRelease = true;  // 标记：2轮内完不成则释放
-        gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表有了新的任务`, result: '需在2轮内完成' });
+        seat._pendingRelease = true;
+        // 只提示自己派系的席位刷新
+        if (previousOwner === gameState.playerFactionId) {
+          gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表有了新的任务`, result: '需在2轮内完成' });
+        }
       }
       // 刷新后的任务倒计时
       if (seat._pendingRelease && !seat.lockedById) {
         seat.roundsRemaining--;
         if (seat.roundsRemaining <= 0) {
+          const previousOwner = seat.visitorId;
           seat.visitorId = null;
           seat._pendingRelease = false;
           seat.revealed = false;
           seat.roundsRemaining = 3;
-          gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
+          if (previousOwner === gameState.playerFactionId) {
+            gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
+          }
         }
       }
     }

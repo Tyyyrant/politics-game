@@ -8,7 +8,7 @@ export function getMaxVisits(factionId) {
   const faction = gameState.factions[factionId];
   if (!faction) return 2;
   const memberCount = faction.members.length; // 不含首领
-  return 2 + Math.floor(memberCount / 4);
+  return 1 + Math.floor(memberCount / 4);
 }
 
 export function executeAction(factionId, actionType, params = {}) {
