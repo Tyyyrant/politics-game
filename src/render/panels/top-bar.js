@@ -1,6 +1,6 @@
 // src/render/panels/top-bar.js
 import { gameState } from '../../logic/state.js';
-import { FACTION_NAMES, ACTION_TYPES } from '../../logic/data/constants.js';
+import { FACTION_NAMES } from '../../logic/data/constants.js';
 import { saveGame } from '../../logic/save.js';
 import { showAlert, showConfirm, showPrompt, showSelect } from '../modal.js';
 
@@ -17,7 +17,6 @@ export function renderTopBar() {
     </div>
     <div class="top-bar-center ${isPlayer ? 'player-turn' : 'ai-turn'}">
       ${gameState.phase === 'bill' ? '📜 法案投票中' : (isPlayer ? '🔔 你的行动回合' : `⏳ ${FACTION_NAMES[cf] || cf} 正在行动…`)}
-      ${isPlayer && gameState.phase === 'action' ? '<button class="btn-end-turn-bar" id="btn-end-turn-bar">✅ 完成行动</button>' : ''}
     </div>
     <div class="top-bar-right">
       <button class="btn-top" id="btn-save">💾 存档</button>
@@ -42,13 +41,6 @@ export function renderTopBar() {
         showGameScreen();
       } else { await showAlert(r.message); }
     }
-  });
-
-  el.querySelector('#btn-end-turn-bar')?.addEventListener('click', async () => {
-    const { executeAction } = await import('../../logic/actions.js');
-    const { advanceAfterPlayer } = await import('../panels/center-panel.js');
-    executeAction(gameState.playerFactionId, ACTION_TYPES.END_TURN);
-    advanceAfterPlayer();
   });
 
   el.querySelector('#btn-exit')?.addEventListener('click', async () => {
