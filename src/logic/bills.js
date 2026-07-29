@@ -1,22 +1,14 @@
 // src/logic/bills.js
 import { gameState, emit } from './state.js';
 import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
+import { FACTION_IDS } from './data/constants.js';
 
 export function drawBill() {
   if (gameState.currentBill) return;
-  // 五年计划触发经济类法案
+  // 五年计划：额外经济法案
   if (gameState._fiveYearPlanTriggered) {
     gameState._fiveYearPlanTriggered = false;
-    const econBills = BILL_POOL.filter(b => b.type === 'finance' || b.type === 'hrss');
-    if (econBills.length > 0) {
-      const bill = econBills[Math.floor(Math.random() * econBills.length)];
-      gameState.currentBill = { ...bill, votes: { support: [], oppose: [], abstain: [] }, _fiveYearPlan: true, _planFaction: gameState._fiveYearPlanFaction };
-      gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 【五年计划】${gameState.currentBill.name} 表决开始`, result: '投票中' });
-      emit('bill:drawn', { bill: gameState.currentBill });
-      // 发起者自动支持
-      castVote(gameState._fiveYearPlanFaction, 'support');
-      return;
-    }
+    gameState._pendingFiveYearPlan = { faction: gameState._fiveYearPlanFaction };
   }
   if (gameState.billDeck.length === 0) gameState.billDeck = shuffleDeck([...BILL_POOL]);
   gameState.currentBill = { ...gameState.billDeck.shift(), votes: { support: [], oppose: [], abstain: [] } };
@@ -68,6 +60,27 @@ export function resolveBill() {
   gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: bill.name, result: passed ? '通过' : '未通过', detail: `${passed ? '支持' : '反对'} ${supportWeight}票:${opposeWeight}票` });
   emit('bill:resolved', result);
   gameState.currentBill = null;
+  // 五年计划：常规法案结束后额外触发一个经济法案
+  if (gameState._pendingFiveYearPlan) {
+    const pf = gameState._pendingFiveYearPlan;
+    gameState._pendingFiveYearPlan = null;
+    const econBills = BILL_POOL.filter(b => b.type === 'finance' || b.type === 'hrss');
+    if (econBills.length > 0) {
+      const eBill = econBills[Math.floor(Math.random() * econBills.length)];
+      gameState.currentBill = { ...eBill, votes: { support: [], oppose: [], abstain: [] } };
+      gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 【五年计划】${gameState.currentBill.name} 表决开始`, result: '投票中' });
+      // 发起者自动支持
+      castVote(pf.faction, 'support');
+      // AI 自动投票
+      for (const fid of FACTION_IDS) {
+        if (fid === pf.faction) continue;
+        castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
+      }
+      // 结算经济法案
+      const r2 = resolveBill();
+      gameState.lastBillResult = r2;
+    }
+  }
   return result;
 }
 
