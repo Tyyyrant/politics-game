@@ -67,13 +67,51 @@ export function currentFactionId() { return gameState.turnOrder[gameState.curren
 
 export function enterCleanup() {
   gameState.phase = 'cleanup';
+  const taskDefs = [
+    { type: 'arrangeSchool', costMin: 1, costMax: 2, resource: 'education' },
+    { type: 'arrangeJob', costMin: 1, costMax: 2, resource: 'sasac' },
+    { type: 'bailFriend', costMin: 1, costMax: 2, resource: 'publicSecurity' },
+    { type: 'businessProject', costMin: 1, costMax: 2, resource: 'housing' },
+    { type: 'buildConnections', costMin: 2, costMax: 2, resource: 'any' }
+  ];
   for (const seat of gameState.npcSeats) {
+    // 未锁定的拜访席位倒计时
     if (seat.visitorId && !seat.lockedById) {
       seat.roundsRemaining--;
       if (seat.roundsRemaining <= 0) {
         emit('seat:expired', { seatId: seat.id, visitorId: seat.visitorId });
         seat.visitorId = null;
-        seat.roundsRemaining = 2;
+        seat.roundsRemaining = 3;
+      }
+    }
+    // 锁定席位3轮后刷新任务
+    if (seat.lockedById) {
+      if (!seat.lockedOnTurn) seat.lockedOnTurn = gameState.turn;
+      if (gameState.turn - seat.lockedOnTurn >= 3 && !seat._lockTaskRefreshed) {
+        seat._lockTaskRefreshed = true;
+        const def = taskDefs[Math.floor(Math.random() * taskDefs.length)];
+        const cost = def.costMin + Math.floor(Math.random() * (def.costMax - def.costMin + 1));
+        seat.task = { type: def.type, cost, resourceType: def.resource };
+        seat.visitorId = seat.lockedById;
+        seat.lockedById = null;
+        seat.lockedOnTurn = null;
+        seat.roundsRemaining = 3;
+        seat.visitedOnTurn = gameState.turn;
+        seat.revealed = true;
+        seat._lockTaskRefreshed = false;
+        seat._pendingRelease = true;  // 标记：2轮内完不成则释放
+        gameState.roundLog.push({ factionId: 'system', action: 'roundStart', target: `${seat.name}席位任务刷新`, result: '需在2轮内完成' });
+      }
+      // 刷新后的任务倒计时
+      if (seat._pendingRelease && !seat.lockedById) {
+        seat.roundsRemaining--;
+        if (seat.roundsRemaining <= 0) {
+          seat.visitorId = null;
+          seat._pendingRelease = false;
+          seat.revealed = false;
+          seat.roundsRemaining = 3;
+          gameState.roundLog.push({ factionId: 'system', action: 'roundStart', target: `${seat.name}席位任务过期`, result: '席位已释放' });
+        }
       }
     }
   }

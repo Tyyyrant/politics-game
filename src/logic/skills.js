@@ -38,7 +38,7 @@ export function executeSkill(factionId, skillId, params = {}) {
         for (const seat of gameState.npcSeats) {
           if (seat.visitorId === targetId && !seat.lockedById) {
             seat.visitorId = null;
-            seat.roundsRemaining = 2;
+            seat.roundsRemaining = 3;
             seat.revealed = false;
             freed++;
           }

@@ -299,6 +299,8 @@ async function handlePlayerAction(factionId, action) {
           // Complete the seat
           seat.lockedById = factionId;
           seat.visitorId = null;
+          seat.lockedOnTurn = gameState.turn;
+          seat._pendingRelease = false;
           pf.lockedSeats++;
           gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${sid})`, result: '锁定成功' });
           await showAlert(`成功锁定${seat.name}！`);

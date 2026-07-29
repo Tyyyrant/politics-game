@@ -29,7 +29,7 @@ function visitSeat(factionId, seatId) {
   if (seat.visitorId === factionId) return { success: false, message: '你已在攻略此席位，无需重复拜访' };
   if (seat.visitorId && seat.visitorId !== factionId) return { success: false, message: '已有其他派系在攻略' };
   seat.visitorId = factionId;
-  seat.roundsRemaining = 2;
+  seat.roundsRemaining = 3;  // 从下轮开始算，保证2个完整行动回合
   seat.visitedOnTurn = gameState.turn;
   if (factionId === gameState.playerFactionId) seat.revealed = true;
   gameState.factions[factionId].visitsThisTurn++;
@@ -42,7 +42,6 @@ function completeTask(factionId, seatId) {
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat || seat.visitorId !== factionId) return { success: false, message: '你未在攻略此席位' };
   if (seat.visitedOnTurn === gameState.turn) return { success: false, message: '本回合刚拜访，请下回合再完成任务' };
-  // Apply task cost reduction from active effects (正面宣传等)
   let cost = seat.task.cost;
   for (const be of gameState.activeBillEffects) {
     if (be.effects.taskCostReduction && (!be.effects.taskType || be.effects.taskType === seat.task.type)) {
@@ -52,6 +51,7 @@ function completeTask(factionId, seatId) {
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, cost) : spendResources(factionId, seat.task.resourceType, cost);
   if (!spent) return { success: false, message: '资源不足' };
   seat.lockedById = factionId; seat.visitorId = null;
+  seat.lockedOnTurn = gameState.turn; seat._pendingRelease = false;
   gameState.factions[factionId].lockedSeats++;
   emit('seat:locked', { factionId, seatId });
   gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${seatId})`, result: '锁定成功' });

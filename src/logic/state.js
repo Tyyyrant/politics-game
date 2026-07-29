@@ -22,8 +22,8 @@ export function createNewGame(playerFactionId) {
   // Ensure visitedOnTurn is set (backward compat)
   for (const s of npcSeats) { if (s.visitedOnTurn === undefined) s.visitedOnTurn = 0; }
   if (npcSeats.length >= 2) {
-    npcSeats[0].lockedById = 'npcCongress';
-    npcSeats[1].lockedById = 'npcCongress';
+    npcSeats[0].lockedById = 'npcCongress'; npcSeats[0].lockedOnTurn = 0;
+    npcSeats[1].lockedById = 'npcCongress'; npcSeats[1].lockedOnTurn = 0;
   }
   // Clear any stale scouted state
   for (const fid of FACTION_IDS) {
