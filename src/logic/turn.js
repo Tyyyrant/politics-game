@@ -52,8 +52,6 @@ export function startNewRound() {
   }
   gameState._fiveYearPlanTriggered = false;
   gameState._pendingFiveYearPlan = null;
-  gameState.lastBillResult = null;
-  gameState.lastBillResult2 = null;
   emit('turn:new-round', { turn: gameState.turn });
 }
 

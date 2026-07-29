@@ -5,6 +5,8 @@ import { FACTION_IDS } from './data/constants.js';
 
 export function drawBill() {
   if (gameState.currentBill) return;
+  gameState.lastBillResult = null;
+  gameState.lastBillResult2 = null;
   // 五年计划：额外经济法案
   if (gameState._fiveYearPlanTriggered) {
     gameState._fiveYearPlanTriggered = false;
