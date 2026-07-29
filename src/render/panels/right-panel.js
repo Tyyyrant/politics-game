@@ -28,6 +28,12 @@ function describeEffects(eff) {
   if (eff.govAppointmentCostIncrease) parts.push('干部任用消耗增加');
   if (eff.supporterPropagandaPenalty) parts.push('支持方宣传资源减少');
   if (eff.immunityAuditStorm) parts.push('免疫审计风暴');
+  if (eff.housingResourceBonus) parts.push(`住建资源+${eff.housingResourceBonus}`);
+  if (eff.housingResourcePenalty) parts.push(`住建资源${eff.housingResourcePenalty}`);
+  if (eff.sasacResourceBonus) parts.push(`国资委资源+${eff.sasacResourceBonus}`);
+  if (eff.sasacResourcePenalty) parts.push(`国资委资源${eff.sasacResourcePenalty}`);
+  if (eff.ndrcResourceBonus) parts.push(`发改委资源+${eff.ndrcResourceBonus}`);
+  if (eff.ndrcResourcePenalty) parts.push(`发改委资源${eff.ndrcResourcePenalty}`);
   return parts.join('，');
 }
 

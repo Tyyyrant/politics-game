@@ -65,11 +65,14 @@ export function resolveBill() {
     const firstResult = result;
     const pf = gameState._pendingFiveYearPlan;
     gameState._pendingFiveYearPlan = null;
-    const econBills = BILL_POOL.filter(b => b.type === 'finance' || b.type === 'hrss');
-    if (econBills.length > 0) {
-      const eBill = econBills[Math.floor(Math.random() * econBills.length)];
-      gameState.currentBill = { ...eBill, votes: { support: [], oppose: [], abstain: [] } };
-      gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 【五年计划】${gameState.currentBill.name} 表决开始`, result: '投票中' });
+    const fiveYearBills = [
+      { id: 'fiveyear_infra', name: '【五年计划】基础设施建设', description: '大规模基建投资拉动经济。通过后全体资源+1、住建+2、任务消耗-1（2轮）；否决后住建厅资源-2。', passEffects: { globalResourceBonus: 1, housingResourceBonus: 2, taskCostReduction: 1, duration: 2 }, failEffects: { housingResourcePenalty: 2, duration: 1 } },
+      { id: 'fiveyear_soe', name: '【五年计划】国企改革方案', description: '深化国企改革提升效率。通过后政府资源+1、国资委+2、任用消耗-2（2轮）；否决后国资委资源-2。', passEffects: { govResourceBonus: 1, sasacResourceBonus: 2, appointmentCostReduction: 2, duration: 2 }, failEffects: { sasacResourcePenalty: 2, duration: 1 } },
+      { id: 'fiveyear_green', name: '【五年计划】绿色能源转型', description: '推动绿色能源可持续发展。通过后全体资源+2、发改委+2（2轮）；否决后发改委资源-2。', passEffects: { globalResourceBonus: 2, ndrcResourceBonus: 2, duration: 2 }, failEffects: { ndrcResourcePenalty: 2, duration: 1 } }
+    ];
+    const eBill = fiveYearBills[Math.floor(Math.random() * fiveYearBills.length)];
+    gameState.currentBill = { ...eBill, votes: { support: [], oppose: [], abstain: [] } };
+    gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
       castVote(pf.faction, 'support');
       for (const fid of FACTION_IDS) {
         if (fid === pf.faction) continue;

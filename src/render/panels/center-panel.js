@@ -37,6 +37,9 @@ function describeEffects(eff) {
   if (eff.govAppointmentCostIncrease) parts.push('任用消耗增加');
   if (eff.supporterPropagandaPenalty) parts.push('宣传方资源惩罚');
   if (eff.immunityAuditStorm) parts.push('免疫审计风暴');
+  if (eff.housingResourceBonus) parts.push(`住建资源+${eff.housingResourceBonus}`);
+  if (eff.sasacResourceBonus) parts.push(`国资委资源+${eff.sasacResourceBonus}`);
+  if (eff.ndrcResourceBonus) parts.push(`发改委资源+${eff.ndrcResourceBonus}`);
   return parts.join('，');
 }
 
@@ -424,15 +427,24 @@ async function handlePlayerAction(factionId, action) {
       case 'sasacCash': {
         const pf = gameState.factions[factionId];
         const choices = [
-          { label: `国资委: ${pf.resources.sasac || 0}`, value: 'sasac' },
-          { label: `住建厅: ${pf.resources.housing || 0}`, value: 'housing' },
-          { label: `发改委: ${pf.resources.ndrc || 0}`, value: 'ndrc' },
-          { label: `财政厅: ${pf.resources.finance || 0}`, value: 'finance' },
-          { label: `通用资源: ${pf.genericResources || 0}`, value: 'generic' }
-        ].filter(c => (c.value === 'generic' ? (pf.genericResources || 0) : (pf.resources[c.value] || 0)) >= 5);
+          { label: `国资委: ${pf.resources.sasac || 0}`, value: 'sasac', amt: pf.resources.sasac || 0 },
+          { label: `住建厅: ${pf.resources.housing || 0}`, value: 'housing', amt: pf.resources.housing || 0 },
+          { label: `发改委: ${pf.resources.ndrc || 0}`, value: 'ndrc', amt: pf.resources.ndrc || 0 },
+          { label: `财政厅: ${pf.resources.finance || 0}`, value: 'finance', amt: pf.resources.finance || 0 },
+          { label: `通用资源: ${pf.genericResources || 0}`, value: 'generic', amt: pf.genericResources || 0 }
+        ].filter(c => c.amt >= 5);
         if (!choices.length) { await showAlert('没有足够的资源（需5单位）'); break; }
-        const dept = await showSelect('选择变现资源（5单位=1笔资金）', choices);
-        if (dept) await showAlert(executeSkill(factionId, 'sasacCash', { dept }).message);
+        const dept = await showSelect('选择变现资源（5单位=1笔资金）', choices.map(c => ({ label: c.label, value: c.value })));
+        if (!dept) break;
+        const amt = choices.find(c => c.value === dept)?.amt || 0;
+        const maxBatches = Math.floor(amt / 5);
+        const batches = await showSlider(`变现几笔？（每笔5${dept === 'generic' ? '通用' : DEPT_NAMES[dept] || dept}=1资金）`, maxBatches, 1);
+        if (batches) {
+          if (dept === 'generic') pf.genericResources -= batches * 5;
+          else pf.resources[dept] -= batches * 5;
+          pf.funds += batches;
+          await showAlert(`已变现${batches}笔，获得${batches}笔资金`);
+        }
         break;
       }
       case 'appoint': {
