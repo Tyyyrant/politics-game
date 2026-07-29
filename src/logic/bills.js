@@ -80,7 +80,7 @@ export function resolveBill() {
       }
       const r2 = resolveBill();
       gameState.lastBillResult = r2;
-      gameState.lastBillResult2 = firstResult;  // 保留常规法案结果
+      gameState.lastBillResult2 = firstResult;
     }
   }
   return result;
