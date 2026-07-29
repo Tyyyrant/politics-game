@@ -30,7 +30,12 @@ export function executeAction(factionId, actionType, params = {}) {
 function visitSeat(factionId, seatId) {
   const maxVisits = getMaxVisits(factionId);
   if (gameState.factions[factionId].visitsThisTurn >= maxVisits) return { success: false, message: `每轮最多拜访${maxVisits}个席位` };
-  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
+  const faction = gameState.factions[factionId];
+  if (faction._freeVisit) {
+    faction._freeVisit = false;
+  } else {
+    if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
+  }
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat) return { success: false, message: '席位不存在' };
   if (seat.lockedById) return { success: false, message: '该席位已被锁定' };

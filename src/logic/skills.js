@@ -10,13 +10,10 @@ export function executeSkill(factionId, skillId, params = {}) {
       if (faction.fiveYearPlanCooldown > 0) return { success: false, message: `冷却中（${faction.fiveYearPlanCooldown}轮）` };
       if (!spendResources(factionId, 'ndrc', 5)) return { success: false, message: '发改资源不足' };
       faction.fiveYearPlanCooldown = 3;
-      // 给发起者全资源+2作为经济刺激效果
-      for (const dept of Object.keys(faction.resources)) {
-        faction.resources[dept] = (faction.resources[dept] || 0) + 2;
-      }
-      faction.genericResources = (faction.genericResources || 0) + 2;
-      gameState.roundLog.push({ factionId, action: 'fiveYearPlan', target: '五年计划', result: '全资源+2，通用+2' });
-      return { success: true, message: '五年计划已启动！全部资源+2，通用资源+2' };
+      // 发起经济投票：先给当前全局加经济红利，在法案阶段额外触发一个经济法案
+      gameState._fiveYearPlanTriggered = true;
+      gameState._fiveYearPlanFaction = factionId;
+      return { success: true, message: '五年计划提案已发起！将在本轮法案阶段进行经济投票。' };
     case 'projectVeto':
       if (faction.projectVetoUsed) return { success: false, message: '本轮已使用' };
       if (!spendResources(factionId, 'ndrc', 2)) return { success: false, message: '发改资源不足' };
@@ -56,23 +53,25 @@ export function executeSkill(factionId, skillId, params = {}) {
       if (faction.projectBidUsed) return { success: false, message: '本轮已使用' };
       if (!spendResources(factionId, 'housing', 2)) return { success: false, message: '住建资源不足' };
       faction.projectBidUsed = true;
-      // 完成一个商人项目席位：找第一个 businessProject 类型且未被锁定的席位
+      // 找第一个 businessProject 类型且未锁定的席位
       let bidSeat = null;
       for (const s of gameState.npcSeats) {
         if (s.task.type === 'businessProject' && !s.lockedById && s.visitorId !== factionId) {
           bidSeat = s; break;
         }
       }
+      let msg = '项目招标成功！';
       if (bidSeat) {
         bidSeat.lockedById = factionId;
         bidSeat.visitorId = null;
         bidSeat.lockedOnTurn = gameState.turn;
-        bidSeat._pendingRelease = false;
         faction.lockedSeats++;
-        faction.visitsThisTurn = Math.max(0, (faction.visitsThisTurn || 0) - 1); // 免费拜访1次
-        return { success: true, message: `项目招标成功！${bidSeat.name}已被锁定，并获得1次免费拜访` };
+        msg += `${bidSeat.name}已被锁定，`;
       }
-      return { success: true, message: '项目招标成功！但当前没有可锁定的商人项目席位' };
+      // 免费拜访1次（下次拜访不消耗影响力）
+      faction._freeVisit = true;
+      msg += '获得1次免费拜访';
+      return { success: true, message: msg };
     case 'positivePropaganda':
       if (!spendResources(factionId, 'propaganda', 2)) return { success: false, message: '宣传资源不足' };
       gameState.activeBillEffects.push({ id: `positive_${params.taskType}`, name: `正面宣传（${params.taskType}）`, effects: { taskCostReduction: 1, taskType: params.taskType }, duration: 1 });

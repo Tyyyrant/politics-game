@@ -43,6 +43,7 @@ export function startNewRound() {
     gameState.factions[fid].interrogateUsed = 0;
     gameState.factions[fid].projectVetoUsed = false;
     gameState.factions[fid].visitsThisTurn = 0;
+    gameState.factions[fid]._freeVisit = false;
     if (gameState.factions[fid].fiveYearPlanCooldown > 0) gameState.factions[fid].fiveYearPlanCooldown--;
   }
   // Produce resources for everyone at round start
