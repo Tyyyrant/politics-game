@@ -20,9 +20,19 @@ export function executeSkill(factionId, skillId, params = {}) {
       faction.projectVetoUsed = true;
       return { success: true, message: '已阻挠对手商人项目' };
     case 'sasacCash':
-      if (!spendResources(factionId, 'sasac', 5)) return { success: false, message: '国资委资源不足' };
+      // 资源变现：可用国资委/住建厅/发改委/财政厅/通用 各5单位
+      if (params.dept) {
+        if (params.dept === 'generic') {
+          if ((faction.genericResources || 0) < 5) return { success: false, message: '通用资源不足' };
+          faction.genericResources -= 5;
+        } else {
+          if (!spendResources(factionId, params.dept, 5)) return { success: false, message: '资源不足（需5单位）' };
+        }
+      } else {
+        if (!spendResources(factionId, 'sasac', 5)) return { success: false, message: '国资委资源不足' };
+      }
       faction.funds += 1;
-      return { success: true, message: '获得1笔可用资金（不留记录）' };
+      return { success: true, message: '获得1笔可用资金' };
     case 'interrogate':
       if (faction.interrogateUsed >= 2) return { success: false, message: '本轮审讯次数已用完' };
       if (!spendResources(factionId, 'publicSecurity', 2)) return { success: false, message: '公安资源不足' };

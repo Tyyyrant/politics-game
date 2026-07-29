@@ -94,7 +94,7 @@ export function renderCenterPanel() {
     h += btn('负面曝光 (2宣传资源)', 'negativePropaganda', '消耗2宣传资源，对目标派系进行负面舆论曝光。目标派系影响力-2。');
     h += btn('项目招标 (2住建资源)', 'projectBid', '消耗2住建资源，发起项目招标。直接完成一个商人项目类型的席位任务，并免费获得一次额外拜访机会。');
     h += btn('五年计划 (5发改资源)', 'fiveYearPlan', '消耗5发改委资源，发起五年计划提案。触发一轮特殊的经济投票，冷却3轮。');
-    h += btn('资金变现 (5国资委资源)', 'sasacCash', '消耗5国资委资源，通过国企渠道变现，获得1笔不留下审计痕迹的可用资金。');
+    h += btn('资源变现 (5资源)', 'sasacCash', '消耗5单位资源（国资委/住建厅/发改委/财政厅/通用）变现为1笔可用资金。');
     h += btn('干部任用 (影响+组织部资源)', 'appoint', '消耗影响力+组织部（或本部门）资源，提拔本派系内部成员到更高职位，或从无派系干部池中招募新人加入本派系。招募者获得「曾受你的提拔」特性。');
     h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '消耗10点影响力或1笔资金，提升选定的本派系成员忠诚度1点。忠诚度影响成员叛变概率和工作效率。');
     h += btn('商人上门 (2影响)', 'merchant', '消耗2点影响力，邀请商人上门。随机获得一笔可用资金，但有概率被纪委盯上，留下受贿标记。');
@@ -421,9 +421,20 @@ async function handlePlayerAction(factionId, action) {
       case 'fiveYearPlan':
         await showAlert(executeSkill(factionId, 'fiveYearPlan', {}).message);
         break;
-      case 'sasacCash':
-        await showAlert(executeSkill(factionId, 'sasacCash', {}).message);
+      case 'sasacCash': {
+        const pf = gameState.factions[factionId];
+        const choices = [
+          { label: `国资委: ${pf.resources.sasac || 0}`, value: 'sasac' },
+          { label: `住建厅: ${pf.resources.housing || 0}`, value: 'housing' },
+          { label: `发改委: ${pf.resources.ndrc || 0}`, value: 'ndrc' },
+          { label: `财政厅: ${pf.resources.finance || 0}`, value: 'finance' },
+          { label: `通用资源: ${pf.genericResources || 0}`, value: 'generic' }
+        ].filter(c => (c.value === 'generic' ? (pf.genericResources || 0) : (pf.resources[c.value] || 0)) >= 5);
+        if (!choices.length) { await showAlert('没有足够的资源（需5单位）'); break; }
+        const dept = await showSelect('选择变现资源（5单位=1笔资金）', choices);
+        if (dept) await showAlert(executeSkill(factionId, 'sasacCash', { dept }).message);
         break;
+      }
       case 'appoint': {
         resetAppointScroll();
         while (true) {

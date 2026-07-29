@@ -62,6 +62,7 @@ export function resolveBill() {
   gameState.currentBill = null;
   // 五年计划：常规法案结束后额外触发一个经济法案
   if (gameState._pendingFiveYearPlan) {
+    const firstResult = result;
     const pf = gameState._pendingFiveYearPlan;
     gameState._pendingFiveYearPlan = null;
     const econBills = BILL_POOL.filter(b => b.type === 'finance' || b.type === 'hrss');
@@ -69,16 +70,14 @@ export function resolveBill() {
       const eBill = econBills[Math.floor(Math.random() * econBills.length)];
       gameState.currentBill = { ...eBill, votes: { support: [], oppose: [], abstain: [] } };
       gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 【五年计划】${gameState.currentBill.name} 表决开始`, result: '投票中' });
-      // 发起者自动支持
       castVote(pf.faction, 'support');
-      // AI 自动投票
       for (const fid of FACTION_IDS) {
         if (fid === pf.faction) continue;
         castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
       }
-      // 结算经济法案
       const r2 = resolveBill();
       gameState.lastBillResult = r2;
+      gameState.lastBillResult2 = firstResult;  // 保留常规法案结果
     }
   }
   return result;

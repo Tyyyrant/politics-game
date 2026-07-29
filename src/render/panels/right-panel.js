@@ -67,18 +67,23 @@ export function renderRightPanel() {
       <div style="font-size:0.8em;margin-top:4px;">支持 ${b.votes.support.length} | 反对 ${b.votes.oppose.length} | 弃权 ${b.votes.abstain.length}</div></div>`;
   }
 
-  // Last resolved bill result
-  if (gameState.lastBillResult) {
-    const r = gameState.lastBillResult;
+  // Last resolved bill result(s)
+  function renderBillResult(r, label) {
     const icon = r.passed ? '✅ 通过' : '❌ 未通过';
     const appliedEffects = r.passed ? r.passEffects : r.failEffects;
     const effText = describeEffects(appliedEffects);
-    h += `<div class="panel-section bill-result ${r.passed ? 'bill-passed' : 'bill-failed'}">
-      <h3>📋 上轮法案结果</h3>
+    return `<div class="panel-section bill-result ${r.passed ? 'bill-passed' : 'bill-failed'}">
+      <h3>${label}</h3>
       <div class="bill-name">${icon} ${r.billName}</div>
       <div style="font-size:0.75em;margin-top:4px;">支持 ${r.supportWeight}票 | 反对 ${r.opposeWeight}票</div>
       <div class="bill-effect-detail">${effText || '（无特殊效果）'}</div>
     </div>`;
+  }
+  if (gameState.lastBillResult) {
+    h += renderBillResult(gameState.lastBillResult, '📋 法案结果');
+  }
+  if (gameState.lastBillResult2) {
+    h += renderBillResult(gameState.lastBillResult2, '📋 常规法案结果');
   }
 
   el.innerHTML = h;
