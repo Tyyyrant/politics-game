@@ -438,20 +438,29 @@ async function handlePlayerAction(factionId, action) {
       }
       case 'boostLoyalty': {
         const faction = gameState.factions[factionId];
-        const opts = faction.members.map(m => ({
-          label: `${m.name} · ${m.rank} · 忠${m.loyalty}/9 · 💰10影响力 或 1资金`,
-          value: m.id
-        }));
-        const mid = await showSelect('提升忠诚度（每+1需10影响力 或 1笔资金）', opts);
-        if (mid) {
-          const method = await showSelect('选择方式', [
-            { label: `消耗10影响力（当前${faction.influence}）`, value: 'influence' },
-            { label: `消耗1笔资金（当前${faction.funds}笔）`, value: 'funds' }
-          ]);
-          if (method) {
-            const m = await import('../../logic/loyalty.js');
-            await showAlert(m.boostLoyalty(factionId, mid, method).message);
-          }
+        const opts = faction.members.map(m => {
+          const questHint = m.personalQuests.length > 0 ? ` 📋${m.personalQuests[0]}` : '';
+          return { label: `${m.name} · ${m.rank} · 忠${m.loyalty}/9${questHint}`, value: m.id };
+        });
+        const mid = await showSelect('提升忠诚度 / 完成个人追求', opts);
+        if (!mid) break;
+        const member = faction.members.find(m => m.id === mid);
+        const choices = [
+          { label: `消耗10影响力（当前${faction.influence}）`, value: 'influence' },
+          { label: `消耗1笔资金（当前${faction.funds}笔）`, value: 'funds' }
+        ];
+        if (member && member.personalQuests.length > 0) {
+          const q = member.personalQuests[0];
+          const qcost = { '小孩升学': '1教育', '购买新房': '1住建', '安排工作': '1国资委', '政治追求': '晋升', '结识贵人': '2任意' }[q] || '?';
+          choices.unshift({ label: `📋 完成「${q}」（${qcost}）`, value: 'quest' });
+        }
+        const method = await showSelect('选择方式', choices);
+        if (!method) break;
+        const m = await import('../../logic/loyalty.js');
+        if (method === 'quest') {
+          await showAlert(m.completePersonalQuest(factionId, mid).message);
+        } else {
+          await showAlert(m.boostLoyalty(factionId, mid, method).message);
         }
         break;
       }

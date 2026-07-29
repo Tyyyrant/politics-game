@@ -317,7 +317,7 @@ export function showOpponentDetail(factionId) {
     }
 
     html += '</div>';
-    html += `<div class="om-actions"><button class="btn-small btn-bribe has-tooltip" data-tooltip="消耗资金收买对方干部。费用=（9-忠诚度）÷2，最低1笔。每次收买忠诚度-2。当忠诚度降至0时，该干部将在回合结束时转投您的麾下。利益共同体和派系首领无法收买。">💰 收买干部(资金)</button></div>`;
+    html += `<div class="om-actions"><button class="btn-small btn-bribe has-tooltip" data-tooltip="消耗资金收买对方干部来降低其忠诚度。忠诚度降至0时，该干部将立即转投您的麾下。利益共同体和派系首领无法收买。">💰 收买干部(资金)</button></div>`;
     html += '<button class="modal-btn modal-cancel" style="margin-top:10px;width:100%">关闭</button></div>';
 
     const overlay = document.createElement('div');
