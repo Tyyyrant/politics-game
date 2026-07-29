@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showConfirm, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -338,8 +338,6 @@ async function handlePlayerAction(factionId, action) {
           s.visitorId && s.visitorId !== factionId && !s.lockedById
         );
         if (!occupied.length) { await showAlert('没有正在被攻略的席位'); break; }
-        const unscouted = occupied.filter(s => !s.scoutedBy?.includes(factionId));
-        // Also show already-scouted seats
         const opts = occupied.map(s => {
           const scouted = s.scoutedBy?.includes(factionId);
           const prefix = scouted ? '👁️' : '❓';
@@ -352,12 +350,8 @@ async function handlePlayerAction(factionId, action) {
         if (!sid) break;
         const seat = gameState.npcSeats.find(s => s.id === sid);
         if (!seat.scoutedBy?.includes(factionId)) {
-          const scoutR = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
-          if (!scoutR.success) { await showAlert('请先探查该席位任务，确认任务内容和攻略者后再抢夺。'); break; }
-          // Show what we found
-          const data = scoutR.data;
-          const ok = await showConfirm(`打探结果：\n攻略者：${FACTION_NAMES_CN[data.visitorId] || data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n原费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n抢夺 = 花双倍资源(${data.task.cost * 2})直接锁定该席位！\n确定要抢吗？`);
-          if (!ok) break;
+          await showAlert('请先使用「打探对手席位」探查该席位，确认任务内容和攻略者后再抢夺。');
+          break;
         }
         await showAlert(executeAction(factionId, ACTION_TYPES.STEAL_SEAT, { seatId: sid }).message);
         break;
