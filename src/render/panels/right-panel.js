@@ -85,11 +85,11 @@ export function renderRightPanel() {
       <div class="bill-effect-detail">${effText || '（无特殊效果）'}</div>
     </div>`;
   }
-  if (gameState.lastBillResult) {
-    h += renderBillResult(gameState.lastBillResult, '📋 法案结果');
-  }
   if (gameState.lastBillResult2) {
     h += renderBillResult(gameState.lastBillResult2, '📋 常规法案结果');
+    h += renderBillResult(gameState.lastBillResult, '📋 【五年计划】法案结果');
+  } else if (gameState.lastBillResult) {
+    h += renderBillResult(gameState.lastBillResult, '📋 法案结果');
   }
 
   el.innerHTML = h;
