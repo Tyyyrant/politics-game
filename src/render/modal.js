@@ -329,8 +329,13 @@ export function showOpponentDetail(factionId) {
 
     function refresh() {
       overlay.remove();
-      import('../screens/game-screen.js').then(m => m.renderAllPanels());
-      showOpponentDetail(factionId).then(resolve);
+      import('../screens/game-screen.js').then(m => {
+        m.renderAllPanels();
+        // Also ensure the new modal opens after render
+        return showOpponentDetail(factionId);
+      }).then(resolve).catch(() => {
+        showOpponentDetail(factionId).then(resolve);
+      });
     }
 
     // Scout
