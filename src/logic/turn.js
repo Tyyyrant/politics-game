@@ -100,7 +100,7 @@ export function enterCleanup() {
         seat.revealed = true;
         seat._lockTaskRefreshed = false;
         seat._pendingRelease = true;  // 标记：2轮内完不成则释放
-        gameState.roundLog.push({ factionId: 'system', action: 'roundStart', target: `${seat.name}席位任务刷新`, result: '需在2轮内完成' });
+        gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表有了新的任务`, result: '需在2轮内完成' });
       }
       // 刷新后的任务倒计时
       if (seat._pendingRelease && !seat.lockedById) {
@@ -110,7 +110,7 @@ export function enterCleanup() {
           seat._pendingRelease = false;
           seat.revealed = false;
           seat.roundsRemaining = 3;
-          gameState.roundLog.push({ factionId: 'system', action: 'roundStart', target: `${seat.name}席位任务过期`, result: '席位已释放' });
+          gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
         }
       }
     }
