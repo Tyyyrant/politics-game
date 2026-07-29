@@ -150,6 +150,8 @@ function completeEnemyQuest(factionId, targetFactionId, memberId) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4;
     member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.personalQuests = [];
+    member.completedQuests = [];
     member.id = `${factionId}_${member.name}`;
     gameState.factions[factionId].members.push(member);
     return { success: true, message: `良禽择木而栖，${member.name}已加入您的派系。` };

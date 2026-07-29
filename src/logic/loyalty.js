@@ -173,6 +173,8 @@ export function tryBribeMember(fromFactionId, toFactionId, memberId) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4;
     member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.personalQuests = [];
+    member.completedQuests = [];
     member.id = `${fromFactionId}_${member.name}`;
     playerFaction.members.push(member);
     return { success: true, message: `良禽择木而栖，${member.name}已加入您的派系。` };
