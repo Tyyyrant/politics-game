@@ -303,7 +303,7 @@ async function handlePlayerAction(factionId, action) {
           seat.lockedOnTurn = gameState.turn;
           seat._pendingRelease = false;
           pf.lockedSeats++;
-          gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}(${sid})`, result: '锁定成功' });
+          gameState.roundLog.push({ factionId, action: 'completeTask', target: `${seat.name}`, result: '锁定成功' });
           await showAlert(`成功锁定${seat.name}！`);
         } else if (seat) {
           // Non-any task: handles resource spending with generic fallback
