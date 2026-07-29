@@ -117,7 +117,6 @@ export function renderCenterPanel() {
     if (allEffects.includes('govPartyExchange')) h += '<button class="action-btn convert-btn" data-action="convertGovParty">政府↔党委(1:1)</button>';
     if (allEffects.includes('govOfficeToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>';
     if (allEffects.includes('publicSecurityAsGeneric')) h += '<button class="action-btn convert-btn" data-action="convertEmergency">公安→政府(1:1)</button>';
-    h += '<button class="action-btn end-turn-btn" data-action="endTurn" title="结束本回合行动">✅ 结束回合</button>';
     h += '</div></div>';
   } else {
     h += `<div class="ai-display">⏳ 等待其他派系行动完成...</div>`;
@@ -595,7 +594,7 @@ async function handlePlayerAction(factionId, action) {
 }
 
 // === TURN ADVANCEMENT ===
-function advanceAfterPlayer() {
+export function advanceAfterPlayer() {
   if (nextPlayer()) {
     if (isCurrentPlayerAI()) {
       const cf = gameState.turnOrder[gameState.currentPlayerIndex];
