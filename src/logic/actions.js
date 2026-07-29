@@ -69,12 +69,12 @@ function completeTask(factionId, seatId) {
 }
 
 function scoutSeat(factionId, seatId) {
-  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat || !seat.visitorId) return { success: false, message: '该席位无人攻略，无需打探' };
-  // Record scout
   if (!seat.scoutedBy) seat.scoutedBy = [];
-  if (!seat.scoutedBy.includes(factionId)) seat.scoutedBy.push(factionId);
+  if (seat.scoutedBy.includes(factionId)) return { success: false, message: '你已经探查过该席位了' };
+  if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
+  seat.scoutedBy.push(factionId);
   return { success: true, message: '打探成功', data: { task: seat.task, visitorId: seat.visitorId, roundsLeft: seat.roundsRemaining } };
 }
 
