@@ -45,6 +45,7 @@ export function createNewGame(playerFactionId) {
     playerFactionId, factions, npcSeats,
     currentBill: null, billDeck: shuffleDeck([...BILL_POOL]),
     eventDeck: shuffleDeck([...EVENT_POOL]),
+    _fiveYearPlanTriggered: false, _pendingFiveYearPlan: null, _fiveYearPlanFaction: null,
     activeBillEffects: [], roundLog: [], history: [],
     globalDisciplineMarkPool: 0, diceResult: null, pendingActions: [],
     lastBillResult: null,

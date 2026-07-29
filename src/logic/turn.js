@@ -50,6 +50,8 @@ export function startNewRound() {
   for (const fid of FACTION_IDS) {
     produceResources(fid);
   }
+  gameState._fiveYearPlanTriggered = false;
+  gameState._pendingFiveYearPlan = null;
   emit('turn:new-round', { turn: gameState.turn });
 }
 
