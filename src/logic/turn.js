@@ -90,7 +90,9 @@ export function enterCleanup() {
       if (gameState.turn - seat.lockedOnTurn >= 3 && !seat._lockTaskRefreshed) {
         seat._lockTaskRefreshed = true;
         const def = taskDefs[Math.floor(Math.random() * taskDefs.length)];
-        const cost = def.costMin + Math.floor(Math.random() * (def.costMax - def.costMin + 1));
+        seat.refreshCount = (seat.refreshCount || 0) + 1;
+        const baseCost = def.costMin + Math.floor(Math.random() * (def.costMax - def.costMin + 1));
+        const cost = baseCost + (seat.refreshCount - 1) * 2;  // 每次+2
         seat.task = { type: def.type, cost, resourceType: def.resource };
         seat.visitorId = seat.lockedById;
         seat.lockedById = null;

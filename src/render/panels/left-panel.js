@@ -1,6 +1,7 @@
 // src/render/panels/left-panel.js
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
+import { getMaxVisits } from '../../logic/actions.js';
 import { showAlert, showSelect, showSlider, showOpponentDetail } from '../modal.js';
 
 let memberSortMode = 'loyalty'; // 'loyalty' | 'rank'
@@ -16,9 +17,10 @@ export function renderLeftPanel() {
   // === 我的派系详情 ===
   h += '<div class="panel-section player-full"><h3>👤 我的派系 — ' + pf.leaderName + '</h3>';
   h += `<div class="stat-row">📊 影响力: <b>${pf.influence}</b> &nbsp;|&nbsp; 💰 资金: <b>${pf.funds}</b> &nbsp;|&nbsp; 🧱 通用: <b>${pf.genericResources || 0}</b></div>`;
-  const visitsLeft = 2 - (pf.visitsThisTurn || 0);
+  const maxVisits = getMaxVisits(gameState.playerFactionId);
+  const visitsLeft = maxVisits - (pf.visitsThisTurn || 0);
   h += `<div class="stat-row">🔒 席位: <b>${pf.lockedSeats}/27</b> &nbsp;|&nbsp; 🔴 纪委标记: <b>${pf.disciplineMarks}</b></div>`;
-  h += `<div class="stat-row">👁️ 剩余拜访: <b>${visitsLeft}/2</b> &nbsp;|&nbsp; 👥 攻略中: <b>${pf.activeSeatTasks.length || gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId).length}</b></div>`;
+  h += `<div class="stat-row">👁️ 剩余拜访: <b>${visitsLeft}/${maxVisits}</b> &nbsp;|&nbsp; 👥 攻略中: <b>${pf.activeSeatTasks.length || gameState.npcSeats.filter(s => s.visitorId === gameState.playerFactionId).length}</b></div>`;
 
   // 资源明细
   h += '<div class="resource-section"><h4>📦 资源</h4>';

@@ -4,6 +4,13 @@ import { spendResources, spendAnyResources, spendInfluence } from './resources.j
 import { rollDice } from './turn.js';
 import { ACTION_TYPES, INVESTIGATE_COST } from './data/constants.js';
 
+export function getMaxVisits(factionId) {
+  const faction = gameState.factions[factionId];
+  if (!faction) return 2;
+  const memberCount = faction.members.length; // 不含首领
+  return 2 + Math.floor(memberCount / 4);
+}
+
 export function executeAction(factionId, actionType, params = {}) {
   switch (actionType) {
     case ACTION_TYPES.VISIT_SEAT: return visitSeat(factionId, params.seatId);
@@ -21,7 +28,8 @@ export function executeAction(factionId, actionType, params = {}) {
 }
 
 function visitSeat(factionId, seatId) {
-  if (gameState.factions[factionId].visitsThisTurn >= 2) return { success: false, message: '每轮最多拜访2个席位' };
+  const maxVisits = getMaxVisits(factionId);
+  if (gameState.factions[factionId].visitsThisTurn >= maxVisits) return { success: false, message: `每轮最多拜访${maxVisits}个席位` };
   if (!spendInfluence(factionId, 1)) return { success: false, message: '影响力不足（需要1点）' };
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat) return { success: false, message: '席位不存在' };

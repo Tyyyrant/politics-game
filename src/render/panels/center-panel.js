@@ -1,6 +1,6 @@
 // src/render/panels/center-panel.js
 import { gameState } from '../../logic/state.js';
-import { executeAction } from '../../logic/actions.js';
+import { executeAction, getMaxVisits } from '../../logic/actions.js';
 import { executeSkill } from '../../logic/skills.js';
 import { nextPlayer, isCurrentPlayerAI } from '../../logic/turn.js';
 import { produceResources } from '../../logic/resources.js';
@@ -80,8 +80,9 @@ export function renderCenterPanel() {
   }
 
   if (isPlayer) {
-    const visitsLeft = 2 - (gameState.factions[cf].visitsThisTurn || 0);
-    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/2）</h3><div class="action-grid">';
+    const maxVisits = getMaxVisits(cf);
+    const visitsLeft = maxVisits - (gameState.factions[cf].visitsThisTurn || 0);
+    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/' + maxVisits + '）</h3><div class="action-grid">';
     h += btn('拜访人大席位 (1影响)', 'visitSeat', '消耗1点影响力，拜访一位人大代表席位，查看其任务需求。下回合可消耗对应资源完成任务，锁定该席位。每轮最多2次。');
     h += btn('完成席位任务 (对应资源)', 'completeTask', '消耗席位所需的部门资源或通用资源，完成该人大代表的任务，将该席位锁定为本派系票仓。本回合刚拜访的席位需下回合才能完成。');
     h += btn('打探对手席位 (1影响)', 'scoutSeat', '消耗1点影响力，查看对手正在攻略的席位详情（任务类型、所需资源、剩余时间），为抢夺做准备。');
