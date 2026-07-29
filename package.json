@@ -18,8 +18,8 @@
       "src/**/*",
       "index.html"
     ],
-    "mac": { "target": "dmg" },
-    "win": { "target": "portable" }
+    "mac": { "target": "dmg", "icon": "icon.png" },
+    "win": { "target": "portable", "icon": "icon.png" }
   },
   "devDependencies": {
     "electron": "^27.3.11",
