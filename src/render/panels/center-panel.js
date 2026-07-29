@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
+import { showSlider, showSelect, showAlert, showConfirm, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
