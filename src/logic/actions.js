@@ -149,7 +149,7 @@ function completeEnemyQuest(factionId, targetFactionId, memberId) {
   if (member.loyalty <= 0) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4;
-    member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.traits = member.traits.filter(t => !['心腹嫡系','利益共同体','小孩升学','购买新房','安排工作','政治追求','结识贵人'].includes(t));
     member.personalQuests = [];
     member.completedQuests = [];
     member.id = `${factionId}_${member.name}`;

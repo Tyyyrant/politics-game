@@ -159,7 +159,9 @@ const hasRes = s.task.resourceType === 'any'
     </span></h4>`;
   for (const m of sorted) {
     const statusIcon = m.investigationStatus === 'evidence' ? '🔴' : m.investigationStatus === 'suspect' ? '🟡' : '🟢';
-    const traits = m.traits.slice(0, 2).join(' · ');
+    const questTraits = ['小孩升学', '购买新房', '安排工作', '政治追求', '结识贵人'];
+    const displayTraits = m.traits.filter(t => !questTraits.includes(t));
+    const traits = displayTraits.slice(0, 3).join(' · ');
     h += `<div class="member-row">
       <div class="member-name"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${statusIcon} ${m.name} <span class="member-rank">${m.rank}</span></div>
       <div class="member-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>

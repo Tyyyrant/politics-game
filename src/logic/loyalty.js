@@ -28,8 +28,9 @@ export function completePersonalQuest(factionId, memberId) {
     case TRAITS.buyHouse: cost = 1; dept = 'housing'; gain = 3; break;
     case TRAITS.politicalAmbition: gain = member.rank === '副处' ? 2 : 3; return promoteMember(factionId, memberId);
     case TRAITS.arrangedJob: cost = 1; dept = 'sasac'; gain = 1; break;
-    case TRAITS.seekPatron: gain = 2; // '结识贵人' — 不需要资源，直接完成
+    case TRAITS.seekPatron: gain = 2;
       member.personalQuests.shift(); member.completedQuests.push(quest);
+      member.traits = member.traits.filter(t => t !== quest);
       member.loyalty = Math.min(member.maxLoyalty, member.loyalty + gain);
       return { success: true, message: `${member.name}结识贵人，忠诚度+${gain}` };
     default: return { success: false, message: '未知任务' };
@@ -37,6 +38,8 @@ export function completePersonalQuest(factionId, memberId) {
   if (dept && !spendResources(factionId, dept, cost)) return { success: false, message: '资源不足' };
   member.loyalty = Math.min(member.maxLoyalty, member.loyalty + gain);
   member.personalQuests.shift(); member.completedQuests.push(quest);
+  // Remove the quest trait from display traits
+  member.traits = member.traits.filter(t => t !== quest);
   return { success: true, message: `${member.name}完成个人追求，忠诚度+${gain}` };
 }
 
@@ -76,6 +79,7 @@ export function promoteMember(factionId, memberId) {
   // Perform promotion
   member.rank = newRank;
   member.position = matchingPos.title;
+  member.traits = member.traits.filter(t => t !== '政治追求');
   member.loyalty = Math.min(member.maxLoyalty, member.loyalty + 2);
   gameState.roundLog.push({ factionId, action: 'promoteMember', target: `${member.name}→${newRank}·${matchingPos.title}`, result: '提拔成功' });
   emit('loyalty:changed', { factionId, memberId, newRank, newPosition: matchingPos.title });
@@ -172,7 +176,7 @@ export function tryBribeMember(fromFactionId, toFactionId, memberId) {
   if (member.loyalty <= 0) {
     targetFaction.members = targetFaction.members.filter(m => m.id !== memberId);
     member.loyalty = 4;
-    member.traits = member.traits.filter(t => t !== '心腹嫡系' && t !== '利益共同体');
+    member.traits = member.traits.filter(t => !['心腹嫡系','利益共同体','小孩升学','购买新房','安排工作','政治追求','结识贵人'].includes(t));
     member.personalQuests = [];
     member.completedQuests = [];
     member.id = `${fromFactionId}_${member.name}`;
