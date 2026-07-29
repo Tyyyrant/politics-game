@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, showOpponentDetail, resetAppointScroll } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -96,7 +96,6 @@ export function renderCenterPanel() {
     h += btn('资金变现 (5国资委资源)', 'sasacCash', '消耗5国资委资源，通过国企渠道变现，获得1笔不留下审计痕迹的可用资金。');
     h += btn('干部任用 (影响+组织部资源)', 'appoint', '消耗影响力+组织部（或本部门）资源，提拔本派系内部成员到更高职位，或从无派系干部池中招募新人加入本派系。招募者获得「曾受你的提拔」特性。');
     h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '消耗10点影响力或1笔资金，提升选定的本派系成员忠诚度1点。忠诚度影响成员叛变概率和工作效率。');
-    h += btn('拉拢对手干部 (资源)', 'poach', '帮对手已打探的成员完成个人追求或直接收买，降低其忠诚度。忠诚度降至0则叛变加入你的派系。');
     h += btn('商人上门 (2影响)', 'merchant', '消耗2点影响力，邀请商人上门。随机获得一笔可用资金，但有概率被纪委盯上，留下受贿标记。');
     // 资源置换按钮
     const pf = gameState.factions[cf];
@@ -435,15 +434,6 @@ async function handlePlayerAction(factionId, action) {
           }
           renderAllPanels();
         }
-        break;
-      }
-      case 'poach': {
-        // Open opponent detail for quick poaching
-        const targets = Object.entries(gameState.factions)
-          .filter(([id]) => id !== factionId)
-          .map(([id, f]) => ({ label: `${FACTION_NAMES_CN[id] || id} · ${f.leaderName}`, value: id }));
-        const target = await showSelect('选择目标派系', targets);
-        if (target) await showOpponentDetail(target);
         break;
       }
       case 'boostLoyalty': {

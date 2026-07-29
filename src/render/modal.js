@@ -396,16 +396,21 @@ export function showOpponentDetail(factionId) {
       bribeBtn.onclick = async function(e) {
         e.stopPropagation();
         e.preventDefault();
-        bribeBtn.textContent = '处理中...'; // DEBUG: confirm click fired
-        const pf = gameState.factions[playerId];
-        const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
-        if (!members.length) { await showAlert('该派系没有可收买的干部'); bribeBtn.textContent = '💰 收买干部(资金)'; return; }
-        const mid = await showSelect(`选择收买目标（可用资金：${pf.funds}笔）`, members);
-        if (!mid) { bribeBtn.textContent = '💰 收买干部(资金)'; return; }
-        const { tryBribeMember } = await import('../../logic/loyalty.js');
-        const r = tryBribeMember(playerId, factionId, mid);
-        await showAlert(r.message);
-        refresh();
+        bribeBtn.textContent = '处理中...';
+        try {
+          const pf = gameState.factions[playerId];
+          const members = faction.members.filter(m => m.name !== faction.leaderName).map(m => ({ label: `${m.name} · ${m.rank}`, value: m.id }));
+          if (!members.length) { await showAlert('该派系没有可收买的干部'); bribeBtn.textContent = '💰 收买干部(资金)'; return; }
+          const mid = await showSelect(`选择收买目标（可用资金：${pf.funds}笔）`, members);
+          if (!mid) { bribeBtn.textContent = '💰 收买干部(资金)'; return; }
+          const { tryBribeMember } = await import('../../logic/loyalty.js');
+          const r = tryBribeMember(playerId, factionId, mid);
+          await showAlert(r.message);
+          refresh();
+        } catch(err) {
+          await showAlert('收买出错: ' + err.message);
+          bribeBtn.textContent = '💰 收买干部(资金)';
+        }
       };
     } else {
       showAlert('DEBUG: bribe button not found in DOM');
