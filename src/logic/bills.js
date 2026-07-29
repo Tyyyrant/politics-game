@@ -73,15 +73,14 @@ export function resolveBill() {
     const eBill = fiveYearBills[Math.floor(Math.random() * fiveYearBills.length)];
     gameState.currentBill = { ...eBill, votes: { support: [], oppose: [], abstain: [] } };
     gameState.roundLog.push({ factionId: 'system', action: 'billResult', target: `📜 ${gameState.currentBill.name} 表决开始`, result: '投票中' });
-      castVote(pf.faction, 'support');
-      for (const fid of FACTION_IDS) {
-        if (fid === pf.faction) continue;
-        castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
-      }
-      const r2 = resolveBill();
-      gameState.lastBillResult = r2;
-      gameState.lastBillResult2 = firstResult;
+    castVote(pf.faction, 'support');
+    for (const fid of FACTION_IDS) {
+      if (fid === pf.faction) continue;
+      castVote(fid, ['support', 'oppose', 'abstain'][Math.floor(Math.random() * 3)]);
     }
+    const r2 = resolveBill();
+    gameState.lastBillResult = r2;
+    gameState.lastBillResult2 = firstResult;
   }
   return result;
 }
