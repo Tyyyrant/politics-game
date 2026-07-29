@@ -653,6 +653,20 @@ body {
 .btn-bribe:hover { background: rgba(196,59,59,0.2) !important; }
 .om-actions { margin-top: 8px; }
 
+/* Tooltip for opponent detail buttons */
+.has-tooltip { position: relative; }
+.has-tooltip:hover::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+  background: #1a1410; color: var(--text-primary);
+  border: 1px solid var(--accent-gold); border-radius: 6px;
+  padding: 8px 12px; font-size: 0.8em; line-height: 1.5;
+  white-space: pre-wrap; max-width: 280px; min-width: 200px;
+  z-index: 999; pointer-events: none; text-align: left;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+  animation: tooltip-appear 0.2s 2s both;
+}
+
 /* ================================================================
    SEAT GRID
    ================================================================ */
