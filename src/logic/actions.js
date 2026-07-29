@@ -26,10 +26,11 @@ function visitSeat(factionId, seatId) {
   const seat = gameState.npcSeats.find(s => s.id === seatId);
   if (!seat) return { success: false, message: '席位不存在' };
   if (seat.lockedById) return { success: false, message: '该席位已被锁定' };
+  if (seat.visitorId === factionId) return { success: false, message: '你已在攻略此席位，无需重复拜访' };
   if (seat.visitorId && seat.visitorId !== factionId) return { success: false, message: '已有其他派系在攻略' };
   seat.visitorId = factionId;
   seat.roundsRemaining = 2;
-  seat.visitedOnTurn = gameState.turn;  // track which turn it was visited
+  seat.visitedOnTurn = gameState.turn;
   if (factionId === gameState.playerFactionId) seat.revealed = true;
   gameState.factions[factionId].visitsThisTurn++;
   emit('seat:visited', { factionId, seatId, task: seat.revealed ? seat.task : null });

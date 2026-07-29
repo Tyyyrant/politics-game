@@ -346,9 +346,8 @@ async function handlePlayerAction(factionId, action) {
         if (!sid) break;
         const seat = gameState.npcSeats.find(s => s.id === sid);
         if (!seat.scoutedBy?.includes(factionId)) {
-          // Scout first
           const scoutR = executeAction(factionId, ACTION_TYPES.SCOUT_SEAT, { seatId: sid });
-          if (!scoutR.success) { await showAlert(scoutR.message); break; }
+          if (!scoutR.success) { await showAlert('请先探查该席位任务，确认任务内容和攻略者后再抢夺。'); break; }
           // Show what we found
           const data = scoutR.data;
           const ok = await showConfirm(`打探结果：\n攻略者：${FACTION_NAMES_CN[data.visitorId] || data.visitorId}\n任务：${SEAT_TASK_NAMES_CN[data.task.type] || data.task.type}\n原费用：${data.task.cost} ${DEPT_NAMES[data.task.resourceType] || data.task.resourceType}\n剩余：${data.roundsLeft}轮\n\n抢夺 = 花双倍资源(${data.task.cost * 2})直接锁定该席位！\n确定要抢吗？`);
