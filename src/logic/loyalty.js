@@ -28,6 +28,10 @@ export function completePersonalQuest(factionId, memberId) {
     case TRAITS.buyHouse: cost = 1; dept = 'housing'; gain = 3; break;
     case TRAITS.politicalAmbition: gain = member.rank === '副处' ? 2 : 3; return promoteMember(factionId, memberId);
     case TRAITS.arrangedJob: cost = 1; dept = 'sasac'; gain = 1; break;
+    case TRAITS.seekPatron: gain = 2; // '结识贵人' — 不需要资源，直接完成
+      member.personalQuests.shift(); member.completedQuests.push(quest);
+      member.loyalty = Math.min(member.maxLoyalty, member.loyalty + gain);
+      return { success: true, message: `${member.name}结识贵人，忠诚度+${gain}` };
     default: return { success: false, message: '未知任务' };
   }
   if (dept && !spendResources(factionId, dept, cost)) return { success: false, message: '资源不足' };

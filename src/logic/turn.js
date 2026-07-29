@@ -90,6 +90,21 @@ export function enterCleanup() {
       faction.disciplineMarks += discMembers.length;
     }
   }
+  // 每3轮为无待办追求的成员刷新一个新追求（不重复）
+  if (gameState.turn % 3 === 0) {
+    const questPool = ['小孩升学', '购买新房', '安排工作', '结识贵人', '政治追求'];
+    for (const fid of FACTION_IDS) {
+      for (const m of gameState.factions[fid].members) {
+        if (m.personalQuests.length === 0 && m.completedQuests.length < questPool.length) {
+          const available = questPool.filter(q => !m.completedQuests.includes(q));
+          if (available.length > 0) {
+            const newQuest = available[Math.floor(Math.random() * available.length)];
+            m.personalQuests.push(newQuest);
+          }
+        }
+      }
+    }
+  }
   checkVictory();
   emit('turn:cleanup-done');
 }
