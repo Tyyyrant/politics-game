@@ -2,6 +2,7 @@
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 import { getMaxVisits } from '../../logic/actions.js';
+import { FACTION_PORTRAITS } from '../../logic/data/factions.js';
 import { showAlert, showSelect, showSlider, showOpponentDetail } from '../modal.js';
 
 let memberSortMode = 'loyalty'; // 'loyalty' | 'rank'
@@ -15,7 +16,8 @@ export function renderLeftPanel() {
   let h = '';
 
   // === 我的派系详情 ===
-  h += '<div class="panel-section player-full"><h3>👤 我的派系 — ' + pf.leaderName + '</h3>';
+  const portrait = FACTION_PORTRAITS[gameState.playerFactionId] || '';
+  h += `<div class="panel-section player-full"><h3><img src="${portrait}" class="player-portrait" onerror="this.style.display='none'" alt=""> ${pf.leaderName}</h3>`;
   h += `<div class="stat-row">📊 影响力: <b>${pf.influence}</b> &nbsp;|&nbsp; 💰 资金: <b>${pf.funds}</b> &nbsp;|&nbsp; 🧱 通用: <b>${pf.genericResources || 0}</b></div>`;
   const maxVisits = getMaxVisits(gameState.playerFactionId);
   const visitsLeft = maxVisits - (pf.visitsThisTurn || 0);
