@@ -216,7 +216,8 @@ function renderBillPhase(el) {
         // 每6轮触发一个全局随机事件
         if (gameState.turn % 6 === 0) {
           const evMod = await import('../../logic/events.js');
-          evMod.triggerGlobalEvent();
+          const result = evMod.triggerGlobalEvent();
+          if (result) await showAlert(`⚡ 随机事件\n\n${result.name}\n${result.detail}`);
         }
         t.enterCleanup();
         if (gameState.phase === 'gameOver') { renderAllPanels(); return; }

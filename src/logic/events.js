@@ -17,9 +17,10 @@ export function drawEvent(factionId) {
 // 每6轮触发一次的全局事件（法案结算后调用）
 export function triggerGlobalEvent() {
   const globalEvents = EVENT_POOL.filter(e => e.effects.releaseRandomLocked || e.effects.seatDefection || e.effects.scandalHit);
-  if (!globalEvents.length) return;
+  if (!globalEvents.length) return null;
   const event = globalEvents[Math.floor(Math.random() * globalEvents.length)];
   const eff = event.effects;
+  let detail = '';
 
   if (eff.releaseRandomLocked) {
     const locked = gameState.npcSeats.filter(s => s.lockedById && !s._pendingRelease);
@@ -31,7 +32,8 @@ export function triggerGlobalEvent() {
       released.push(s.name);
       locked.splice(locked.indexOf(s), 1);
     }
-    gameState.roundLog.push({ factionId: 'system', action: 'event', target: '🔄 换届风波', result: `释放了${count}个席位（${released.join('、')}）` });
+    detail = `释放了${count}个席位：${released.join('、')}`;
+    gameState.roundLog.push({ factionId: 'system', action: 'event', target: '🔄 换届风波', result: detail });
   }
 
   if (eff.scandalHit) {
@@ -46,7 +48,8 @@ export function triggerGlobalEvent() {
         const s = topSeats[Math.floor(Math.random() * topSeats.length)];
         s.lockedById = null; s.visitorId = null; s.lockedOnTurn = null; s.revealed = false; s.roundsRemaining = 3;
       }
-      gameState.roundLog.push({ factionId: 'system', action: 'event', target: '📰 丑闻曝光', result: `${FACTION_NAMES_CN[topFaction] || topFaction}受冲击，-5影响，失1席` });
+      detail = `${FACTION_NAMES_CN[topFaction] || topFaction}影响力-5，失去1个席位`;
+      gameState.roundLog.push({ factionId: 'system', action: 'event', target: '📰 丑闻曝光', result: detail });
     }
   }
 
@@ -61,10 +64,13 @@ export function triggerGlobalEvent() {
       if (poorest) {
         const oldOwner = s.lockedById;
         s.lockedById = poorest; s.lockedOnTurn = gameState.turn;
-        gameState.roundLog.push({ factionId: 'system', action: 'event', target: '🔀 代表倒戈', result: `${s.name}从${FACTION_NAMES_CN[oldOwner] || oldOwner}倒向${FACTION_NAMES_CN[poorest] || poorest}` });
+        detail = `${s.name}从${FACTION_NAMES_CN[oldOwner] || oldOwner}倒向${FACTION_NAMES_CN[poorest] || poorest}`;
+        gameState.roundLog.push({ factionId: 'system', action: 'event', target: '🔀 代表倒戈', result: detail });
       }
     }
   }
+
+  return { name: event.name, detail: detail || event.description };
 }
 
 export function resolveEvent(factionId) {
