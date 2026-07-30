@@ -114,6 +114,14 @@ export const FACTION_PORTRAITS = {
   publicSecurity: 'portraits/wan.png'
 };
 
+// 成员头像映射（在portraits/mapping.json中填入文件名即可生效）
+export function getMemberPortrait(memberName) {
+  try {
+    // 尝试按名字匹配 portraits/ 下文件
+    return `portraits/${memberName}.png`;
+  } catch (_) { return null; }
+}
+
 export function getFactionInfluence(factionState) {
   let inf = 0;
   for (const member of factionState.members) {

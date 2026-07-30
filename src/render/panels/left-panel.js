@@ -2,7 +2,7 @@
 import { gameState } from '../../logic/state.js';
 import { FACTION_NAMES, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 import { getMaxVisits } from '../../logic/actions.js';
-import { FACTION_PORTRAITS } from '../../logic/data/factions.js';
+import { FACTION_PORTRAITS, getMemberPortrait } from '../../logic/data/factions.js';
 import { showAlert, showSelect, showSlider, showOpponentDetail } from '../modal.js';
 
 let memberSortMode = 'loyalty'; // 'loyalty' | 'rank'
@@ -167,7 +167,7 @@ const hasRes = s.task.resourceType === 'any'
     const displayTraits = m.traits.filter(t => !questTraits.includes(t));
     const traits = displayTraits.slice(0, 3).join(' · ');
     h += `<div class="member-row">
-      <div class="member-name"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${statusIcon} ${m.name} <span class="member-rank">${m.rank}</span></div>
+      <div class="member-name"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${statusIcon} ${m.name} <span class="member-rank">${m.rank}</span></div>
       <div class="member-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>
       <div class="member-loyalty">忠: ${m.loyalty}/9 ${traits ? '| ' + traits : ''}</div>
     </div>`;
