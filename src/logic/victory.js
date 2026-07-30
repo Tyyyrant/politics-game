@@ -28,12 +28,14 @@ function doCheck(playerId, pf) {
     return { gameOver: true, playerLost: true, reason: 'disloyalty', playerWon: false };
   }
 
-  // 过半立即获胜（任何人）
-  const majorityWinner = findMajorityWinner();
-  if (majorityWinner) {
-    gameState.phase = 'gameOver';
-    const won = majorityWinner === playerId;
-    return { gameOver: true, playerWon: won, playerLost: !won, type: 'majority', winner: majorityWinner, seats: gameState.factions[playerId].lockedSeats };
+  // 过半获胜（10轮后才触发）
+  if (gameState.turn > 10) {
+    const majorityWinner = findMajorityWinner();
+    if (majorityWinner) {
+      gameState.phase = 'gameOver';
+      const won = majorityWinner === playerId;
+      return { gameOver: true, playerWon: won, playerLost: !won, type: 'majority', winner: majorityWinner, seats: gameState.factions[playerId].lockedSeats };
+    }
   }
 
   // 第20轮结算

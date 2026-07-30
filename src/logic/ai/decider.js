@@ -33,36 +33,56 @@ export function decideAIActions(factionId) {
     }
   }
 
-  // 第一轮不打探不抢夺（刚开局，大家都在拜访）
+  // 玩家席位多时AI更激进
+  const playerSeats = gameState.factions[gameState.playerFactionId].lockedSeats || 0;
+  const emergencyMode = playerSeats > 10;  // 玩家>10席，AI不惜代价抢
+
+  // 第一轮不打探不抢夺
   if (gameState.turn > 1) {
-    // 先打探一个被占用的席位（花1影响力）
     const occupiedByOther = gameState.npcSeats.filter(s => s.visitorId && s.visitorId !== factionId && !s.lockedById);
-    const unscoutedOccupied = occupiedByOther.filter(s => !s.scoutedBy?.includes(factionId));
-    if (unscoutedOccupied.length && faction.influence >= 1) {
-      const target = unscoutedOccupied[Math.floor(Math.random() * unscoutedOccupied.length)];
-      candidates.push({ type: ACTION_TYPES.SCOUT_SEAT, params: { seatId: target.id }, score: 4 + p.aggression * 3 });
+    // 优先打探玩家的席位
+    const playerOccupied = occupiedByOther.filter(s => s.visitorId === gameState.playerFactionId);
+    const otherOccupied = occupiedByOther.filter(s => s.visitorId !== gameState.playerFactionId);
+
+    // 打探
+    const scoutTargets = emergencyMode ? [...playerOccupied, ...otherOccupied] : [...playerOccupied, ...otherOccupied].sort(() => Math.random() - 0.5);
+    const unscoutedTargets = scoutTargets.filter(s => !s.scoutedBy?.includes(factionId));
+    if (unscoutedTargets.length && faction.influence >= 1) {
+      const target = unscoutedTargets[0]; // 优先第一个（玩家席位在前）
+      const priority = target.visitorId === gameState.playerFactionId ? 5 : 2;
+      candidates.push({ type: ACTION_TYPES.SCOUT_SEAT, params: { seatId: target.id }, score: 4 + p.aggression * priority });
     }
 
-    // 抢夺已打探过的席位
+    // 抢夺已打探过的席位（优先玩家）
     const scoutedOccupied = occupiedByOther.filter(s => s.scoutedBy?.includes(factionId));
-    if (scoutedOccupied.length && faction.influence >= 2 && p.aggression > 0.5) {
-      const target = scoutedOccupied[Math.floor(Math.random() * scoutedOccupied.length)];
-      candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: target.id }, score: sit.seatGap * p.aggression * 5 });
+    if (scoutedOccupied.length && faction.influence >= 2) {
+      const playerScouted = scoutedOccupied.filter(s => s.visitorId === gameState.playerFactionId);
+      const otherScouted = scoutedOccupied.filter(s => s.visitorId !== gameState.playerFactionId);
+      const stealPool = emergencyMode ? [...playerScouted, ...otherScouted] : [...playerScouted, ...otherScouted].sort(() => Math.random() - 0.5);
+      if (stealPool.length && (p.aggression > 0.3 || emergencyMode)) {
+        const target = stealPool[0];
+        const stealScore = (target.visitorId === gameState.playerFactionId ? 8 : 3) * (emergencyMode ? 2 : 1);
+        candidates.push({ type: ACTION_TYPES.STEAL_SEAT, params: { seatId: target.id }, score: stealScore * p.aggression });
+      }
     }
   }
 
-  // 查处玩家干部
-  if (faction.disciplineMarks >= 1 && p.aggression > 0.4) {
+  // 查处玩家干部（紧急模式更激进）
+  const investThreshold = emergencyMode ? 0.1 : 0.4;
+  if (faction.disciplineMarks >= 1 && p.aggression > investThreshold) {
     const pm = gameState.factions[gameState.playerFactionId].members.filter(m => !m.isUnderInvestigation && m.rank !== '副部');
     if (pm.length) {
       const t = pm[Math.floor(Math.random() * pm.length)];
-      candidates.push({ type: ACTION_TYPES.INVESTIGATE, params: { targetFactionId: gameState.playerFactionId, memberId: t.id }, score: p.aggression * (sit.threatMap[gameState.playerFactionId] || 0.5) * 12 });
+      const investScore = p.aggression * (sit.threatMap[gameState.playerFactionId] || 0.5) * (emergencyMode ? 20 : 12);
+      candidates.push({ type: ACTION_TYPES.INVESTIGATE, params: { targetFactionId: gameState.playerFactionId, memberId: t.id }, score: investScore });
     }
   }
 
-  // 审讯
-  if ((faction.resources.publicSecurity || 0) >= 2 && p.aggression > 0.6) {
-    candidates.push({ type: 'interrogate', params: { targetFactionId: gameState.playerFactionId }, score: p.aggression * (sit.threatMap[gameState.playerFactionId] || 0.5) * 10 });
+  // 审讯（紧急模式更激进）
+  const interrogateThreshold = emergencyMode ? 0.2 : 0.6;
+  if ((faction.resources.publicSecurity || 0) >= 2 && p.aggression > interrogateThreshold) {
+    const interScore = p.aggression * (sit.threatMap[gameState.playerFactionId] || 0.5) * (emergencyMode ? 18 : 10);
+    candidates.push({ type: 'interrogate', params: { targetFactionId: gameState.playerFactionId }, score: interScore });
   }
 
   // 提升忠诚度
