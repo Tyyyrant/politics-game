@@ -213,6 +213,11 @@ function renderBillPhase(el) {
 
       setTimeout(async () => {
         const t = await import('../../logic/turn.js');
+        // 每6轮触发一个全局随机事件
+        if (gameState.turn % 6 === 0) {
+          const evMod = await import('../../logic/events.js');
+          evMod.triggerGlobalEvent();
+        }
         t.enterCleanup();
         if (gameState.phase === 'gameOver') { renderAllPanels(); return; }
         t.startNewRound();

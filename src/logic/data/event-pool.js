@@ -11,11 +11,9 @@ export const EVENT_POOL = [
   { id: 'event_opinion_reversal', name: '舆情反转', type: 'mixed', description: '网络上一则旧闻突然发酵，宣传资源临时获得特殊转化能力。', effects: { propagandaToGeneric: true, negativePropagandaDouble: true } },
   { id: 'event_emergency_stability', name: '紧急维稳', type: 'mixed', description: '突发事件需要紧急处置，公安资源可临时等价于任意政府资源，但下轮公安资源无法获取。', effects: { publicSecurityAsGeneric: true, blockNextPublicSecurity: true } },
   { id: 'event_transition_inspection', name: '换届考察', type: 'negative', description: '省委启动换届考察，必须完成积累人脉任务，否则影响力受损。', effects: { mustCompleteConnections: true, organizationResourceBonus: 1 } },
-  { id: 'event_integrity_week', name: '廉政教育周', type: 'mixed', description: '全省廉政教育周启动，纪委获得额外标记，查处成功率大幅提升。', effects: { disciplineMarksBonus: 2, disciplineSuccessRange: [3, 6], payPartyOrInfluence: true } }
-];
-  { id: 'event_election_shakeup', name: '换届风波', type: 'mixed', description: '省人大传出换届风声，部分代表态度松动，随机3-5个已锁定席位被释放回空闲状态。', effects: { releaseRandomLocked: true } },
-  { id: 'event_defection', name: '代表倒戈', type: 'mixed', description: '有代表对现任派系不满，一个随机锁定席位转投席位最少的派系。', effects: { seatDefection: true } },
-  { id: 'event_business_sponsor', name: '企业家赞助', type: 'positive', description: '本地企业家联合会主动提供赞助，获得2笔可用资金。', effects: { bonusFunds: 2 } },
-  { id: 'event_joint_letter', name: '代表联名信', type: 'mixed', description: '人大代表联名上书要求改善民生，所有空闲席位任务成本+1，已攻略席位成本-1。', effects: { taskCostShift: true } },
-  { id: 'event_scandal', name: '丑闻曝光', type: 'negative', description: '一则腐败丑闻在媒体上曝光，席位最多的派系影响力-5、随机失去1个锁定席位。', effects: { scandalHit: true } }
+  { id: 'event_integrity_week', name: '廉政教育周', type: 'mixed', description: '全省廉政教育周启动，纪委获得额外标记，查处成功率大幅提升。', effects: { disciplineMarksBonus: 2, disciplineSuccessRange: [3, 6], payPartyOrInfluence: true } },
+  // 每6轮触发一次的全局事件（法案结算后）
+  { id: 'event_election_shakeup', name: '换届风波', type: 'mixed', description: '省人大换届风声起，随机3-5个已锁定席位被释放。', effects: { releaseRandomLocked: true } },
+  { id: 'event_defection', name: '代表倒戈', type: 'mixed', description: '有代表改换门庭，一个锁定席位转投席位最少的派系。', effects: { seatDefection: true } },
+  { id: 'event_scandal', name: '丑闻曝光', type: 'negative', description: '腐败丑闻曝光，席位最多的派系影响力-5并失去1个锁定席位。', effects: { scandalHit: true } }
 ];
