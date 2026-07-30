@@ -1,6 +1,6 @@
 // src/render/screens/title-screen.js
 import { createNewGame } from '../../logic/state.js';
-import { FACTION_DEFS, createInitialFactionState, getFactionResources, getFactionInfluence } from '../../logic/data/factions.js';
+import { FACTION_DEFS, createInitialFactionState, getFactionResources, getFactionInfluence, FACTION_PORTRAITS } from '../../logic/data/factions.js';
 import { showGameScreen } from './game-screen.js';
 import { listSaves, loadGame, deleteSave } from '../../logic/save.js';
 import { DEPARTMENTS } from '../../logic/data/departments.js';
@@ -54,7 +54,8 @@ function showFactionSelect() {
     card.innerHTML = `
       <div class="tw-card-bg"></div>
       <div class="tw-portrait">
-        <div class="tw-portrait-placeholder">${def.leader.name[0]}</div>
+        <img src="${FACTION_PORTRAITS[fid]}" class="tw-portrait-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" alt="${def.leader.name}">
+        <div class="tw-portrait-placeholder" style="display:none">${def.leader.name[0]}</div>
         <div class="tw-portrait-ring"></div>
       </div>
       <div class="tw-card-content">
@@ -162,7 +163,7 @@ function showFactionPreview(fid) {
     <div class="title-screen">
       <div class="preview-panel">
         <h2>${def.leader.title}</h2>
-        <div class="preview-leader">首领：<b>${def.leader.name}</b> · ${def.leader.rank}级</div>
+        <div class="preview-leader"><img src="${FACTION_PORTRAITS[fid]}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;border:2px solid var(--accent-gold)" onerror="this.style.display='none'" alt="">首领：<b>${def.leader.name}</b> · ${def.leader.rank}级</div>
         <div class="preview-desc">${getDesc(fid)}</div>
 
         <div class="preview-section">

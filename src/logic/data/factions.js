@@ -106,6 +106,14 @@ export function getFactionResources(factionState) {
   return resources;
 }
 
+// 派系首领头像
+export const FACTION_PORTRAITS = {
+  propaganda: 'portraits/liu.png',
+  discipline: 'portraits/chen.png',
+  organization: 'portraits/mi.png',
+  publicSecurity: 'portraits/wan.png'
+};
+
 export function getFactionInfluence(factionState) {
   let inf = 0;
   for (const member of factionState.members) {
