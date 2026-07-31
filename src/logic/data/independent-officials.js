@@ -58,7 +58,7 @@ export const INDEPENDENT_OFFICIALS = [
   { name: '范学军', dept: 'partyOffice', position: '一处副处长', rank: '副处' },
 
   // === 组织部 ===
-  { name: '彭志远', dept: 'organization', position: '干部处处长', rank: '正处' },
+  { name: '白文杰', dept: 'organization', position: '干部处处长', rank: '正处' },
   { name: '鲁建华', dept: 'organization', position: '人才处处长', rank: '正处' },
   { name: '马红梅', dept: 'organization', position: '一处副处长', rank: '副处' },
 

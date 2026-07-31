@@ -106,6 +106,7 @@ export function showConfirm(message) {
 import { gameState } from '../logic/state.js';
 import { DEPARTMENTS } from '../logic/data/departments.js';
 import { executeAction } from '../logic/actions.js';
+import { getMemberPortrait } from '../logic/data/factions.js';
 import { SEAT_TASK_NAMES_CN, DEPT_NAMES, FACTION_NAMES_CN, TRAITS, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, APPOINTMENT_COST } from '../logic/data/constants.js';
 
 // Slider input for choosing an amount
@@ -293,7 +294,7 @@ export function showOpponentDetail(factionId) {
     for (const m of faction.members) {
       const scouted = isScouted(m);
       html += `<div class="opponent-member-row">
-        <span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>
+        <img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>
         <div class="om-info">
           <div class="om-name">${m.name} · ${m.rank}${loyaltyText(m)}</div>
           <div class="om-dept">${DEPT_NAMES[m.dept] || m.dept} · ${m.position}</div>`;
@@ -467,8 +468,13 @@ export function showAppointmentUI(factionId) {
         let ctrlLabel;
         if (isControlled) {
           const deptMembers = faction.members.filter(m => m.dept === deptId);
-          const memberNames = deptMembers.map(m => `<span class="dept-member-chip"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name}·${m.position}</span>`).join('');
-          ctrlLabel = `🔵 ${memberNames}`;
+          const chips = deptMembers.map(m => `<span class="dept-member-chip"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name}·${m.position}</span>`);
+          const pairs = [];
+          for (let i = 0; i < chips.length; i += 2) {
+            pairs.push(chips.slice(i, i + 2).join(''));
+          }
+          const memberNames = pairs.join('<br>');
+          ctrlLabel = `${memberNames}`;
         } else {
           ctrlLabel = `⚪ 未渗透 · 仅可外部招募`;
         }
@@ -540,7 +546,7 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
         hasAny = true;
         for (const m of internalCandidates) {
           html += `<div class="candidate-row">
-            <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${m.dept}">${m.name[0]}</span>${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
+            <span class="candidate-info"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
             <span class="candidate-path">${sourceRank}→${targetRank}</span>
             <button class="btn-small btn-promote" data-mid="${m.id}">提拔</button></div>`;
         }
@@ -551,18 +557,29 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
     }
 
     const pool = gameState.independentOfficials || [];
-    const externalCandidates = pool.filter(o => o.dept === deptId && o.rank === sourceRank);
+    const externalCandidates = pool.filter(o => o.dept === deptId && (o.rank === sourceRank || o.rank === targetRank));
+    const externalPromote = externalCandidates.filter(o => o.rank === sourceRank);
+    const externalDirect = externalCandidates.filter(o => o.rank === targetRank);
     html += '<div class="appoint-section"><h5>🟢 外部招募 — 无派系' + sourceRank + '级干部（加入后获"曾受你的提拔"特性）</h5>';
-    if (externalCandidates.length) {
+    if (externalPromote.length) {
       hasAny = true;
-      for (const o of externalCandidates) {
+      for (const o of externalPromote) {
         html += `<div class="candidate-row">
-          <span class="candidate-info"><span class="avatar-sq av-sm av-dept-${o.dept}">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
+          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
           <span class="candidate-path">招募→${targetRank}</span>
           <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button></div>`;
       }
     } else {
       html += '<div class="candidate-empty">暂无可招募的' + sourceRank + '级无派系干部</div>';
+    }
+    if (targetRank !== sourceRank && externalDirect.length) {
+      html += '<div class="appoint-section"><h5>🟡 同级调入 — 无派系' + targetRank + '级干部（直接任命，不获提拔特性）</h5>';
+      for (const o of externalDirect) {
+        html += `<div class="candidate-row">
+          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
+          <span class="candidate-path">调入→${targetRank}</span>
+          <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">调入</button></div>`;
+      }
     }
     html += '</div>';
 

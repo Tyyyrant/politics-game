@@ -178,8 +178,9 @@ const hasRes = s.task.resourceType === 'any'
   h += '<div class="panel-section"><h3>对手派系</h3>';
   for (const [fid, f] of opponents) {
     const active = fid === gameState.turnOrder[gameState.currentPlayerIndex];
+    const oppPortrait = FACTION_PORTRAITS[fid] || '';
     h += `<div class="opponent-row ${active ? 'active' : ''}" data-faction="${fid}">
-      <div class="opponent-name">${FACTION_NAMES[fid]} · ${f.leaderName}</div>
+      <div class="opponent-name"><img src="${oppPortrait}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${f.leaderDept || 'congress'}" style="display:none">${f.leaderName[0]}</span> ${FACTION_NAMES[fid]} · ${f.leaderName}</div>
       <div class="opponent-seats">🔒${f.lockedSeats}席 📊${f.influence}影 🔴${f.disciplineMarks}标</div>
     </div>`;
   }

@@ -64,9 +64,12 @@ function completeTask(factionId, seatId) {
   }
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, cost) : spendResources(factionId, seat.task.resourceType, cost);
   if (!spent) return { success: false, message: '资源不足' };
+  const wasReLock = seat._pendingRelease === true;
   seat.lockedById = factionId; seat.visitorId = null;
   seat.lockedOnTurn = gameState.turn; seat._pendingRelease = false;
-  gameState.factions[factionId].lockedSeats++;
+  if (!wasReLock) {
+    gameState.factions[factionId].lockedSeats++;
+  }
   emit('seat:locked', { factionId, seatId });
   const isPlayer2 = factionId === gameState.playerFactionId;
   gameState.roundLog.push({ factionId, action: 'completeTask', target: isPlayer2 ? `${seat.name}` : '某席位', result: '锁定成功' });
@@ -95,6 +98,7 @@ function stealSeat(factionId, seatId) {
   // 直接锁定席位（抢夺就是花双倍资源直接完成）
   seat.lockedById = factionId;
   seat.visitorId = null;
+  seat._pendingRelease = false;
   gameState.factions[factionId].lockedSeats++;
   const isPlayer3 = factionId === gameState.playerFactionId;
   gameState.roundLog.push({ factionId, action: 'stealSeat', target: isPlayer3 ? `${seat.name}` : '某席位', result: '抢夺锁定' });

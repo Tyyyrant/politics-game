@@ -120,6 +120,10 @@ export function enterCleanup() {
           seat._pendingRelease = false;
           seat.revealed = false;
           seat.roundsRemaining = 3;
+          // 席位因任务未完成而真正丢失
+          if (previousOwner && gameState.factions[previousOwner]) {
+            gameState.factions[previousOwner].lockedSeats = Math.max(0, gameState.factions[previousOwner].lockedSeats - 1);
+          }
           if (previousOwner === gameState.playerFactionId) {
             gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
           }
