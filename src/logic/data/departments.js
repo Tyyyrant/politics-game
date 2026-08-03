@@ -64,21 +64,21 @@ export const DEPARTMENTS = {
     { title: '三处副处长', rank: '副处', count: 2 }, { title: '四处副处长', rank: '副处', count: 2 }
   ]},
   partyOffice: { id: 'partyOffice', name: '党委办公厅', type: 'party', positions: [
-    { title: '办公厅主任', rank: '副部', count: 1 }, { title: '办公厅副主任', rank: '正厅', count: 2 },
+    { title: '办公厅主任', rank: '副部', count: 1 }, { title: '办公厅副主任', rank: '副厅', count: 2 },
     { title: '综合处处长', rank: '正处', count: 1 }, { title: '会议处处长', rank: '正处', count: 1 },
     { title: '信息处处长', rank: '正处', count: 1 }, { title: '保密处处长', rank: '正处', count: 1 },
     { title: '一处副处长', rank: '副处', count: 2 }, { title: '二处副处长', rank: '副处', count: 2 },
     { title: '三处副处长', rank: '副处', count: 2 }, { title: '四处副处长', rank: '副处', count: 2 }
   ]},
   organization: { id: 'organization', name: '组织部', type: 'party', positions: [
-    { title: '组织部长', rank: '副部', count: 1 }, { title: '组织部副部长', rank: '正厅', count: 2 },
+    { title: '组织部长', rank: '副部', count: 1 }, { title: '组织部副部长', rank: '副厅', count: 2 },
     { title: '干部处处长', rank: '正处', count: 1 }, { title: '考核处处长', rank: '正处', count: 1 },
     { title: '人才处处长', rank: '正处', count: 1 }, { title: '档案处处长', rank: '正处', count: 1 },
     { title: '一处副处长', rank: '副处', count: 2 }, { title: '二处副处长', rank: '副处', count: 2 },
     { title: '三处副处长', rank: '副处', count: 2 }, { title: '四处副处长', rank: '副处', count: 2 }
   ]},
   propaganda: { id: 'propaganda', name: '宣传部', type: 'party', positions: [
-    { title: '宣传部长', rank: '副部', count: 1 }, { title: '宣传部副部长', rank: '正厅', count: 2 },
+    { title: '宣传部长', rank: '副部', count: 1 }, { title: '宣传部副部长', rank: '副厅', count: 2 },
     { title: '宣传处处长', rank: '正处', count: 1 }, { title: '舆论处处长', rank: '正处', count: 1 },
     { title: '文化处处长', rank: '正处', count: 1 }, { title: '出版处处长', rank: '正处', count: 1 },
     { title: '一处副处长', rank: '副处', count: 2 }, { title: '二处副处长', rank: '副处', count: 2 },

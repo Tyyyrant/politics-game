@@ -1,7 +1,8 @@
 // src/render/screens/title-screen.js
 import { createNewGame } from '../../logic/state.js';
-import { FACTION_DEFS, createInitialFactionState, getFactionResources, getFactionInfluence, FACTION_PORTRAITS, getMemberPortrait } from '../../logic/data/factions.js';
+import { FACTION_DEFS, createInitialFactionState, getFactionResources, getFactionInfluence, FACTION_PORTRAITS, getMemberPortrait, rememberPortraitOrigin, getOriginalName } from '../../logic/data/factions.js';
 import { showGameScreen } from './game-screen.js';
+import { showPrompt } from '../modal.js';
 import { listSaves, loadGame, deleteSave } from '../../logic/save.js';
 import { DEPARTMENTS } from '../../logic/data/departments.js';
 import { DEPT_NAMES, TRAITS } from '../../logic/data/constants.js';
@@ -163,14 +164,14 @@ function showFactionPreview(fid) {
     <div class="title-screen">
       <div class="preview-panel">
         <h2>${def.leader.title}</h2>
-        <div class="preview-leader"><img src="${FACTION_PORTRAITS[fid]}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;border:2px solid var(--accent-gold)" onerror="this.style.display='none'" alt="">首领：<b>${def.leader.name}</b> · ${def.leader.rank}级</div>
+        <div class="preview-leader"><img src="${FACTION_PORTRAITS[fid]}" style="width:48px;height:48px;border-radius:50%;object-fit:cover;vertical-align:middle;margin-right:8px;border:2px solid var(--accent-gold)" onerror="this.style.display='none'" alt="">首领：<b class="editable-name" data-edit="leader">${def.leader.name}</b> · ${def.leader.rank}级</div>
         <div class="preview-desc">${getDesc(fid)}</div>
 
         <div class="preview-section">
           <h3>👥 派系成员（${state.members.length}人）</h3>
           <table class="preview-table"><thead><tr><th>姓名</th><th>部门</th><th>职务</th><th>级别</th><th>忠诚</th><th>特质</th></tr></thead>
-          <tbody>${state.members.map(m => `
-            <tr><td><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name}</td><td>${DEPT_NAMES[m.dept] || m.dept}</td><td>${m.position}</td><td>${m.rank}</td><td>${m.loyalty}/9</td><td>${m.traits.map(t => TRAITS[t] || t).join('、') || '—'}</td></tr>
+          <tbody>${state.members.map((m, idx) => `
+            <tr><td><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span><span class="editable-name" data-edit="member" data-idx="${idx}">${m.name}</span></td><td>${DEPT_NAMES[m.dept] || m.dept}</td><td>${m.position}</td><td>${m.rank}</td><td>${m.loyalty}/9</td><td>${m.traits.map(t => TRAITS[t] || t).join('、') || '—'}</td></tr>
           `).join('')}</tbody></table>
         </div>
 
@@ -198,5 +199,27 @@ function showFactionPreview(fid) {
   });
   document.getElementById('btn-back-select').addEventListener('click', () => {
     showFactionSelect();
+  });
+
+  // 点击名字改名字
+  root.querySelectorAll('.editable-name').forEach(el => {
+    el.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const edit = el.dataset.edit;
+      const oldName = el.textContent;
+      const initialName = getOriginalName(oldName);
+      const newName = await showPrompt(`请输入新名字（原：${initialName}）`, oldName);
+      if (!newName || newName === oldName) return;
+      if (edit === 'leader') {
+        def.leader.name = newName;
+      } else if (edit === 'member') {
+        const idx = parseInt(el.dataset.idx);
+        if (idx >= 0 && def.members[idx]) {
+          rememberPortraitOrigin(newName, oldName);
+          def.members[idx].name = newName;
+        }
+      }
+      showFactionPreview(fid);
+    });
   });
 }

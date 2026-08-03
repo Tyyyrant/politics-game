@@ -199,6 +199,8 @@ body {
   padding-bottom: 8px; border-bottom: 2px solid var(--accent-darkred);
 }
 .preview-leader { color: var(--text-primary); font-size: 1.1em; margin-bottom: 4px; }
+.editable-name { cursor: pointer; border-bottom: 1px dashed var(--accent-gold); transition: all 0.2s; }
+.editable-name:hover { color: var(--accent-gold); background: rgba(200,164,92,0.08); border-radius: 2px; }
 .preview-desc { color: var(--text-secondary); font-size: 0.9em; margin-bottom: 18px; }
 .preview-section { margin-bottom: 20px; }
 .preview-section h3 {

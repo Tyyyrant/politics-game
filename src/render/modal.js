@@ -415,18 +415,28 @@ export function showOpponentDetail(factionId) {
 let _appointScrollTop = 0;
 export function resetAppointScroll() { _appointScrollTop = 0; }
 
-function countFactionInPosition(faction, deptId, positionTitle) {
-  return faction.members.filter(m => m.dept === deptId && m.position === positionTitle).length;
-}
-
 function getVacantPositions(faction) {
   const controlledDepts = new Set(faction.members.map(m => m.dept));
+  // 统计所有派系成员占据的职位（跨派系）
+  const allFilled = {};
+  for (const [fid, f] of Object.entries(gameState.factions)) {
+    for (const m of f.members) {
+      const key = m.dept + '|' + m.position;
+      allFilled[key] = (allFilled[key] || 0) + 1;
+    }
+  }
+  // 独立官员也占据职位
+  for (const o of (gameState.independentOfficials || [])) {
+    const key = o.dept + '|' + o.position;
+    allFilled[key] = (allFilled[key] || 0) + 1;
+  }
   const result = [];
   for (const [deptId, dept] of Object.entries(DEPARTMENTS)) {
     const isControlled = controlledDepts.has(deptId);
     for (const pos of dept.positions) {
       if (pos.rank === '副部' || pos.rank === '正部') continue;
-      const filled = countFactionInPosition(faction, deptId, pos.title);
+      const key = deptId + '|' + pos.title;
+      const filled = allFilled[key] || 0;
       const vacant = Math.max(0, pos.count - filled);
       if (vacant > 0) {
         result.push({ deptId, deptName: dept.name, title: pos.title, rank: pos.rank, total: pos.count, filled, vacant, isControlled });

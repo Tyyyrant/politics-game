@@ -31,7 +31,7 @@ export const FACTION_DEFS = {
   organization: {
     id: 'organization', leader: { name: '米景文', title: '省委常委、组织部部长', dept: 'organization', rank: '副部', isPlayerControllable: true },
     members: [
-      { name: '欧阳正', dept: 'organization', position: '组织部副部长', rank: '正厅', loyalty: 9, traits: [T.trustedAide, T.sharedInterest, T.mentored] },
+      { name: '欧阳正', dept: 'organization', position: '组织部副部长', rank: '副厅', loyalty: 9, traits: [T.trustedAide, T.sharedInterest, T.mentored] },
       { name: '苏宁', dept: 'hrss', position: '人社厅副厅长', rank: '副厅', loyalty: 7, traits: [T.mentored, T.politicalAmbition] },
       { name: '苏敏', dept: 'education', position: '教育厅副厅长', rank: '副厅', loyalty: 7, traits: [T.mentored, T.alumni] },
       { name: '郭强', dept: 'finance', position: '二处处长', rank: '正处', loyalty: 7, traits: [T.mentored, T.childSchool] },
@@ -114,11 +114,20 @@ export const FACTION_PORTRAITS = {
   publicSecurity: 'portraits/wan.png'
 };
 
-// 成员头像映射（在portraits/mapping.json中填入文件名即可生效）
+// 成员头像映射（改名后保持原头像）
+const _portraitOriginals = {};
+export function rememberPortraitOrigin(newName, originalName) {
+  _portraitOriginals[newName] = originalName;
+}
+export function getOriginalName(currentName) {
+  let name = currentName;
+  while (_portraitOriginals[name]) name = _portraitOriginals[name];
+  return name;
+}
 export function getMemberPortrait(memberName) {
   try {
-    // 尝试按名字匹配 portraits/ 下文件
-    return `portraits/${memberName}.png`;
+    const lookup = getOriginalName(memberName);
+    return `portraits/${lookup}.png`;
   } catch (_) { return null; }
 }
 
