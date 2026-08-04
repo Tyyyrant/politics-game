@@ -17,7 +17,8 @@
       "electron/**/*",
       "src/**/*",
       "index.html",
-      "portraits/**/*"
+      "portraits/**/*",
+      "assets/**/*"
     ],
     "mac": { "target": "dmg", "icon": "icon.png" },
     "win": { "target": "portable", "icon": "icon.png" }

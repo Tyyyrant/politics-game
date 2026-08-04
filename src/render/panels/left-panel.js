@@ -39,14 +39,13 @@ export function renderLeftPanel() {
   }
   h += '</div>';
 
-  // 生效法案效果 + 可点击的置换入口
-  if (gameState.activeBillEffects.length) {
+  // 生效法案效果（只显示通过的）
+  const passedEffects = gameState.activeBillEffects.filter(be => be && be.name && be.name.includes('（通过）'));
+  if (passedEffects.length) {
     h += '<div class="panel-section bill-effects-box"><h4>📜 生效法案</h4>';
-    for (const be of gameState.activeBillEffects) {
+    for (const be of passedEffects) {
       const eff = be.effects;
-      if (!be || !be.name || !eff) continue;
-      const isPassed = be.name.includes('（通过）');
-      const icon = isPassed ? '✅' : '❌';
+      if (!be || !eff) continue;
       // Build description
       const descParts = [];
       if (eff.globalResourceBonus) descParts.push(`全体资源+${eff.globalResourceBonus}`);
@@ -64,7 +63,7 @@ export function renderLeftPanel() {
       if (eff.govOfficeToGeneric) descParts.push('办公厅可换通用');
       if (eff.publicSecurityAsGeneric) descParts.push('公安可当政府资源');
 
-      h += `<div class="effect-item">${icon} ${be.name}：${descParts.join('，')}（剩${be.duration}轮）`;
+      h += `<div class="effect-item">✅ ${be.name}：${descParts.join('，')}（剩${be.duration}轮）`;
 
       // Inline conversion buttons for actionable effects
       if (eff.propagandaToInfluence) {

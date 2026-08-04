@@ -85,44 +85,56 @@ export function renderCenterPanel() {
   if (isPlayer) {
     const maxVisits = getMaxVisits(cf);
     const visitsLeft = maxVisits - (gameState.factions[cf].visitsThisTurn || 0);
-    h += '<div class="action-panel"><h3>选择行动（本轮剩余拜访次数：' + visitsLeft + '/' + maxVisits + '）</h3><div class="action-grid">';
-    h += btn('拜访人大席位 (1影响)', 'visitSeat', '消耗1点影响力，拜访一位人大代表席位，查看其任务需求。下回合可消耗对应资源完成任务，锁定该席位。每轮最多2次。');
-    h += btn('完成席位任务 (对应资源)', 'completeTask', '消耗席位所需的部门资源或通用资源，完成该人大代表的任务，将该席位锁定为本派系票仓。本回合刚拜访的席位需下回合才能完成。');
-    h += btn('打探对手席位 (1影响)', 'scoutSeat', '消耗1点影响力，查看对手正在攻略的席位详情（任务类型、所需资源、剩余时间），为抢夺做准备。');
-    h += btn('抢夺对手席位 (2影响+双倍资源)', 'stealSeat', '必须先打探该席位。消耗2点影响力+双倍任务资源，直接从对手手中锁定该席位为己有。第一轮不可使用。');
-    h += btn('查处对手干部 (纪委标记)', 'investigate', '消耗纪委标记（副处1·正处2·副厅3·正厅4），掷骰子判定：1-2无证据、3-4嫌疑（限制1轮）、5-6证据确凿（资源产出暂停）。');
-    h += btn('公安审讯 (2公安资源)', 'interrogate', '消耗2公安资源，对目标派系进行审讯。目标下回合所有成员无法产出资源，影响力和资源均被封锁一轮。');
-    h += btn('突击检查 (3公安资源)', 'raid', '消耗3公安资源，对目标派系进行突击检查。目标当前正在进行的席位任务直接失败，席位恢复空闲。');
-    h += btn('正面宣传 (2宣传资源)', 'positivePropaganda', '消耗2宣传资源，选择一种任务类型进行舆论引导。本轮全体玩家完成该类型任务时资源消耗-1。');
-    h += btn('负面曝光 (2宣传资源)', 'negativePropaganda', '消耗2宣传资源，对目标派系进行负面舆论曝光。目标派系影响力-2。');
-    h += btn('项目招标 (2住建资源)', 'projectBid', '消耗2住建资源，发起项目招标。直接完成一个商人项目类型的席位任务，并免费获得一次额外拜访机会。');
-    h += btn('五年计划 (5发改资源)', 'fiveYearPlan', '消耗5发改委资源，发起五年计划提案。触发一轮特殊的经济投票，冷却3轮。');
-    h += btn('资源变现 (5资源)', 'sasacCash', '消耗5单位资源（国资委/住建厅/发改委/财政厅/通用）变现为1笔可用资金。');
-    h += btn('干部任用 (影响+组织部资源)', 'appoint', '消耗影响力+组织部（或本部门）资源，提拔本派系内部成员到更高职位，或从无派系干部池中招募新人加入本派系。招募者获得「曾受你的提拔」特性。');
-    h += btn('提升忠诚度 (10影响/1资金)', 'boostLoyalty', '消耗10点影响力或1笔资金，提升选定的本派系成员忠诚度1点。忠诚度影响成员叛变概率和工作效率。');
-    h += btn('商人上门 (2影响)', 'merchant', '消耗2点影响力，邀请商人上门。随机获得一笔可用资金，但有概率被纪委盯上，留下受贿标记。');
-    // 资源置换按钮
     const pf = gameState.factions[cf];
+
+    h += `<div class="action-card-grid">`;
+
+    // 卡片1: 席位攻略
+    h += `<div class="action-card"><div class="action-card-hd">🎯 席位攻略 <span>剩余拜访 ${visitsLeft}/${maxVisits}</span></div><div class="action-card-btns">`;
+    h += btn('拜访席位', 'visitSeat', '消耗1影响，拜访人大代表，查看任务需求');
+    h += btn('完成任务', 'completeTask', '消耗对应资源，锁定席位。刚拜访的席位下回合才能完成');
+    h += btn('打探情报', 'scoutSeat', '消耗1影响，查看对手正在攻略的席位详情');
+    h += btn('抢夺席位', 'stealSeat', '消耗2影响+双倍资源，直接抢走对手席位。需先打探。第一轮不可用');
+    h += `</div></div>`;
+
+    // 卡片2: 派系技能
+    h += `<div class="action-card"><div class="action-card-hd">🏛️ 派系技能</div><div class="action-card-btns">`;
+    h += btn('正面宣传', 'positivePropaganda', '消耗2宣传，选一种任务类型，本轮全体该类型消耗-1');
+    h += btn('负面曝光', 'negativePropaganda', '消耗2宣传，目标派系影响力-2');
+    h += btn('项目招标', 'projectBid', '消耗2住建，直接完成一个商人项目席位+免费拜访1次');
+    h += btn('五年计划', 'fiveYearPlan', '消耗5发改，发起特殊经济投票。冷却3轮');
+    h += btn('公安审讯', 'interrogate', '消耗2公安，目标下回合资源产出全部封锁');
+    h += btn('突击检查', 'raid', '消耗3公安，目标当前攻略的席位直接失败');
+    h += `</div></div>`;
+
+    // 卡片3: 干部管理
+    h += `<div class="action-card"><div class="action-card-hd">👥 干部管理</div><div class="action-card-btns">`;
+    h += btn('查处干部', 'investigate', '消耗纪委标记，掷骰判定。证据确凿则暂停其资源产出');
+    h += btn('干部任用', 'appoint', '消耗影响+组织部资源，提拔内部或招募外部无派系干部');
+    h += btn('提升忠诚', 'boostLoyalty', '消耗10影响或1资金，提升选定成员忠诚度1点');
+    h += btn('商人上门', 'merchant', '消耗2影响，随机获得资金，但有概率留下受贿标记');
+    h += btn('资源变现', 'sasacCash', '消耗5资源变现为1笔资金');
+    h += `</div></div>`;
+
+    // 卡片4: 资源置换
+    h += `<div class="action-card"><div class="action-card-hd">⚡ 资源置换</div><div class="action-card-btns">`;
+    const govRes = pf.resources.govOffice || 0;
+    const partyRes = pf.resources.partyOffice || 0;
     const billEffects = gameState.activeBillEffects.flatMap(e => Object.keys(e.effects));
     const eventEffects = gameState.currentEvent ? Object.keys(gameState.currentEvent.effects) : [];
     const allEffects = [...billEffects, ...eventEffects];
+    h += `<button class="action-btn${govRes ? '' : ' btn-disabled'}" data-action="convertGovOffice">🏛️ 政府办→政府 (${govRes})</button>`;
+    h += `<button class="action-btn${partyRes ? '' : ' btn-disabled'}" data-action="convertPartyOffice">🏛️ 党委办→党委 (${partyRes})</button>`;
+    h += `<button class="action-btn${pf.influence >= 5 ? '' : ' btn-disabled'}" data-action="convertInfluence">💎 影响→通用 (5:1|现${pf.influence})</button>`;
+    if (allEffects.includes('propagandaToInfluence')) h += '<button class="action-btn" data-action="convertPropaganda">📢 宣传→影响(2:1)</button>';
+    if (allEffects.includes('propagandaToGeneric')) h += '<button class="action-btn" data-action="convertPropagandaToGeneric">📢 宣传→通用(2:1)</button>';
+    if (allEffects.includes('govPartyExchange')) h += '<button class="action-btn" data-action="convertGovParty">🔄 政府↔党委(1:1)</button>';
+    if (allEffects.includes('govOfficeToGeneric')) h += '<button class="action-btn" data-action="convertGovOfficeToGeneric">🏛️ 办公厅→通用(1:1)</button>';
+    if (allEffects.includes('publicSecurityAsGeneric')) h += '<button class="action-btn" data-action="convertEmergency">🚔 公安→政府(1:1)</button>';
+    h += `</div></div>`;
 
-    // 始终可用：两个办公厅各自兑换到本体系部门
-    const govRes = pf.resources.govOffice || 0;
-    const partyRes = pf.resources.partyOffice || 0;
-    h += `<button class="action-btn convert-btn${govRes ? '' : ' btn-disabled'}" data-action="convertGovOffice">🏛️ 政府办→政府 (${govRes})</button>`;
-    h += `<button class="action-btn convert-btn${partyRes ? '' : ' btn-disabled'}" data-action="convertPartyOffice">🏛️ 党委办→党委 (${partyRes})</button>`;
-    // 始终可用：影响力→通用
-    h += `<button class="action-btn convert-btn${pf.influence >= 5 ? '' : ' btn-disabled'}" data-action="convertInfluence">影响→通用 (5:1|现${pf.influence})</button>`;
-
-    // 动态显示：法案/事件触发的置换
-    if (allEffects.includes('propagandaToInfluence')) h += '<button class="action-btn convert-btn" data-action="convertPropaganda">宣传→影响(2:1)</button>';
-    if (allEffects.includes('propagandaToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertPropagandaToGeneric">宣传→通用(2:1)</button>';
-    if (allEffects.includes('govPartyExchange')) h += '<button class="action-btn convert-btn" data-action="convertGovParty">政府↔党委(1:1)</button>';
-    if (allEffects.includes('govOfficeToGeneric')) h += '<button class="action-btn convert-btn" data-action="convertGovOfficeToGeneric">办公厅→通用(1:1)</button>';
-    if (allEffects.includes('publicSecurityAsGeneric')) h += '<button class="action-btn convert-btn" data-action="convertEmergency">公安→政府(1:1)</button>';
-    h += '</div></div>';
-    h += '<div style="margin-top:auto;padding-top:24px"><button class="action-btn end-turn-btn" data-action="endTurn" style="width:100%;padding:14px">✅ 完成行动</button></div>';
+    h += `</div>`;
+    h += '<div style="margin-top:14px"><button class="action-btn end-turn-btn" data-action="endTurn" style="width:100%;padding:14px;font-size:1em">✅ 完成行动</button></div>';
     h += '</div>';
   } else {
     h += `<div class="ai-display">⏳ 等待其他派系行动完成...</div>`;
@@ -136,49 +148,82 @@ export function renderCenterPanel() {
 }
 
 // === BILL PHASE (fixed — waits for player) ===
-function renderBillPhase(el) {
+let _bargainsResolved = false;
+async function renderBillPhase(el) {
   // Bill not yet drawn — draw it only once per round
   if (!gameState.currentBill) {
     if (_billResolving) return;
     _playerVoted = false;
     _aiVoteTriggered = false;
     _billResolving = false;
-    import('../../logic/bills.js').then(m => { m.drawBill(); el.innerHTML = ''; renderBillPhase(el); });
+    _bargainsResolved = false;
+    import('../../logic/bills.js').then(async m => {
+      m.drawBill();
+      // 生成外交消息
+      const bargainMod = await import('../../logic/bargaining.js');
+      bargainMod.generateBargains();
+      el.innerHTML = '';
+      renderBillPhase(el);
+    });
     return;
   }
 
-  // Player already voted — show waiting state with no re-trigger
+  // 有未回复的外交消息 → 显示消息界面
+  if (!_bargainsResolved && !_playerVoted && !_billResolving) {
+    const bargain = (await import('../../logic/bargaining.js')).getNextPendingBargain();
+    if (bargain) {
+      showBargainUI(el, bargain);
+      return;
+    } else {
+      _bargainsResolved = true;
+    }
+  }
+
+  // Player already voted — show waiting state
   if (_playerVoted || _billResolving) {
     const b = gameState.currentBill;
-    el.innerHTML = `<div class="center-content"><div class="bill-phase">
-      <div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>
-      <div class="event-card-body"><b>${b.name}</b><br>已投票，等待其他派系投票和结算...</div></div>
-      <div class="bill-vote-status">支持 ${b.votes.support.length} | 反对 ${b.votes.oppose.length} | 弃权 ${b.votes.abstain.length}</div>
+    el.innerHTML = `<div class="center-content"><div class="bill-document">
+      <div class="bill-doc-header">中共汉东省委办公厅</div>
+      <div class="bill-doc-title">${b.name}</div>
+      <hr class="red-header-line">
+      <div class="bill-doc-body">
+        <p>${b.description || ''}</p>
+        <p style="text-align:center;color:#8b1a1a;margin-top:1em;">⏳ 已投票，等待其他派系表决…</p>
+      </div>
+      <div class="bill-doc-footer">
+        <span>支持 ${b.votes.support.length} 票</span>
+        <span>反对 ${b.votes.oppose.length} 票</span>
+        <span>弃权 ${b.votes.abstain.length} 票</span>
+      </div>
     </div></div>`;
     return;
   }
 
   const bill = gameState.currentBill;
-  let h = '<div class="center-content"><div class="bill-phase">';
-  h += `<div class="event-card"><div class="event-card-header">📜 法案投票 — 第${gameState.turn}轮</div>`;
-  h += `<div class="event-card-body"><b>${bill.name}</b><br>${bill.description || ''}`;
+  let h = '<div class="center-content"><div class="bill-document">';
+  h += `<div class="bill-doc-header">中共汉东省委办公厅</div>`;
+  h += `<div class="bill-doc-title">${bill.name}</div>`;
+  h += '<hr class="red-header-line">';
+  h += `<div class="bill-doc-body">`;
+  h += `<p>${bill.description || ''}</p>`;
   // Show what happens on pass/fail
   if (bill.passEffects) {
     const passEff = describeEffects(bill.passEffects);
-    if (passEff) h += `<br><span class="bill-effect-pass">✅ 通过：${passEff}</span>`;
+    if (passEff) h += `<p class="bill-pass-note">✅ 若通过：${passEff}</p>`;
   }
   if (bill.failEffects && Object.keys(bill.failEffects).length) {
     const failEff = describeEffects(bill.failEffects);
-    if (failEff) h += `<br><span class="bill-effect-fail">❌ 未通过：${failEff}</span>`;
+    if (failEff) h += `<p class="bill-fail-note">❌ 若否决：${failEff}</p>`;
   }
-  h += `<br><small>通过需票数过半</small></div></div>`;
-  h += '<div class="bill-vote-section"><h4>选择你的立场（必须投票）</h4>';
-  h += '<div class="action-grid">';
-  h += '<button class="action-btn support-btn" id="bill-support">✅ 支持</button>';
-  h += '<button class="action-btn oppose-btn" id="bill-oppose">❌ 反对</button>';
-  h += '<button class="action-btn abstain-btn" id="bill-abstain">⏸️ 弃权</button>';
-  h += '</div></div>';
-  h += `<div class="bill-vote-status">当前票数 — 支持 ${bill.votes.support.length} | 反对 ${bill.votes.oppose.length} | 弃权 ${bill.votes.abstain.length}</div>`;
+  h += `<p class="bill-vote-hint">通过需票数过半</p>`;
+  h += `</div>`;
+  // Vote buttons INSIDE the document footer area
+  h += '<div class="bill-doc-vote">';
+  h += '<button class="bill-vote-btn support" id="bill-support">支持</button>';
+  h += '<button class="bill-vote-btn oppose" id="bill-oppose">反对</button>';
+  h += '<button class="bill-vote-btn abstain" id="bill-abstain">弃权</button>';
+  h += '</div>';
+  h += `<div class="bill-doc-stats">当前 — 支持 ${bill.votes.support.length} | 反对 ${bill.votes.oppose.length} | 弃权 ${bill.votes.abstain.length}</div>`;
   h += '</div></div>';
   el.innerHTML = h;
 
@@ -197,11 +242,56 @@ function renderBillPhase(el) {
     }, 100);
   }
 
-  // Player vote → resolve immediately
+  const stampText = { support: '同意', oppose: '反对', abstain: '弃权' };
+  const stampBtnId = { support: 'bill-support', oppose: 'bill-oppose', abstain: 'bill-abstain' };
+
+  // 盖章动画 — 挂在body上避免被panel裁剪
+  const playStamp = (stance) => {
+    return new Promise(resolve => {
+      const btn = document.getElementById(stampBtnId[stance]);
+      if (!btn) { resolve(); return; }
+      const rect = btn.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const inkColor = stance === 'support' ? 'rgba(196,30,30,0.25)' : stance === 'oppose' ? 'rgba(74,85,104,0.18)' : 'rgba(154,140,108,0.18)';
+      const sealColor = stance === 'support' ? '#c41e1e' : stance === 'oppose' ? '#4a5568' : '#9a8c6c';
+
+      // 墨迹
+      const ink = document.createElement('div');
+      ink.style.cssText = `position:fixed;left:${cx - 40}px;top:${cy - 40}px;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,${inkColor} 0%,transparent 70%);pointer-events:none;z-index:9998;transform:scale(0);opacity:1;`;
+      document.body.appendChild(ink);
+      requestAnimationFrame(() => {
+        ink.style.transition = 'all 0.5s ease-out';
+        ink.style.transform = 'scale(3)';
+        ink.style.opacity = '0';
+      });
+
+      // 印章
+      const seal = document.createElement('div');
+      seal.style.cssText = `position:fixed;left:${cx - 40}px;top:${cy - 40}px;width:80px;height:80px;border:4px solid ${sealColor};border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-serif);font-size:1.6em;font-weight:bold;color:${sealColor};letter-spacing:0.1em;pointer-events:none;z-index:9999;transform:scale(3) rotate(-20deg);opacity:0;`;
+      seal.style.fontFamily = "'Noto Serif SC', 'STSong', 'SimSun', serif";
+      seal.textContent = stampText[stance] || '✓';
+      document.body.appendChild(seal);
+      requestAnimationFrame(() => {
+        seal.style.transition = 'all 0.5s cubic-bezier(0.18,0.89,0.32,1.2)';
+        seal.style.transform = 'scale(1) rotate(0deg)';
+        seal.style.opacity = '0.85';
+      });
+
+      setTimeout(() => {
+        document.body.removeChild(ink);
+        document.body.removeChild(seal);
+        resolve();
+      }, 600);
+    });
+  };
+
+  // Player vote → stamp animation then resolve
   const doPlayerVote = async (stance) => {
     if (_playerVoted || _billResolving) return;
     _playerVoted = true;
     _billResolving = true;
+    await playStamp(stance);
     (await import('../../logic/bills.js')).castVote(gameState.playerFactionId, stance);
     renderAllPanels();
 
@@ -650,6 +740,47 @@ async function endTurnFlow() {
 }
 
 // === AI TURN ===
+// === 外交消息 UI ===
+function showBargainUI(el, bargain) {
+  const stanceLabel = bargain.preferStance === 'support' ? '✅ 支持' : '❌ 反对';
+  const hints = [
+    '滴水之恩，涌泉相报。',
+    '君子一言，驷马难追。',
+    '投我以桃，报之以李。',
+    '己所不欲，勿施于人。',
+    '来而不往，非礼也。',
+    '与人方便，自己方便。',
+    '多个朋友多条路，多个冤家多堵墙。',
+    '话不投机半句多。',
+    '宁可得罪君子，不可得罪小人。',
+    '局势瞬息万变，三思而后行。',
+    '一言既出，如白染皂。',
+    '明者因时而变，知者随事而制。',
+  ];
+  const hint = hints[Math.floor(Math.random() * hints.length)];
+
+  el.innerHTML = `<div class="center-content"><div class="bargain-card">
+    <div class="bargain-from">📨 ${bargain.leaderName}</div>
+    <div class="bargain-msg">"${bargain.message}"</div>
+    <div class="bargain-stance">希望你在本轮法案投：<b>${stanceLabel}</b></div>
+    <div class="bargain-btns">
+      <button class="bargain-btn accept" id="bargain-accept">🤝 接受</button>
+      <button class="bargain-btn reject" id="bargain-reject">👎 拒绝</button>
+    </div>
+    <div class="bargain-hint">${hint}</div>
+  </div></div>`;
+
+  const handleChoice = async (accepted) => {
+    const bargainMod = await import('../../logic/bargaining.js');
+    bargainMod.resolveBargain(bargain.factionId, accepted);
+    el.innerHTML = '';
+    renderBillPhase(el);
+  };
+
+  el.querySelector('#bargain-accept')?.addEventListener('click', () => handleChoice(true));
+  el.querySelector('#bargain-reject')?.addEventListener('click', () => handleChoice(false));
+}
+
 async function executeAITurn(factionId) {
   try {
     const evMod = await import('../../logic/events.js');

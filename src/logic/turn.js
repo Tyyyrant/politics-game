@@ -78,8 +78,8 @@ export function enterCleanup() {
     { type: 'buildConnections', costMin: 2, costMax: 2, resource: 'any' }
   ];
   for (const seat of gameState.npcSeats) {
-    // 未锁定的拜访席位倒计时
-    if (seat.visitorId && !seat.lockedById) {
+    // 未锁定的拜访席位倒计时（不包含等待释放的席位）
+    if (seat.visitorId && !seat.lockedById && !seat._pendingRelease) {
       seat.roundsRemaining--;
       if (seat.roundsRemaining <= 0) {
         emit('seat:expired', { seatId: seat.id, visitorId: seat.visitorId });
@@ -111,22 +111,23 @@ export function enterCleanup() {
           gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表有了新的任务`, result: '需在2轮内完成' });
         }
       }
-      // 刷新后的任务倒计时
-      if (seat._pendingRelease && !seat.lockedById) {
-        seat.roundsRemaining--;
-        if (seat.roundsRemaining <= 0) {
-          const previousOwner = seat.visitorId;
-          seat.visitorId = null;
-          seat._pendingRelease = false;
-          seat.revealed = false;
-          seat.roundsRemaining = 3;
-          // 席位因任务未完成而真正丢失
-          if (previousOwner && gameState.factions[previousOwner]) {
-            gameState.factions[previousOwner].lockedSeats = Math.max(0, gameState.factions[previousOwner].lockedSeats - 1);
-          }
-          if (previousOwner === gameState.playerFactionId) {
-            gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
-          }
+    }
+    // 等待释放的席位倒计时（独立运行，跳过刷新当回合）
+    if (seat._pendingRelease && !seat.lockedById && seat.visitedOnTurn !== gameState.turn) {
+      seat.roundsRemaining--;
+      if (seat.roundsRemaining <= 0) {
+        const previousOwner = seat.visitorId;
+        seat.visitorId = null;
+        seat._pendingRelease = false;
+        seat.revealed = false;
+        seat.roundsRemaining = 3;
+        seat._lastOwner = null;  // 席位完全释放，允许下次重新计数
+        // 席位因任务未完成而真正丢失
+        if (previousOwner && gameState.factions[previousOwner]) {
+          gameState.factions[previousOwner].lockedSeats = Math.max(0, gameState.factions[previousOwner].lockedSeats - 1);
+        }
+        if (previousOwner === gameState.playerFactionId) {
+          gameState.roundLog.push({ factionId: 'system', action: 'seatRefresh', target: `${seat.name}代表的任务过期`, result: '席位已释放' });
         }
       }
     }

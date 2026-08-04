@@ -2,7 +2,7 @@
 import { gameState, emit } from './state.js';
 import { BILL_POOL, shuffleDeck } from './data/bill-pool.js';
 import { FACTION_IDS } from './data/constants.js';
-
+import { shouldHonorAgreement, expireAgreements } from './bargaining.js';
 export function drawBill() {
   if (gameState.currentBill) return;
   gameState.lastBillResult = null;
@@ -23,6 +23,20 @@ export function castVote(factionId, stance) {
   if (!bill) return { success: false, message: '没有待投票的法案' };
   const allVotes = [...bill.votes.support, ...bill.votes.oppose, ...bill.votes.abstain];
   if (allVotes.find(v => v.factionId === factionId)) return { success: false, message: '已投票' };
+
+  // AI 派系检查是否有外交承诺需要履行
+  let actualStance = stance;
+  let honored = null;
+  if (factionId !== gameState.playerFactionId) {
+    const agreementStance = shouldHonorAgreement(factionId, stance);
+    if (agreementStance) {
+      actualStance = agreementStance;
+      honored = true;
+    } else if (gameState._activeAgreements?.some(a => a.factionId === factionId)) {
+      honored = false; // 有承诺但没履行
+    }
+  }
+
   const faction = gameState.factions[factionId];
   let weight = 0;
   for (const m of faction.members) {
@@ -30,12 +44,16 @@ export function castVote(factionId, stance) {
     if (m.rank === '正厅') weight += 1.5;
     else if (m.rank === '副厅') weight += 1;
   }
-  bill.votes[stance].push({ factionId, weight });
-  emit('bill:voted', { factionId, stance, weight });
+  bill.votes[actualStance].push({ factionId, weight });
+  if (honored !== null) {
+    gameState.roundLog.push({ factionId: 'system', action: 'bargain', target: factionId, result: honored ? '履行承诺' : '背弃承诺' });
+  }
+  emit('bill:voted', { factionId, stance: actualStance, weight });
   return { success: true };
 }
 
 export function resolveBill() {
+  expireAgreements();  // 承诺履行完毕，清理
   const bill = gameState.currentBill;
   const supportWeight = bill.votes.support.reduce((s, v) => s + v.weight, 0);
   const opposeWeight = bill.votes.oppose.reduce((s, v) => s + v.weight, 0);

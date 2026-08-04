@@ -5,6 +5,7 @@ import { EVENT_POOL } from './data/event-pool.js';
 import { generateSeatTasks } from './data/seat-tasks.js';
 import { INDEPENDENT_OFFICIALS } from './data/independent-officials.js';
 import { FACTION_IDS, TOTAL_NPC_SEATS } from './data/constants.js';
+import { assignStrategies } from './ai/strategy-loader.js';
 
 export let gameState = null;
 
@@ -32,17 +33,10 @@ export function createNewGame(playerFactionId) {
     }
   }
 
-  // TEST: boost propaganda faction for testing
-  if (factions.propaganda) {
-    factions.propaganda.influence = 100;
-    factions.propaganda.funds = 30;
-    factions.propaganda.genericResources = 30;
-    factions.propaganda.disciplineMarks = 10;
-  }
-
   gameState = {
     turn: 0, phase: 'dice', turnOrder: [], currentPlayerIndex: 0,
     playerFactionId, factions, npcSeats,
+    aiStrategies: assignStrategies(),  // 每局随机分配AI策略
     currentBill: null, billDeck: shuffleDeck([...BILL_POOL]),
     eventDeck: shuffleDeck([...EVENT_POOL]),
     _fiveYearPlanTriggered: false, _pendingFiveYearPlan: null, _fiveYearPlanFaction: null,

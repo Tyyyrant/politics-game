@@ -63,10 +63,10 @@ export function executeSkill(factionId, skillId, params = {}) {
       if (faction.projectBidUsed) return { success: false, message: '本轮已使用' };
       if (!spendResources(factionId, 'housing', 2)) return { success: false, message: '住建资源不足' };
       faction.projectBidUsed = true;
-      // 找第一个 businessProject 类型且未锁定的席位
+      // 找第一个 businessProject 且未锁定、非等待释放的席位
       let bidSeat = null;
       for (const s of gameState.npcSeats) {
-        if (s.task.type === 'businessProject' && !s.lockedById && s.visitorId !== factionId) {
+        if (s.task.type === 'businessProject' && !s.lockedById && !s._pendingRelease && s.visitorId !== factionId) {
           bidSeat = s; break;
         }
       }
@@ -74,6 +74,8 @@ export function executeSkill(factionId, skillId, params = {}) {
       if (bidSeat) {
         bidSeat.lockedById = factionId;
         bidSeat.visitorId = null;
+        bidSeat._pendingRelease = false;
+        bidSeat._lastOwner = factionId;
         bidSeat.lockedOnTurn = gameState.turn;
         faction.lockedSeats++;
         msg += `${bidSeat.name}已被锁定，`;

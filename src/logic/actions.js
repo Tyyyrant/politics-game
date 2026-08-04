@@ -64,7 +64,9 @@ function completeTask(factionId, seatId) {
   }
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, cost) : spendResources(factionId, seat.task.resourceType, cost);
   if (!spent) return { success: false, message: '资源不足' };
-  const wasReLock = seat._pendingRelease === true;
+  // 多重防护：只有真正的新锁才+1
+  const wasReLock = seat._pendingRelease === true || seat._lastOwner === factionId;
+  if (!seat._lastOwner) seat._lastOwner = factionId;
   seat.lockedById = factionId; seat.visitorId = null;
   seat.lockedOnTurn = gameState.turn; seat._pendingRelease = false;
   if (!wasReLock) {
@@ -95,10 +97,15 @@ function stealSeat(factionId, seatId) {
   const spent = seat.task.resourceType === 'any' ? spendAnyResources(factionId, seat.task.cost * 2) : spendResources(factionId, seat.task.resourceType, seat.task.cost * 2);
   if (!spent) return { success: false, message: '双倍资源不足' };
   const victimId = seat.visitorId;
+  // 如果抢的是等待释放的席位，原主人的 lockedSeats 需要扣除
+  if (seat._pendingRelease && victimId && gameState.factions[victimId]) {
+    gameState.factions[victimId].lockedSeats = Math.max(0, gameState.factions[victimId].lockedSeats - 1);
+  }
   // 直接锁定席位（抢夺就是花双倍资源直接完成）
   seat.lockedById = factionId;
   seat.visitorId = null;
   seat._pendingRelease = false;
+  seat._lastOwner = factionId;
   gameState.factions[factionId].lockedSeats++;
   const isPlayer3 = factionId === gameState.playerFactionId;
   gameState.roundLog.push({ factionId, action: 'stealSeat', target: isPlayer3 ? `${seat.name}` : '某席位', result: '抢夺锁定' });

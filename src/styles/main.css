@@ -24,7 +24,8 @@
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-  background: var(--bg-primary);
+  background: var(--bg-primary) url('../../assets/ui/bg-dark.png') center/cover no-repeat;
+  background-blend-mode: overlay;
   color: var(--text-primary);
   font-family: var(--font-sans);
   overflow: hidden;
@@ -87,6 +88,13 @@ body {
   padding: 12px 16px; margin: 6px 0;
   background: var(--bg-card); border: 1px solid var(--border-color);
   border-radius: 6px; gap: 12px;
+  transition: all 0.25s cubic-bezier(0.25,0.8,0.25,1.1);
+  cursor: pointer;
+}
+.save-row:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-gold);
+  box-shadow: 0 4px 16px rgba(200,164,92,0.08);
 }
 .save-info { display: flex; flex-direction: column; text-align: left; }
 .save-slot { color: var(--accent-gold); font-weight: bold; }
@@ -299,10 +307,14 @@ body {
 .opponent-row {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 4px; padding: 8px 10px; margin-bottom: 6px;
-  transition: border-color 0.15s; cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.25,0.8,0.25,1.1); cursor: pointer;
 }
-.opponent-row:hover { border-color: var(--accent-gold); }
-.opponent-row.active { border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); }
+.opponent-row:hover {
+  border-color: var(--accent-gold);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(200,164,92,0.08);
+}
+.opponent-row.active { border-color: var(--accent-gold); border-left: 3px solid var(--accent-gold); background: rgba(200,164,92,0.04); }
 .opponent-name { font-weight: bold; color: var(--text-primary); }
 .opponent-seats { font-size: 0.78em; color: var(--text-secondary); margin-top: 4px; }
 
@@ -316,6 +328,12 @@ body {
   font-size: 0.78em; color: var(--text-primary); padding: 5px 8px;
   background: rgba(200,164,92,0.05); border-radius: 3px; margin: 3px 0;
   line-height: 1.8;
+  transition: all 0.2s;
+}
+.effect-item:hover {
+  background: rgba(200,164,92,0.1);
+  border-left: 2px solid var(--accent-gold);
+  padding-left: 12px;
 }
 .btn-effect-convert {
   display: inline-block; padding: 2px 8px; margin-left: 4px;
@@ -393,9 +411,14 @@ body {
 .member-row {
   background: var(--bg-panel); border: 1px solid var(--border-color);
   border-radius: 4px; padding: 7px 10px; margin-bottom: 4px; font-size: 0.78em;
-  transition: border-color 0.15s;
+  transition: all 0.2s cubic-bezier(0.25,0.8,0.25,1.1);
 }
-.member-row:hover { border-color: var(--border-light); }
+.member-row:hover {
+  border-color: var(--accent-gold);
+  border-left: 3px solid var(--accent-gold);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(200,164,92,0.06);
+}
 .member-name { font-weight: bold; color: var(--text-primary); }
 .member-rank { color: var(--accent-gold); font-size: 0.9em; }
 .member-dept { color: var(--text-secondary); font-size: 0.85em; }
@@ -410,6 +433,12 @@ body {
 .active-seat-row {
   background: rgba(200,164,92,0.06); border: 1px solid rgba(200,164,92,0.25);
   border-radius: 4px; padding: 7px 10px; margin-bottom: 4px; font-size: 0.78em;
+  transition: all 0.2s;
+}
+.active-seat-row:hover {
+  background: rgba(200,164,92,0.1);
+  border-color: var(--accent-gold);
+  transform: translateX(2px);
 }
 .active-seat-name { font-weight: bold; color: var(--text-primary); }
 .active-seat-cost { color: var(--text-secondary); font-size: 0.9em; margin-top: 2px; }
@@ -418,7 +447,40 @@ body {
    CENTER PANEL — 行动
    ================================================================ */
 .action-panel h3 { color: var(--accent-gold); margin-bottom: 14px; font-family: var(--font-serif); }
-.action-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.action-card-grid {
+  display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+}
+.action-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 8px; overflow: hidden;
+  transition: all 0.25s;
+}
+.action-card:hover { border-color: rgba(200,164,92,0.25); }
+.action-card-hd {
+  font-family: var(--font-serif); font-size: 0.85em; color: var(--accent-gold);
+  padding: 10px 14px; letter-spacing: 0.06em;
+  background: rgba(200,164,92,0.04);
+  border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.action-card-hd span { font-size: 0.85em; color: var(--text-muted); font-family: var(--font-sans); }
+.action-card-btns {
+  display: flex; flex-wrap: wrap; gap: 6px; padding: 10px;
+}
+.action-card-btns .action-btn {
+  background: var(--bg-panel); color: var(--text-primary);
+  border: 1px solid var(--border-color); padding: 7px 10px;
+  border-radius: 6px; cursor: pointer; font-size: 0.76em;
+  transition: all 0.2s; text-align: center; flex: 1 1 auto; min-width: 0;
+  white-space: nowrap;
+}
+.action-card-btns .action-btn:hover {
+  border-color: var(--accent-gold); background: rgba(200,164,92,0.08);
+  transform: translateY(-1px); box-shadow: 0 2px 8px rgba(200,164,92,0.06);
+}
+/* 卡片内按钮隐藏大 tooltip，用原生 title 代替 */
+.action-card-btns .action-btn[data-tooltip]:hover::after,
+.action-card-btns .action-btn[data-tooltip]:hover::before { display: none; }
 .action-btn {
   background: var(--bg-panel); color: var(--text-primary);
   border: 1px solid var(--border-color); padding: 11px 8px;
@@ -467,6 +529,12 @@ body {
 .event-card {
   background: var(--bg-card); border: 1px solid var(--accent-darkred);
   border-radius: 6px; padding: 18px; margin-bottom: 16px;
+  transition: all 0.3s cubic-bezier(0.25,0.8,0.25,1.1);
+}
+.event-card:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 4px 20px rgba(200,164,92,0.08), inset 0 1px 0 rgba(200,164,92,0.04);
+  transform: translateY(-1px);
 }
 .event-card-header { font-family: var(--font-serif); font-size: 1.05em; color: var(--accent-gold); margin-bottom: 10px; }
 .event-card-body { color: var(--text-primary); font-size: 0.9em; line-height: 1.6; }
@@ -474,20 +542,107 @@ body {
 /* ================================================================
    BILL PHASE
    ================================================================ */
-.bill-phase { padding: 16px; }
-.bill-vote-section h4 {
-  font-family: var(--font-serif); color: var(--text-primary);
-  margin: 14px 0 10px; font-weight: normal;
+/* === 法案红头文件 === */
+.bill-document {
+  max-width: 720px; margin: 0 auto;
+  background: linear-gradient(180deg, #fdfaf3 0%, #faf6ed 5%, #fdfaf3 100%);
+  border-top: 8px solid #8b1a1a;
+  border-radius: 2px;
+  box-shadow: 0 6px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(139,26,26,0.25);
+  color: #2a1a0a; font-family: var(--font-serif);
 }
-.bill-vote-status { margin-top: 14px; font-size: 0.88em; color: var(--text-secondary); text-align: center; }
-.support-btn { background: rgba(74,140,92,0.15) !important; border-color: rgba(74,140,92,0.4) !important; }
-.support-btn:hover { border-color: var(--accent-green) !important; background: rgba(74,140,92,0.25) !important; }
-.oppose-btn { background: rgba(196,59,59,0.15) !important; border-color: rgba(196,59,59,0.4) !important; }
-.oppose-btn:hover { border-color: var(--accent-red) !important; background: rgba(196,59,59,0.25) !important; }
-.abstain-btn { background: rgba(168,152,128,0.1) !important; }
-.abstain-btn:hover { background: rgba(168,152,128,0.18) !important; }
-.bill-effect-pass { color: var(--accent-green); font-size: 0.85em; }
-.bill-effect-fail { color: var(--accent-red); font-size: 0.85em; }
+.bill-doc-header {
+  text-align: center; font-size: 1.4em; font-weight: bold;
+  color: #8b1a1a; letter-spacing: 0.2em;
+  padding: 24px 32px 8px;
+}
+.bill-doc-title {
+  text-align: center; font-size: 1.6em; font-weight: bold;
+  color: #2a1a0a; letter-spacing: 0.08em;
+  padding: 8px 32px 12px;
+}
+.bill-doc-body {
+  padding: 20px 40px; font-size: 1.05em; line-height: 2.2;
+  color: #2a1a0a;
+}
+.bill-doc-body p { margin-bottom: 6px; }
+.bill-pass-note { color: #2d6a4f; font-size: 0.9em; margin-top: 8px; }
+.bill-fail-note { color: #8b1a1a; font-size: 0.9em; margin-top: 4px; }
+.bill-vote-hint { text-align: center; color: #8b1a1a; font-size: 0.85em; margin-top: 12px; }
+
+/* 投票按钮 — 印章风格 */
+.bill-doc-vote {
+  display: flex; gap: 28px; justify-content: center;
+  padding: 18px 32px 14px;
+}
+.bill-vote-btn {
+  width: 90px; height: 90px; border-radius: 50%;
+  border: 3px solid; cursor: pointer;
+  font-family: var(--font-serif); font-size: 1.15em; font-weight: bold;
+  letter-spacing: 0.1em; transition: all 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.bill-vote-btn.support {
+  color: #c41e1e; border-color: #c41e1e; background: rgba(196,30,30,0.03);
+}
+.bill-vote-btn.support:hover { background: rgba(196,30,30,0.12); transform: scale(1.08); box-shadow: 0 0 16px rgba(196,30,30,0.25); }
+.bill-vote-btn.oppose {
+  color: #4a5568; border-color: #4a5568; background: rgba(74,85,104,0.03);
+}
+.bill-vote-btn.oppose:hover { background: rgba(74,85,104,0.1); transform: scale(1.08); box-shadow: 0 0 16px rgba(74,85,104,0.2); }
+.bill-vote-btn.abstain {
+  color: #9a8c6c; border-color: #9a8c6c; background: rgba(154,140,108,0.03);
+}
+.bill-vote-btn.abstain:hover { background: rgba(154,140,108,0.1); transform: scale(1.08); }
+
+.bill-doc-stats {
+  text-align: center; font-size: 0.92em; color: #8b1a1a;
+  padding: 12px 32px 20px; letter-spacing: 0.06em;
+}
+.bill-doc-footer {
+  display: flex; gap: 24px; justify-content: center;
+  padding: 12px 32px 20px; font-size: 0.92em; color: #6a4a2a;
+}
+
+/* === 外交消息卡 === */
+.bargain-card {
+  max-width: 520px; margin: 40px auto;
+  background: linear-gradient(180deg, #2c221c 0%, #241c16 100%);
+  border: 2px solid var(--accent-gold); border-radius: 8px;
+  padding: 0; text-align: center; overflow: hidden;
+  box-shadow: 0 4px 24px rgba(200,164,92,0.15);
+}
+.bargain-from {
+  font-family: var(--font-serif); font-size: 0.95em; color: var(--accent-gold);
+  padding: 16px 20px 8px; letter-spacing: 0.08em;
+}
+.bargain-msg {
+  font-size: 1.15em; color: var(--text-primary); padding: 16px 24px;
+  font-style: italic; line-height: 1.6;
+}
+.bargain-stance {
+  font-size: 0.9em; color: var(--text-secondary); padding: 0 24px 16px;
+}
+.bargain-btns {
+  display: flex; gap: 16px; justify-content: center; padding: 8px 24px 20px;
+}
+.bargain-btn {
+  padding: 10px 32px; border-radius: 6px; cursor: pointer;
+  font-family: var(--font-serif); font-size: 1em; letter-spacing: 0.06em;
+  transition: all 0.2s; border: 1px solid;
+}
+.bargain-btn.accept {
+  background: rgba(74,140,92,0.1); border-color: var(--accent-green); color: var(--accent-green);
+}
+.bargain-btn.accept:hover { background: rgba(74,140,92,0.2); transform: scale(1.04); }
+.bargain-btn.reject {
+  background: rgba(196,59,59,0.1); border-color: var(--accent-red); color: var(--accent-red);
+}
+.bargain-btn.reject:hover { background: rgba(196,59,59,0.2); transform: scale(1.04); }
+.bargain-hint {
+  font-size: 0.72em; color: var(--text-muted); padding: 10px 24px 14px;
+  border-top: 1px solid var(--border-color);
+}
 
 /* ================================================================
    RIGHT PANEL — 日志 & 法案
@@ -512,10 +667,16 @@ body {
 .bill-status {
   background: rgba(200,164,92,0.04); border: 1px solid rgba(200,164,92,0.3);
   border-radius: 6px; padding: 12px;
+  transition: all 0.25s;
+}
+.bill-status:hover {
+  border-color: var(--accent-gold);
+  box-shadow: 0 2px 12px rgba(200,164,92,0.06);
 }
 .bill-name { font-weight: bold; color: var(--accent-gold); margin-bottom: 4px; }
 
-.bill-result { border-radius: 6px; padding: 12px; margin-top: 10px; }
+.bill-result { border-radius: 6px; padding: 12px; margin-top: 10px; transition: all 0.25s; }
+.bill-result:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(0,0,0,0.3); }
 .bill-passed { border: 1px solid rgba(74,140,92,0.4); background: rgba(74,140,92,0.06); }
 .bill-passed h3 { color: var(--accent-green) !important; }
 .bill-failed { border: 1px solid rgba(196,59,59,0.4); background: rgba(196,59,59,0.06); }
@@ -609,7 +770,8 @@ body {
 }
 .dept-name { font-weight: bold; color: var(--text-primary); min-width: 70px; }
 .dept-count { color: var(--text-secondary); font-size: 0.85em; flex: 1; min-width: 0; }
-.dept-member-chip { background: rgba(139,26,26,0.15); color: var(--text-primary); padding: 1px 6px; border-radius: 3px; font-size: 0.85em; white-space: nowrap; }
+.dept-member-chip { background: rgba(139,26,26,0.15); color: var(--text-primary); padding: 1px 6px; border-radius: 3px; font-size: 0.85em; white-space: nowrap; transition: all 0.15s; }
+.dept-member-chip:hover { background: rgba(200,164,92,0.2); }
 .btn-small {
   padding: 4px 10px; border: 1px solid var(--border-color); border-radius: 3px;
   cursor: pointer; font-size: 0.78em; background: var(--bg-panel); color: var(--text-primary);
@@ -637,7 +799,7 @@ body {
   display: flex; align-items: center; gap: 8px; padding: 6px 10px;
   border-bottom: 1px solid rgba(61,50,40,0.3); font-size: 0.82em;
 }
-.candidate-row:hover { background: rgba(200,164,92,0.04); }
+.candidate-row:hover { background: rgba(200,164,92,0.06); border-color: var(--accent-gold); transform: translateX(2px); }
 .candidate-info { flex: 1; }
 .candidate-path { color: var(--accent-gold); min-width: 60px; text-align: center; font-size: 0.8em; }
 .candidate-empty { font-size: 0.78em; color: var(--text-muted); padding: 6px 0; }
@@ -720,3 +882,52 @@ body {
   transition: all 0.2s;
 }
 .btn-restart:hover { background: #a01e1e; box-shadow: 0 2px 12px rgba(139,26,26,0.4); }
+
+/* === 红头文件装饰线 === */
+.red-header-line {
+  height: 3px; background: var(--accent-darkred); border: none; margin: 8px 0 16px;
+  position: relative;
+}
+.red-header-line::before {
+  content: '';
+  position: absolute; top: -1px; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent-gold), transparent);
+}
+
+/* === 盖章动画 === */
+.stamp-overlay {
+  position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none; z-index: 100;
+}
+.stamp-seal {
+  width: 80px; height: 80px; border: 4px solid; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-serif); font-size: 1.6em; font-weight: bold;
+  letter-spacing: 0.1em; opacity: 0; transform: scale(3) rotate(-20deg);
+}
+.stamp-seal.support { color: #c41e1e; border-color: #c41e1e; }
+.stamp-seal.oppose { color: #4a5568; border-color: #4a5568; }
+.stamp-seal.abstain { color: #9a8c6c; border-color: #9a8c6c; }
+.stamp-seal.animate {
+  animation: stampIn 0.6s cubic-bezier(0.18, 0.89, 0.32, 1.2) forwards;
+}
+@keyframes stampIn {
+  0%   { opacity: 0; transform: scale(3) rotate(-20deg); }
+  15%  { opacity: 0.9; }
+  40%  { opacity: 0.95; transform: scale(0.85) rotate(2deg); }
+  60%  { opacity: 1; transform: scale(1.05) rotate(-1deg); }
+  80%  { transform: scale(0.96) rotate(0.5deg); }
+  100% { opacity: 0.85; transform: scale(1) rotate(0deg); }
+}
+.stamp-ink {
+  position: absolute; width: 60px; height: 60px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(196,30,30,0.15) 0%, rgba(196,30,30,0.05) 50%, transparent 70%);
+  transform: scale(4); opacity: 0; pointer-events: none;
+}
+.stamp-ink.animate { animation: inkSpread 0.4s ease-out forwards; }
+@keyframes inkSpread {
+  0%   { opacity: 0.8; transform: scale(0); }
+  100% { opacity: 0; transform: scale(4); }
+}
+
