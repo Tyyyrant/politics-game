@@ -44,7 +44,7 @@ export function completePersonalQuest(factionId, memberId) {
 }
 
 // 提拔本派系成员：消耗影响力 + 组织部资源
-export function promoteMember(factionId, memberId) {
+export function promoteMember(factionId, memberId, targetDeptId, payMode) {
   const faction = gameState.factions[factionId];
   const member = faction.members.find(m => m.id === memberId);
   if (!member) return { success: false, message: '成员不存在' };
@@ -57,38 +57,96 @@ export function promoteMember(factionId, memberId) {
   const influenceCost = PROMOTION_INFLUENCE_COST[member.rank] || 5;
   const resourceCost = APPOINTMENT_COST[newRank] || 8;
 
-  // Find a vacant position at the new rank in this department
-  const dept = DEPARTMENTS[member.dept];
-  if (!dept) return { success: false, message: '部门不存在' };
+  // Determine target department
+  const targetDept = targetDeptId || member.dept;
+  const dept = DEPARTMENTS[targetDept];
+  if (!dept) return { success: false, message: '目标部门不存在' };
   const candidates = dept.positions.filter(p => p.rank === newRank);
   if (!candidates.length) return { success: false, message: `该部门没有${newRank}级职位` };
 
   let matchingPos = null;
   for (const pos of candidates) {
-    const holders = faction.members.filter(m => m.dept === member.dept && m.position === pos.title && m.id !== member.id);
-    if (holders.length < pos.count) { matchingPos = pos; break; }
+    const allFilled = gameState.npcSeats ? 0 : 0; // placeholder
+    const holders = faction.members.filter(m => m.dept === targetDept && m.position === pos.title && m.id !== member.id);
+    const indepHolders = (gameState.independentOfficials || []).filter(o => o.dept === targetDept && o.position === pos.title).length;
+    if (holders.length + indepHolders < pos.count) { matchingPos = pos; break; }
   }
   if (!matchingPos) return { success: false, message: `${dept.name}的所有${newRank}职位已满` };
 
-  // Spend resources
-  if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
-  if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, member.dept, resourceCost)) {
-    return { success: false, message: `组织部或本部门资源不足（需${resourceCost}）` };
+  const isCrossDept = targetDept !== member.dept;
+
+  // Spend resources (skip if pre-paid via resource picker)
+  if (payMode !== 'prepaid') {
+    if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
+    if (isCrossDept && payMode === 'dual') {
+      if (!spendResources(factionId, member.dept, resourceCost)) return { success: false, message: `${DEPT_NAMES[member.dept] || member.dept}资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+      if (!spendResources(factionId, targetDept, resourceCost)) return { success: false, message: `${dept.name}资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+    } else if (isCrossDept && payMode === 'org') {
+      if (!spendResources(factionId, 'organization', resourceCost * 2)) return { success: false, message: `组织部资源不足（需${resourceCost * 2}，通用${faction.genericResources||0}）` };
+    } else {
+      if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, member.dept, resourceCost)) {
+        return { success: false, message: `组织部或本部门资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+      }
+    }
   }
 
   // Perform promotion
   member.rank = newRank;
   member.position = matchingPos.title;
+  if (isCrossDept) member.dept = targetDept;
   member.traits = member.traits.filter(t => t !== '政治追求');
   member.loyalty = Math.min(member.maxLoyalty, member.loyalty + 2);
-  gameState.roundLog.push({ factionId, action: 'promoteMember', target: `${member.name}→${newRank}·${matchingPos.title}`, result: '提拔成功' });
-  emit('loyalty:changed', { factionId, memberId, newRank, newPosition: matchingPos.title });
-  return { success: true, message: `${member.name}已晋升为${newRank}·${matchingPos.title}！消耗${influenceCost}影响力+${resourceCost}资源` };
+  const deptLabel = DEPT_NAMES[targetDept] || targetDept;
+  gameState.roundLog.push({ factionId, action: 'promoteMember', target: `${member.name}→${newRank}·${deptLabel}·${matchingPos.title}`, result: '提拔成功' });
+  emit('loyalty:changed', { factionId, memberId, newRank, newPosition: matchingPos.title, newDept: targetDept });
+  return { success: true, message: `${member.name}已晋升为${newRank}·${matchingPos.title}！` };
+}
+
+// 同级调入：成员从其他部门调入目标部门，不升级
+export function transferMember(factionId, memberId, targetDeptId, payMode) {
+  const faction = gameState.factions[factionId];
+  const member = faction.members.find(m => m.id === memberId);
+  if (!member) return { success: false, message: '成员不存在' };
+  if (member.dept === targetDeptId) return { success: false, message: '已在目标部门' };
+
+  const targetDept = DEPARTMENTS[targetDeptId];
+  if (!targetDept) return { success: false, message: '目标部门不存在' };
+
+  const influenceCost = PROMOTION_INFLUENCE_COST[member.rank] || 5;
+  const resourceCost = APPOINTMENT_COST[member.rank] || 6;
+
+  // Find vacant position at same rank
+  const candidates = targetDept.positions.filter(p => p.rank === member.rank);
+  if (!candidates.length) return { success: false, message: `该部门没有${member.rank}级职位` };
+
+  let matchingPos = null;
+  for (const pos of candidates) {
+    const holders = faction.members.filter(m => m.dept === targetDeptId && m.position === pos.title && m.id !== member.id);
+    const indepHolders = (gameState.independentOfficials || []).filter(o => o.dept === targetDeptId && o.position === pos.title).length;
+    if (holders.length + indepHolders < pos.count) { matchingPos = pos; break; }
+  }
+  if (!matchingPos) return { success: false, message: `${targetDept.name}的所有${member.rank}职位已满` };
+
+  if (payMode !== 'prepaid') {
+    if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
+    if (payMode === 'dual') {
+      if (!spendResources(factionId, member.dept, resourceCost)) return { success: false, message: `${DEPT_NAMES[member.dept] || member.dept}资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+      if (!spendResources(factionId, targetDeptId, resourceCost)) return { success: false, message: `${targetDept.name}资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+    } else {
+      if (!spendResources(factionId, 'organization', resourceCost * 2)) return { success: false, message: `组织部资源不足（需${resourceCost * 2}，通用${faction.genericResources||0}）` };
+    }
+  }
+
+  member.dept = targetDeptId;
+  member.position = matchingPos.title;
+  gameState.roundLog.push({ factionId, action: 'transferMember', target: `${member.name}调入${targetDept.name}·${matchingPos.title}`, result: '调入成功' });
+  emit('loyalty:changed', { factionId, memberId, newDept: targetDeptId, newPosition: matchingPos.title });
+  return { success: true, message: `${member.name}已调入${targetDept.name}·${matchingPos.title}！` };
 }
 
 // 招募无派系干部：消耗影响力 + 组织部资源，该干部获得"曾受你的提拔"特性
 // targetRank: 目标职位级别  targetTitle: 具体职位名称（如"舆论处处长"，避免find取到同级别第一个）
-export function recruitOfficial(factionId, officialName, officialDept, targetRank, targetTitle) {
+export function recruitOfficial(factionId, officialName, officialDept, targetRank, targetTitle, payMode) {
   const faction = gameState.factions[factionId];
   const pool = gameState.independentOfficials;
 
@@ -109,10 +167,12 @@ export function recruitOfficial(factionId, officialName, officialDept, targetRan
   const holders = faction.members.filter(m => m.dept === officialDept && m.position === matchingPos.title);
   if (holders.length >= matchingPos.count) return { success: false, message: `${dept.name}的${matchingPos.title}职位已满` };
 
-  // Spend resources
-  if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
-  if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, officialDept, resourceCost)) {
-    return { success: false, message: `组织部或本部门资源不足（需${resourceCost}）` };
+  // Spend resources (skip if pre-paid via picker)
+  if (payMode !== 'prepaid') {
+    if (!spendInfluence(factionId, influenceCost)) return { success: false, message: `影响力不足（需${influenceCost}点）` };
+    if (!spendResources(factionId, 'organization', resourceCost) && !spendResources(factionId, officialDept, resourceCost)) {
+      return { success: false, message: `组织部或本部门资源不足（需${resourceCost}，通用${faction.genericResources||0}）` };
+    }
   }
 
   // Remove from pool and add to faction at target rank

@@ -22,18 +22,24 @@ export function produceResources(factionId) {
   emit('resources:produced', { factionId });
 }
 
-export function spendResources(factionId, dept, amount) {
+export function spendResources(factionId, dept, amount, options = {}) {
   const faction = gameState.factions[factionId];
   const deptRes = faction.resources[dept] || 0;
   const genRes = faction.genericResources || 0;
-  if (deptRes + genRes < amount) return false;
-  // Spend specific resources first, then generic
-  const fromDept = Math.min(deptRes, amount);
-  const fromGen = amount - fromDept;
-  faction.resources[dept] = deptRes - fromDept;
-  faction.genericResources = genRes - fromGen;
-  emit('resources:spent', { factionId, dept, amount, genericUsed: fromGen });
+  // 允许手动指定通用资源用量
+  const maxGen = Math.min(genRes, amount);
+  const useGen = options.genericAmount != null ? Math.min(options.genericAmount, maxGen) : Math.min(maxGen, Math.max(0, amount - deptRes));
+  const useDept = Math.min(deptRes, amount - useGen);
+  if (useDept + useGen < amount) return false;
+  faction.resources[dept] = deptRes - useDept;
+  faction.genericResources = genRes - useGen;
+  emit('resources:spent', { factionId, dept, amount, genericUsed: useGen });
   return true;
+}
+
+export function getResourceAvailable(factionId, dept) {
+  const f = gameState.factions[factionId];
+  return { specific: f.resources[dept] || 0, generic: f.genericResources || 0, total: (f.resources[dept] || 0) + (f.genericResources || 0) };
 }
 
 export function spendAnyResources(factionId, amount) {

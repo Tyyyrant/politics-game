@@ -7,7 +7,7 @@ import { produceResources } from '../../logic/resources.js';
 import { decideAIActions } from '../../logic/ai/decider.js';
 import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
-import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, resetAppointScroll } from '../modal.js';
+import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, showMultiSlider, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
 
 function describeEffects(eff) {
@@ -543,10 +543,87 @@ async function handlePlayerAction(factionId, action) {
           const result = await showAppointmentUI(factionId);
           if (!result) break;
           const m = await import('../../logic/loyalty.js');
+          const pf = gameState.factions[factionId];
+
+          // Multi-slider payment: show each resource type as a slider, must sum to cost
+          const multiPay = async (cost, deptSlots) => {
+            // deptSlots: [{dept, label, max}] — each dept's own slider
+            const generic = pf.genericResources || 0;
+            const genSlot = generic > 0 ? [{dept:'generic', label:`通用`, max:generic}] : [];
+            const slots = [...deptSlots, ...genSlot];
+            const totalAvail = slots.reduce((s, sl) => s + sl.max, 0);
+            if (totalAvail < cost) {
+              const names = slots.map(s => `${s.label}:${s.max}`).join('，');
+              await showAlert(`资源不足！需${cost}，可用：${names}`);
+              return false;
+            }
+            // Build multi-slider UI
+            const picked = await showMultiSlider(`支付 ${cost} 资源`, cost, slots);
+            if (!picked) return false;
+            for (const [key, amt] of Object.entries(picked)) {
+              if (key === 'generic') pf.genericResources -= amt;
+              else pf.resources[key] = (pf.resources[key] || 0) - amt;
+            }
+            return true;
+          };
+
           if (result.action === 'promote') {
-            await showAlert(m.promoteMember(factionId, result.memberId).message);
+            const mid = result.memberId;
+            const member = pf.members.find(m => m.id === mid);
+            const rankOrder = ['副处', '正处', '副厅', '正厅'];
+            const newRank = rankOrder[rankOrder.indexOf(member.rank) + 1];
+            const infCost = (await import('../../logic/data/constants.js')).PROMOTION_INFLUENCE_COST[member.rank] || 5;
+            const resCost = (await import('../../logic/data/constants.js')).APPOINTMENT_COST[newRank] || 8;
+            const isCross = result.payMode !== 'same';
+            if (pf.influence < infCost) { await showAlert(`影响力不足（需${infCost}）`); renderAllPanels(); continue; }
+            // Pay influence
+            pf.influence -= infCost;
+            // Pay resources with picker
+            let paid = true;
+            if (isCross && result.payMode === 'org') {
+              paid = await multiPay(resCost * 2, [{dept:'organization', label:DEPT_NAMES.organization, max:pf.resources.organization||0}]);
+            } else if (isCross && result.payMode === 'dual') {
+              paid = await multiPay(resCost * 2, [
+                {dept:member.dept, label:DEPT_NAMES[member.dept]||member.dept, max:pf.resources[member.dept]||0},
+                {dept:result.targetDeptId, label:DEPT_NAMES[result.targetDeptId]||result.targetDeptId, max:pf.resources[result.targetDeptId]||0},
+              ]);
+            } else {
+              paid = await multiPay(resCost, [
+                {dept:'organization', label:DEPT_NAMES.organization, max:pf.resources.organization||0},
+                {dept:member.dept, label:DEPT_NAMES[member.dept]||member.dept, max:pf.resources[member.dept]||0},
+              ]);
+            }
+            if (!paid) { renderAllPanels(); continue; }
+            await showAlert(m.promoteMember(factionId, mid, result.targetDeptId, 'prepaid').message);
+          } else if (result.action === 'transfer') {
+            const mid = result.memberId;
+            const member = pf.members.find(m => m.id === mid);
+            const infCost = (await import('../../logic/data/constants.js')).PROMOTION_INFLUENCE_COST[member.rank] || 5;
+            const resCost = (await import('../../logic/data/constants.js')).APPOINTMENT_COST[member.rank] || 6;
+            if (pf.influence < infCost) { await showAlert(`影响力不足（需${infCost}）`); renderAllPanels(); continue; }
+            pf.influence -= infCost;
+            let paid2 = true;
+            if (result.payMode === 'dual') {
+              paid2 = await multiPay(resCost * 2, [
+                {dept:member.dept, label:DEPT_NAMES[member.dept]||member.dept, max:pf.resources[member.dept]||0},
+                {dept:result.targetDeptId, label:DEPT_NAMES[result.targetDeptId]||result.targetDeptId, max:pf.resources[result.targetDeptId]||0},
+              ]);
+            } else {
+              paid2 = await multiPay(resCost * 2, [{dept:'organization', label:DEPT_NAMES.organization, max:pf.resources.organization||0}]);
+            }
+            if (!paid2) { renderAllPanels(); continue; }
+            await showAlert(m.transferMember(factionId, mid, result.targetDeptId, 'prepaid').message);
           } else if (result.action === 'recruit') {
-            await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle).message);
+            const infCost = (await import('../../logic/data/constants.js')).RECRUIT_INFLUENCE_COST[result.targetRank] || 5;
+            const resCost = (await import('../../logic/data/constants.js')).RECRUIT_RESOURCE_COST[result.targetRank] || 8;
+            if (pf.influence < infCost) { await showAlert(`影响力不足（需${infCost}）`); renderAllPanels(); continue; }
+            pf.influence -= infCost;
+            const paid3 = await multiPay(resCost, [
+              {dept:'organization', label:DEPT_NAMES.organization, max:pf.resources.organization||0},
+              {dept:result.officialDept, label:DEPT_NAMES[result.officialDept]||result.officialDept, max:pf.resources[result.officialDept]||0},
+            ]);
+            if (!paid3) { renderAllPanels(); continue; }
+            await showAlert(m.recruitOfficial(factionId, result.officialName, result.officialDept, result.targetRank, result.targetTitle, 'prepaid').message);
           }
           renderAllPanels();
         }

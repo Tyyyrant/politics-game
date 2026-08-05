@@ -109,6 +109,63 @@ import { executeAction } from '../logic/actions.js';
 import { getMemberPortrait } from '../logic/data/factions.js';
 import { SEAT_TASK_NAMES_CN, DEPT_NAMES, FACTION_NAMES_CN, TRAITS, PROMOTION_INFLUENCE_COST, RECRUIT_INFLUENCE_COST, RECRUIT_RESOURCE_COST, APPOINTMENT_COST } from '../logic/data/constants.js';
 
+// Multi-slider: N resource sliders, total must equal target
+export function showMultiSlider(title, target, slots) {
+  return new Promise(resolve => {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay';
+    let rowsHtml = '';
+    for (const s of slots) {
+      const cap = Math.min(s.max, target);
+      rowsHtml += `<div class="res-pick-row">
+        <span class="res-pick-label">${s.label}: ${s.max}</span>
+        <input type="range" class="res-pick-slider" min="0" max="${cap}" value="0" data-key="${s.dept}">
+        <span class="res-pick-val">0</span>
+      </div>`;
+    }
+    overlay.innerHTML = `<div class="modal-box modal-respick">
+      <div class="modal-title">${title}（需凑满 ${target}）</div>
+      <div class="res-pick-list">${rowsHtml}</div>
+      <div class="res-pick-total">已选：<b id="res-pick-total">0</b> / ${target}</div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-cancel">取消</button>
+        <button class="modal-btn modal-ok" id="res-pick-ok" disabled>确定</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+
+    const sliders = overlay.querySelectorAll('.res-pick-slider');
+    const totalEl = overlay.querySelector('#res-pick-total');
+    const okBtn = overlay.querySelector('#res-pick-ok');
+
+    function update() {
+      let t = 0;
+      sliders.forEach(s => { t += parseInt(s.value); });
+      totalEl.textContent = t;
+      okBtn.disabled = t !== target;
+      totalEl.style.color = t > target ? 'var(--danger)' : t === target ? 'var(--accent-green)' : 'var(--text-secondary)';
+    }
+
+    sliders.forEach(s => {
+      const valEl = s.parentElement.querySelector('.res-pick-val');
+      s.addEventListener('input', () => {
+        let otherSum = 0;
+        sliders.forEach(o => { if (o !== s) otherSum += parseInt(o.value); });
+        if (parseInt(s.value) + otherSum > target) s.value = target - otherSum;
+        valEl.textContent = s.value;
+        update();
+      });
+    });
+
+    overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
+    okBtn.addEventListener('click', () => {
+      const alloc = {};
+      sliders.forEach(s => { const v = parseInt(s.value); if (v > 0) alloc[s.dataset.key] = v; });
+      overlay.remove();
+      resolve(alloc);
+    });
+  });
+}
+
 // Slider input for choosing an amount
 export function showSlider(title, max, defaultValue = 1) {
   return new Promise(resolve => {
@@ -139,10 +196,13 @@ export function showSlider(title, max, defaultValue = 1) {
 
 // Resource picker for "any" type seat tasks — pick which resources to spend
 export function showResourcePicker(cost, factionResources, genericResources) {
-  return new Promise(resolve => {
+  return new Promise(async resolve => {
     const entries = Object.entries(factionResources).filter(([, v]) => v > 0);
     const totalMax = entries.reduce((s, [, v]) => s + v, 0) + (genericResources || 0);
-    if (totalMax < cost) { resolve(null); return; }
+    if (totalMax < cost) {
+      await showAlert(`资源不足！需要 ${cost}，但可用资源总共只有 ${totalMax}`);
+      resolve(null); return;
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -186,12 +246,23 @@ export function showResourcePicker(cost, factionResources, genericResources) {
       let total = 0;
       sliders.forEach(s => { total += parseInt(s.value); });
       totalEl.textContent = total;
-      okBtn.disabled = total < cost;
+      okBtn.disabled = total !== cost;
+      if (total > cost) totalEl.style.color = 'var(--danger)';
+      else if (total === cost) totalEl.style.color = 'var(--accent-green)';
+      else totalEl.style.color = 'var(--text-secondary)';
     }
 
     sliders.forEach(s => {
       const valEl = s.parentElement.querySelector('.res-pick-val');
-      s.addEventListener('input', () => { valEl.textContent = s.value; updateTotal(); });
+      s.addEventListener('input', () => {
+        // Prevent exceeding cost: calculate other sliders' total first
+        let otherTotal = 0;
+        sliders.forEach(o => { if (o !== s) otherTotal += parseInt(o.value); });
+        const maxAllowed = cost - otherTotal;
+        if (parseInt(s.value) > maxAllowed) s.value = maxAllowed;
+        valEl.textContent = s.value;
+        updateTotal();
+      });
     });
 
     overlay.querySelector('.modal-cancel').addEventListener('click', () => { overlay.remove(); resolve(null); });
@@ -541,61 +612,92 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
 
     const infCost = PROMOTION_INFLUENCE_COST[targetRank] || 10;
     const resCost = APPOINTMENT_COST[targetRank] || 8;
+    const orgName = DEPT_NAMES.organization || '组织部';
 
     let html = '<div class="appointment-panel">';
     html += `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-shrink:0"><h4>📋 任命：${deptName} · ${targetRank}（${posTitle}）</h4><button class="modal-btn modal-cancel btn-close-top">✕ 关闭</button></div>`;
-    html += `<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;flex-shrink:0">消耗 💰${infCost}影响力 + ${resCost}组织部或本部门资源</p>`;
+    html += `<p style="font-size:0.75em;color:var(--text-secondary);margin-bottom:8px;flex-shrink:0">同部门：💰${infCost}影响 + ${resCost}${orgName}(或本部门)资源 &nbsp;|&nbsp; 跨部门：🅰️双倍${orgName} 或 🅱️两部门各付</p>`;
     html += '<div class="appoint-scroll">';
 
     let hasAny = false;
 
-    if (isControlled && targetIdx > 0) {
-      const internalCandidates = faction.members.filter(m => m.dept === deptId && m.rank === sourceRank);
-      html += '<div class="appoint-section"><h5>🔵 内部提拔 — 本派系' + sourceRank + '级成员</h5>';
-      if (internalCandidates.length) {
-        hasAny = true;
-        for (const m of internalCandidates) {
+    // === 内部提拔（所有部门低一级成员）===
+    if (targetIdx > 0) {
+      const allInternal = faction.members.filter(m => m.rank === sourceRank);
+      const sameDept = allInternal.filter(m => m.dept === deptId);
+      const crossDept = allInternal.filter(m => m.dept !== deptId);
+
+      if (allInternal.length) {
+        html += '<div class="appoint-section"><h5>🔵 内部提拔 — ' + sourceRank + '→' + targetRank + '</h5>';
+        // Same dept first
+        for (const m of sameDept) {
+          hasAny = true;
           html += `<div class="candidate-row">
-            <span class="candidate-info"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name} · ${m.position || m.rank} · 忠${m.loyalty}/9</span>
-            <span class="candidate-path">${sourceRank}→${targetRank}</span>
-            <button class="btn-small btn-promote" data-mid="${m.id}">提拔</button></div>`;
+            <span class="candidate-info"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name} <span class="cand-tag same">同部门</span> · ${DEPT_NAMES[m.dept] || m.dept}</span>
+            <span class="candidate-cost">💰${infCost}影响 + ${resCost}${orgName}/${DEPT_NAMES[deptId]||deptId}</span>
+            <button class="btn-small btn-promote" data-mid="${m.id}" data-target-dept="${deptId}" data-cross="0">提拔</button></div>`;
+        }
+        // Cross dept
+        for (const m of crossDept) {
+          hasAny = true;
+          html += `<div class="candidate-row">
+            <span class="candidate-info"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name} <span class="cand-tag cross">跨部门</span> · ${DEPT_NAMES[m.dept] || m.dept}</span>
+            <span class="candidate-cost">💰${infCost}影响 + 🅰️${resCost*2}${orgName} / 🅱️${resCost}${DEPT_NAMES[m.dept]||''}+${resCost}${DEPT_NAMES[deptId]||deptId}</span>
+            <button class="btn-small btn-promote" data-mid="${m.id}" data-target-dept="${deptId}" data-cross="1">提拔</button></div>`;
         }
       } else {
-        html += '<div class="candidate-empty">本派系在该部门无' + sourceRank + '级成员可提拔</div>';
+        html += '<div class="candidate-empty">本派系无' + sourceRank + '级成员可提拔</div>';
       }
       html += '</div>';
     }
 
+    // === 内部同级调入（其他部门同级成员）===
+    if (targetIdx >= 0) {
+      const sameRankOthers = faction.members.filter(m => m.rank === targetRank && m.dept !== deptId);
+      if (sameRankOthers.length) {
+        html += '<div class="appoint-section"><h5>🟡 内部调入 — ' + targetRank + '级（其他部门调入）</h5>';
+        for (const m of sameRankOthers) {
+          hasAny = true;
+          html += `<div class="candidate-row cross-dept">
+            <span class="candidate-info"><img src="${getMemberPortrait(m.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${m.dept}" style="display:none">${m.name[0]}</span>${m.name} · ${DEPT_NAMES[m.dept] || m.dept} · ${m.position || m.rank}</span>
+            <span class="candidate-cost">💰${infCost}影响 + 🅰️${resCost*2}${orgName} / 🅱️${resCost}${DEPT_NAMES[m.dept]||''}+${resCost}${DEPT_NAMES[deptId]||deptId}</span>
+            <button class="btn-small btn-transfer" data-mid="${m.id}" data-target-dept="${deptId}" data-cross="1">调入</button></div>`;
+        }
+        html += '</div>';
+      }
+    }
+
+    // === 外部招募 ===
     const pool = gameState.independentOfficials || [];
-    const externalCandidates = pool.filter(o => o.dept === deptId && (o.rank === sourceRank || o.rank === targetRank));
-    const externalPromote = externalCandidates.filter(o => o.rank === sourceRank);
-    const externalDirect = externalCandidates.filter(o => o.rank === targetRank);
-    html += '<div class="appoint-section"><h5>🟢 外部招募 — 无派系' + sourceRank + '级干部（加入后获"曾受你的提拔"特性）</h5>';
+    const externalPromote = pool.filter(o => o.dept === deptId && o.rank === sourceRank);
+    const externalDirect = pool.filter(o => o.dept === deptId && o.rank === targetRank);
+
     if (externalPromote.length) {
-      hasAny = true;
+      html += '<div class="appoint-section"><h5>🟢 外部招募 — 无派系' + sourceRank + '级（加入后获"曾受你的提拔"）</h5>';
       for (const o of externalPromote) {
+        hasAny = true;
         html += `<div class="candidate-row">
-          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
-          <span class="candidate-path">招募→${targetRank}</span>
+          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank}</span>
+          <span class="candidate-cost">💰${infCost}影响 + ${resCost}${orgName}/${DEPT_NAMES[deptId]||deptId}</span>
           <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">招募</button></div>`;
       }
-    } else {
+    } else if (sourceRank !== targetRank) {
       html += '<div class="candidate-empty">暂无可招募的' + sourceRank + '级无派系干部</div>';
     }
     if (targetRank !== sourceRank && externalDirect.length) {
-      html += '<div class="appoint-section"><h5>🟡 同级调入 — 无派系' + targetRank + '级干部（直接任命，不获提拔特性）</h5>';
+      html += '<div class="appoint-section"><h5>🟢 同级调入 — 无派系' + targetRank + '级</h5>';
       for (const o of externalDirect) {
+        hasAny = true;
         html += `<div class="candidate-row">
-          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank} · ${o.dept ? (DEPT_NAMES[o.dept] || o.dept) : ''}</span>
-          <span class="candidate-path">调入→${targetRank}</span>
+          <span class="candidate-info"><img src="${getMemberPortrait(o.name)}" class="avatar-sq av-sm" onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex'" alt=""><span class="avatar-sq av-sm av-dept-${o.dept}" style="display:none">${o.name[0]}</span>${o.name} · ${o.position || o.rank}</span>
+          <span class="candidate-cost">💰${infCost}影响 + ${resCost}${orgName}/${DEPT_NAMES[deptId]||deptId}</span>
           <button class="btn-small btn-recruit" data-name="${o.name}" data-dept="${o.dept}" data-rank="${o.rank}" data-target="${targetRank}" data-target-title="${posTitle}">调入</button></div>`;
       }
     }
     html += '</div>';
 
     if (!hasAny) html += '<div style="padding:12px;text-align:center;color:var(--text-secondary);">暂无可用的候选人</div>';
-    html += '</div>'; // close appoint-scroll
-
+    html += '</div>';
     html += `<button class="modal-btn" style="margin-top:8px;width:100%;flex-shrink:0" id="btn-back-to-positions">↩️ 返回职位列表</button></div>`;
 
     const overlay = document.createElement('div');
@@ -611,8 +713,39 @@ function showCandidateUI(factionId, deptId, targetRank, targetTitle, isControlle
       showAppointmentUI(factionId).then(resolve);
     });
 
+    // 提拔按钮（可能跨部门）
     overlay.querySelectorAll('.btn-promote').forEach(btn => {
-      btn.addEventListener('click', () => { overlay.remove(); resolve({ action: 'promote', memberId: btn.dataset.mid }); });
+      btn.addEventListener('click', async () => {
+        const mid = btn.dataset.mid;
+        const targetDept = btn.dataset.targetDept;
+        const isCross = btn.dataset.cross === '1';
+        let payMode = 'same';
+        if (isCross) {
+          const choice = await showSelect('跨部门提拔 — 选择付费方式', [
+            { label: `🅰️ 双倍组织部资源 (${resCost*2})`, value: 'org' },
+            { label: `🅱️ 两个部门各付一份 (各${resCost})`, value: 'dual' },
+          ]);
+          if (!choice) return; // 取消
+          payMode = choice;
+        }
+        overlay.remove();
+        resolve({ action: 'promote', memberId: mid, targetDeptId: targetDept, payMode });
+      });
+    });
+
+    // 调入按钮（内部同级转岗）
+    overlay.querySelectorAll('.btn-transfer').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const mid = btn.dataset.mid;
+        const targetDept = btn.dataset.targetDept;
+        const choice = await showSelect('跨部门调入 — 选择付费方式', [
+          { label: `🅰️ 双倍组织部资源 (${resCost*2})`, value: 'org' },
+          { label: `🅱️ 两个部门各付一份 (各${resCost})`, value: 'dual' },
+        ]);
+        if (!choice) return;
+        overlay.remove();
+        resolve({ action: 'transfer', memberId: mid, targetDeptId: targetDept, payMode: choice });
+      });
     });
 
     overlay.querySelectorAll('.btn-recruit').forEach(btn => {

@@ -128,15 +128,19 @@ export function resolveBargain(factionId, accepted) {
   bargain.resolved = true;
   bargain.accepted = accepted;
 
+  // 只有接受才建立承诺，拒绝则无事发生
+  if (!accepted) return;
+
   // 存入承诺池（下轮法案生效）
   if (!gameState._activeAgreements) gameState._activeAgreements = [];
   gameState._activeAgreements.push({
     factionId,
-    accepted,
+    accepted: true,
     preferStance: bargain.preferStance,
     strategyName: bargain.strategyName,
     category: bargain.category,
-    roundsLeft: 1, // 仅下轮生效
+    createdOnTurn: gameState.turn,
+    roundsLeft: 2,
   });
 }
 
@@ -154,6 +158,8 @@ export function shouldHonorAgreement(factionId, myStance) {
   if (!gameState._activeAgreements) return null; // null = 不干涉
   const agreement = gameState._activeAgreements.find(a => a.factionId === factionId);
   if (!agreement) return null;
+  // 当轮创建的承诺不生效，等下一轮
+  if (agreement.createdOnTurn === gameState.turn) return null;
 
   // 15-35% 概率背叛（诡变型背叛率更高）
   let betrayChance = 0.2;
@@ -167,12 +173,7 @@ export function shouldHonorAgreement(factionId, myStance) {
   // 履行承诺
   const followRate = 0.65 + Math.random() * 0.2; // 65-85%
   if (Math.random() < followRate) {
-    if (agreement.accepted) {
-      return agreement.preferStance; // 跟玩家保持一致的立场
-    } else {
-      // 拒绝 → 投相反的
-      return agreement.preferStance === 'support' ? 'oppose' : 'support';
-    }
+    return agreement.preferStance;
   }
   return null; // 小概率不按承诺走
 }

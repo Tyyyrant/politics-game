@@ -32,8 +32,8 @@ export function castVote(factionId, stance) {
     if (agreementStance) {
       actualStance = agreementStance;
       honored = true;
-    } else if (gameState._activeAgreements?.some(a => a.factionId === factionId)) {
-      honored = false; // 有承诺但没履行
+    } else if (gameState._activeAgreements?.some(a => a.factionId === factionId && a.createdOnTurn !== gameState.turn)) {
+      honored = false; // 有上轮承诺但本轮未履行
     }
   }
 

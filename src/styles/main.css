@@ -452,7 +452,7 @@ body {
 }
 .action-card {
   background: var(--bg-card); border: 1px solid var(--border-color);
-  border-radius: 8px; overflow: hidden;
+  border-radius: 8px; overflow: visible;
   transition: all 0.25s;
 }
 .action-card:hover { border-color: rgba(200,164,92,0.25); }
@@ -478,9 +478,6 @@ body {
   border-color: var(--accent-gold); background: rgba(200,164,92,0.08);
   transform: translateY(-1px); box-shadow: 0 2px 8px rgba(200,164,92,0.06);
 }
-/* 卡片内按钮隐藏大 tooltip，用原生 title 代替 */
-.action-card-btns .action-btn[data-tooltip]:hover::after,
-.action-card-btns .action-btn[data-tooltip]:hover::before { display: none; }
 .action-btn {
   background: var(--bg-panel); color: var(--text-primary);
   border: 1px solid var(--border-color); padding: 11px 8px;
@@ -799,7 +796,11 @@ body {
   display: flex; align-items: center; gap: 8px; padding: 6px 10px;
   border-bottom: 1px solid rgba(61,50,40,0.3); font-size: 0.82em;
 }
-.candidate-row:hover { background: rgba(200,164,92,0.06); border-color: var(--accent-gold); transform: translateX(2px); }
+.candidate-row:hover { background: rgba(200,164,92,0.06); border-color: var(--accent-gold); }
+.cand-tag { font-size: 0.7em; padding: 1px 5px; border-radius: 2px; margin: 0 2px; }
+.cand-tag.same { background: rgba(74,140,92,0.2); color: var(--accent-green); }
+.cand-tag.cross { background: rgba(200,164,92,0.2); color: var(--accent-gold); }
+.candidate-cost { font-size: 0.72em; color: var(--text-muted); white-space: nowrap; }
 .candidate-info { flex: 1; }
 .candidate-path { color: var(--accent-gold); min-width: 60px; text-align: center; font-size: 0.8em; }
 .candidate-empty { font-size: 0.78em; color: var(--text-muted); padding: 6px 0; }
