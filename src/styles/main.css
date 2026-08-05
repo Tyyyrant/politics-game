@@ -641,6 +641,44 @@ body {
   border-top: 1px solid var(--border-color);
 }
 
+/* === 政务任务卡 === */
+.quest-section { margin-top: 16px; }
+.quest-section-hd {
+  font-family: var(--font-serif); font-size: 0.85em; color: var(--accent-gold);
+  margin-bottom: 8px; padding: 6px 0 4px 10px;
+  border-left: 3px solid var(--accent-darkred);
+  letter-spacing: 0.04em;
+}
+.quest-card {
+  background: var(--bg-card); border: 1px solid var(--border-color);
+  border-radius: 6px; padding: 12px; margin-bottom: 8px;
+  transition: all 0.2s;
+}
+.quest-card:hover { border-color: rgba(200,164,92,0.3); }
+.quest-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.quest-cat {
+  font-size: 0.7em; padding: 2px 6px; border-radius: 2px; color: #fff; white-space: nowrap;
+}
+.cat-民生 { background: #4a8c5c; }
+.cat-经济 { background: #c8a45c; }
+.cat-维稳 { background: #8b1a1a; }
+.cat-政治 { background: #5a6a8a; }
+.cat-危机 { background: #c43b3b; }
+.quest-deadline { font-size: 0.75em; color: var(--text-muted); margin-left: auto; white-space: nowrap; }
+.quest-desc { font-size: 0.8em; color: var(--text-secondary); margin-bottom: 8px; line-height: 1.5; }
+.quest-options { display: flex; flex-direction: column; gap: 4px; }
+.quest-opt-btn {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--bg-panel); border: 1px solid var(--border-color);
+  border-radius: 4px; padding: 7px 10px; cursor: pointer;
+  font-size: 0.78em; color: var(--text-primary); text-align: left;
+  transition: all 0.15s;
+}
+.quest-opt-btn:hover {
+  border-color: var(--accent-gold); background: rgba(200,164,92,0.06);
+}
+.quest-cost { font-size: 0.85em; color: var(--text-muted); white-space: nowrap; margin-left: 8px; }
+
 /* ================================================================
    RIGHT PANEL — 日志 & 法案
    ================================================================ */

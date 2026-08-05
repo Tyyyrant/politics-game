@@ -19,6 +19,10 @@ export function renderLeftPanel() {
   const portrait = FACTION_PORTRAITS[gameState.playerFactionId] || '';
   h += `<div class="panel-section player-full"><h3><img src="${portrait}" class="player-portrait" onerror="this.style.display='none'" alt=""> ${pf.leaderName}</h3>`;
   h += `<div class="stat-row">📊 影响力: <b>${pf.influence}</b> &nbsp;|&nbsp; 💰 资金: <b>${pf.funds}</b> &nbsp;|&nbsp; 🧱 通用: <b>${pf.genericResources || 0}</b></div>`;
+  const pop = pf.popularity || 50;
+  const face = pop >= 60 ? '😊' : pop >= 40 ? '😐' : '😠';
+  const faceColor = pop >= 60 ? 'var(--accent-green)' : pop >= 40 ? '#c8a45c' : 'var(--accent-red)';
+  h += `<div class="stat-row">📋 民意值: <span style="color:${faceColor}">${face}</span> <b>${pop}</b>/100 &nbsp;|&nbsp; 📝 政务: <b>${(pf.activeQuests||[]).length}</b>个待处理</div>`;
   const maxVisits = getMaxVisits(gameState.playerFactionId);
   const visitsLeft = maxVisits - (pf.visitsThisTurn || 0);
   h += `<div class="stat-row">🔒 席位: <b>${pf.lockedSeats}/27</b> &nbsp;|&nbsp; 🔴 纪委标记: <b>${pf.disciplineMarks}</b></div>`;

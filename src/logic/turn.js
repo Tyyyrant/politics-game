@@ -3,6 +3,7 @@ import { gameState, emit } from './state.js';
 import { FACTION_IDS } from './data/constants.js';
 import { produceResources } from './resources.js';
 import { checkVictory } from './victory.js';
+import { generateQuests, checkQuestExpiry, processPendingFollowUps, getPopularityBonus } from './quests.js';
 
 export function rollDice(sides = 6) { return Math.floor(Math.random() * sides) + 1; }
 
@@ -52,6 +53,8 @@ export function startNewRound() {
   }
   gameState._fiveYearPlanTriggered = false;
   gameState._pendingFiveYearPlan = null;
+  // 每轮为玩家生成新政务
+  generateQuests(gameState.playerFactionId);
   emit('turn:new-round', { turn: gameState.turn });
 }
 
@@ -158,6 +161,22 @@ export function enterCleanup() {
           }
         }
       }
+    }
+  }
+  // 政务处理：过期+连锁+AI生成
+  for (const fid of FACTION_IDS) {
+    if (fid === gameState.playerFactionId) continue;
+    generateQuests(fid);
+    checkQuestExpiry(fid);
+    processPendingFollowUps(fid);
+  }
+  checkQuestExpiry(gameState.playerFactionId);
+  processPendingFollowUps(gameState.playerFactionId);
+  // 民意值影响力加成
+  for (const fid of FACTION_IDS) {
+    const bonus = getPopularityBonus(fid);
+    if (bonus > 0) {
+      gameState.factions[fid].influence += bonus;
     }
   }
   checkVictory();

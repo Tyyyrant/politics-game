@@ -9,6 +9,7 @@ import { ACTION_TYPES, MAX_ROUNDS } from '../../logic/data/constants.js';
 import { renderAllPanels } from '../screens/game-screen.js';
 import { showSlider, showSelect, showAlert, showSeatPicker, showAppointmentUI, showResourcePicker, showMultiSlider, resetAppointScroll } from '../modal.js';
 import { FACTION_NAMES_CN, DEPT_NAMES, SEAT_TASK_NAMES_CN } from '../../logic/data/constants.js';
+import { completeQuest, aiChooseQuestOption, checkFollowUp } from '../../logic/quests.js';
 
 function describeEffects(eff) {
   const parts = [];
@@ -134,6 +135,30 @@ export function renderCenterPanel() {
     h += `</div></div>`;
 
     h += `</div>`;
+
+    // 政务任务卡片
+    const activeQuests = pf.activeQuests || [];
+    if (activeQuests.length) {
+      h += '<div class="quest-section"><div class="quest-section-hd">📋 政务任务</div>';
+      for (const q of activeQuests) {
+        h += `<div class="quest-card">
+          <div class="quest-header"><span class="quest-cat cat-${q.category}">${q.category}</span> <b>${q.title}</b> <span class="quest-deadline">剩${q.remaining}轮</span></div>
+          <div class="quest-desc">${q.desc}</div>
+          <div class="quest-options">`;
+        for (let i = 0; i < q.options.length; i++) {
+          const o = q.options[i];
+          const costStr = (o.cost && Object.keys(o.cost).length > 0) ? Object.entries(o.cost).map(([d, amt]) => d === 'funds' ? `资金:${amt}` : `${DEPT_NAMES[d]||d}:${amt}`).join('+') : '免费';
+          const effStr = [];
+          if (o.effects.popularity) effStr.push(`民意${o.effects.popularity>0?'+':''}${o.effects.popularity}`);
+          if (o.effects.influence) effStr.push(`影响${o.effects.influence>0?'+':''}${o.effects.influence}`);
+          if (o.effects.funds) effStr.push(`资金${o.effects.funds>0?'+':''}${o.effects.funds}`);
+          h += `<button class="quest-opt-btn" data-qid="${q.id}" data-oidx="${i}" title="消耗：${costStr}  效果：${effStr.join('，')}">${i+1}. ${o.label} <span class="quest-cost">💰${costStr}</span></button>`;
+        }
+        h += `</div></div>`;
+      }
+      h += '</div>';
+    }
+
     h += '<div style="margin-top:14px"><button class="action-btn end-turn-btn" data-action="endTurn" style="width:100%;padding:14px;font-size:1em">✅ 完成行动</button></div>';
     h += '</div>';
   } else {
@@ -340,6 +365,20 @@ function bindButtons(el, factionId) {
         await handlePlayerAction(factionId, action);
         renderAllPanels();
       }
+    });
+  });
+  // Quest buttons
+  el.querySelectorAll('.quest-opt-btn').forEach(b => {
+    b.addEventListener('click', async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const qid = b.dataset.qid;
+      const oidx = parseInt(b.dataset.oidx);
+      if (!qid) return;
+      const r = completeQuest(factionId, qid, oidx);
+      if (r.success) checkFollowUp(factionId, qid, oidx);
+      await showAlert(r.message);
+      renderAllPanels();
     });
   });
 }
@@ -872,6 +911,16 @@ async function executeAITurn(factionId) {
         const d2 = depts[Math.floor(Math.random() * depts.length)];
         gameState.factions[factionId].resources[d1] = (gameState.factions[factionId].resources[d1] || 0) + 1;
         gameState.factions[factionId].resources[d2] = (gameState.factions[factionId].resources[d2] || 0) + 1;
+      }
+    }
+
+    // AI 自动处理政务
+    const aiQuests = gameState.factions[factionId].activeQuests || [];
+    for (const q of [...aiQuests]) {
+      const oidx = aiChooseQuestOption(factionId, q.id);
+      if (oidx >= 0) {
+        const r = completeQuest(factionId, q.id, oidx);
+        if (r.success) checkFollowUp(factionId, q.id, oidx);
       }
     }
 

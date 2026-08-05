@@ -18,6 +18,7 @@ export function createNewGame(playerFactionId) {
     factions[fid] = createInitialFactionState(fid);
     factions[fid].resources = {};  // 从零开始，每轮产出时获取
     factions[fid].influence = getFactionInfluenceFromMembers(factions[fid]);
+    factions[fid].popularity = 50;  // 民意值初始50
   }
   const npcSeats = generateSeatTasks(TOTAL_NPC_SEATS);
   // Ensure visitedOnTurn is set (backward compat)
