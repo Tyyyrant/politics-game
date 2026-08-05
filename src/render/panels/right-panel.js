@@ -46,6 +46,7 @@ export function renderRightPanel() {
       if (e.action === 'roundStart') h += `<div class="log-round">━━━ ${e.target} ━━━</div>`;
       else if (e.action === 'billResult') h += `<div class="log-bill">📜 ${e.target}：${e.result}（${e.detail || ''}）</div>`;
       else if (e.action === 'seatRefresh') h += `<div class="log-bill">🔄 ${e.target}，${e.result}</div>`;
+      else if (e.action === 'bargain') h += `<div class="log-bill">🤝 ${e.target} ${e.result}</div>`;
       else h += `<div class="log-system">${e.target} ${e.result || ''}</div>`;
     } else {
       const factionName = FACTION_NAMES_CN[e.factionId] || e.factionId || '未知';

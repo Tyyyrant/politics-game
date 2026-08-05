@@ -46,7 +46,8 @@ export function castVote(factionId, stance) {
   }
   bill.votes[actualStance].push({ factionId, weight });
   if (honored !== null) {
-    gameState.roundLog.push({ factionId: 'system', action: 'bargain', target: factionId, result: honored ? '履行承诺' : '背弃承诺' });
+    const leaderName = gameState.factions[factionId]?.leaderName || factionId;
+    gameState.roundLog.push({ factionId: 'system', action: 'bargain', target: leaderName, result: honored ? '履行承诺' : '背弃承诺' });
   }
   emit('bill:voted', { factionId, stance: actualStance, weight });
   return { success: true };

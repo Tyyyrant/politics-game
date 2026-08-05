@@ -48,7 +48,8 @@ export function triggerGlobalEvent() {
         const s = topSeats[Math.floor(Math.random() * topSeats.length)];
         s.lockedById = null; s.visitorId = null; s.lockedOnTurn = null; s.revealed = false; s.roundsRemaining = 3;
       }
-      detail = `${FACTION_NAMES_CN[topFaction] || topFaction}影响力-5，失去1个席位`;
+      const topLeader = gameState.factions[topFaction]?.leaderName || topFaction;
+      detail = `${topLeader}影响力-5，失去1个席位`;
       gameState.roundLog.push({ factionId: 'system', action: 'event', target: '📰 丑闻曝光', result: detail });
     }
   }
@@ -64,7 +65,9 @@ export function triggerGlobalEvent() {
       if (poorest) {
         const oldOwner = s.lockedById;
         s.lockedById = poorest; s.lockedOnTurn = gameState.turn;
-        detail = `${s.name}从${FACTION_NAMES_CN[oldOwner] || oldOwner}倒向${FACTION_NAMES_CN[poorest] || poorest}`;
+        const oldLeader = gameState.factions[oldOwner]?.leaderName || oldOwner;
+        const newLeader = gameState.factions[poorest]?.leaderName || poorest;
+        detail = `${s.name}从${oldLeader}倒向${newLeader}`;
         gameState.roundLog.push({ factionId: 'system', action: 'event', target: '🔀 代表倒戈', result: detail });
       }
     }
